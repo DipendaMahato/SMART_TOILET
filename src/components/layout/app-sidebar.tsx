@@ -72,6 +72,7 @@ export default function AppSidebar() {
           <Button variant="ghost" size="icon" className="ml-auto" asChild>
             <Link href="/login">
                 <LogOut className="h-5 w-5" />
+                <span className="sr-only">Logout</span>
             </Link>
           </Button>
         </div>

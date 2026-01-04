@@ -8,6 +8,8 @@ import { generateOtp } from '@/ai/flows/send-otp-flow';
 import { mockMedicalProfile, mockToiletSensorData } from '@/lib/data';
 import { z } from 'zod';
 import nodemailer from 'nodemailer';
+import { generateHealthInsights } from '@/ai/flows/generate-health-insights';
+import { refineInsightsWithReasoning } from '@/ai/flows/refine-insights-with-reasoning';
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -48,11 +50,9 @@ export async function sendOtpAction(email: string) {
   try {
     const { otp } = await generateOtp();
 
-    // Use direct SMTP transport for more reliability
+    // Use service: 'gmail' for robust, library-managed connection
     const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 465,
-      secure: true, // true for 465, false for other ports
+      service: 'gmail',
       auth: {
         user: process.env.EMAIL_SERVER_USER,
         pass: process.env.EMAIL_SERVER_PASSWORD,
@@ -72,8 +72,9 @@ export async function sendOtpAction(email: string) {
     return { success: true, otp: otp };
 
   } catch (error) {
+    // Enhanced error logging to capture specific nodemailer errors
     console.error('Detailed Error in sendOtpAction:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
-    return { success: false, error: `Failed to send OTP. Please check server logs for details. Error: ${errorMessage}` };
+    return { success: false, error: `Failed to send OTP. Server Error: ${errorMessage}` };
   }
 }

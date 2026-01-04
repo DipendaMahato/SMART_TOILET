@@ -76,6 +76,8 @@ export async function sendOtpAction(email: string) {
 
   } catch (error) {
     console.error('Error in sendOtpAction:', error);
-    return { success: false, error: 'Failed to send OTP. Please check server logs for details.' };
+    // Return a more detailed error for debugging
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return { success: false, error: `Failed to send OTP: ${errorMessage}` };
   }
 }

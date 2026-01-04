@@ -184,7 +184,7 @@ export function ProfileForm() {
                     <FormControl>
                     <SelectTrigger>
                         <SelectValue placeholder="Select your blood group" />
-                    </Trigger>
+                    </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                         {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(group => (

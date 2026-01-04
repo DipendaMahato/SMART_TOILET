@@ -1,7 +1,7 @@
 "use client"
 
 import { Line, LineChart, CartesianGrid, XAxis, Tooltip, ResponsiveContainer, YAxis } from "recharts"
-import { ChartTooltipContent } from "@/components/ui/chart"
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
 
 const chartData = [
   { day: "Mon", heartRate: 75, hydration: 90 },
@@ -13,62 +13,70 @@ const chartData = [
   { day: "Sun", heartRate: 76, hydration: 91 },
 ]
 
+const chartConfig = {
+  heartRate: {
+    label: "Heart Rate",
+    color: "hsl(var(--primary))",
+  },
+  hydration: {
+    label: "Hydration",
+    color: "hsl(var(--accent))",
+  },
+} satisfies ChartConfig;
+
+
 export function RealTimeChart() {
   return (
     <div className="h-[350px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart
-            data={chartData}
-            margin={{
-              top: 5,
-              right: 10,
-              left: 10,
-              bottom: 0,
-            }}
-          >
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-            <XAxis
-              dataKey="day"
-              stroke="hsl(var(--muted-foreground))"
-              fontSize={12}
-              tickLine={false}
-              axisLine={false}
-            />
-            <YAxis
-              stroke="hsl(var(--muted-foreground))"
-              fontSize={12}
-              tickLine={false}
-              axisLine={false}
-            />
-            <Tooltip
-              cursor={{ stroke: "hsl(var(--accent))", strokeWidth: 2, strokeDasharray: "3 3" }}
-              content={<ChartTooltipContent />}
-              wrapperStyle={{ outline: 'none' }}
-              contentStyle={{ 
-                background: 'hsl(var(--background))',
-                border: '1px solid hsl(var(--border))',
-                borderRadius: 'var(--radius)',
-                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+        <ChartContainer config={chartConfig} className="h-full w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              data={chartData}
+              margin={{
+                top: 5,
+                right: 10,
+                left: 10,
+                bottom: 0,
               }}
-            />
-            <Line
-              type="monotone"
-              dataKey="heartRate"
-              stroke="hsl(var(--primary))"
-              strokeWidth={2}
-              dot={false}
-              name="Heart Rate (bpm)"
-            />
-            <Line
-              type="monotone"
-              dataKey="hydration"
-              stroke="hsl(var(--accent))"
-              strokeWidth={2}
-              dot={false}
-              name="Hydration (%)"
-            />
-          </LineChart>
-        </ResponsiveContainer>
+            >
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+              <XAxis
+                dataKey="day"
+                stroke="hsl(var(--muted-foreground))"
+                fontSize={12}
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis
+                stroke="hsl(var(--muted-foreground))"
+                fontSize={12}
+                tickLine={false}
+                axisLine={false}
+              />
+              <ChartTooltip
+                cursor={{ stroke: "hsl(var(--accent))", strokeWidth: 2, strokeDasharray: "3 3" }}
+                content={<ChartTooltipContent />}
+                wrapperStyle={{ outline: 'none' }}
+              />
+              <Line
+                type="monotone"
+                dataKey="heartRate"
+                stroke="var(--color-heartRate)"
+                strokeWidth={2}
+                dot={false}
+                name="Heart Rate (bpm)"
+              />
+              <Line
+                type="monotone"
+                dataKey="hydration"
+                stroke="var(--color-hydration)"
+                strokeWidth={2}
+                dot={false}
+                name="Hydration (%)"
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </ChartContainer>
     </div>
   )
 }

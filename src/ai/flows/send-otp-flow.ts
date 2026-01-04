@@ -43,8 +43,8 @@ const sendOtpFlow = ai.defineFlow(
       },
     });
 
-    const text = `Your Smart Toilet verification code is ${otp}. Please enter this code to securely verify your account. This OTP is valid for 5 minutes. Do not share it with anyone.\n\nDipendra Mahato`;
-    const html = `<p>Your Smart Toilet verification code is <b>${otp}</b>.</p><p>Please enter this code to securely verify your account. This OTP is valid for 5 minutes. Do not share it with anyone.</p><p>Dipendra Mahato</p>`;
+    const text = `Your Smart Toilet verification code is ${otp}. Please enter this code to securely verify your account. This OTP is valid for 5 minutes. Do not share it with anyone. Dipendra Mahato`;
+    const html = `<p>Your Smart Toilet verification code is <b>${otp}</b>. Please enter this code to securely verify your account. This OTP is valid for 5 minutes. Do not share it with anyone.</p><p>Dipendra Mahato</p>`;
 
     const mailOptions = {
       from: process.env.EMAIL_SERVER_USER,

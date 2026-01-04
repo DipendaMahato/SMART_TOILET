@@ -2,6 +2,9 @@
 // @ts-nocheck
 'use server';
 
+import { config } from 'dotenv';
+config();
+
 import { generateHealthInsights } from '@/ai/flows/generate-health-insights';
 import { refineInsightsWithReasoning } from '@/ai/flows/refine-insights-with-reasoning';
 import { generateOtp } from '@/ai/flows/send-otp-flow';

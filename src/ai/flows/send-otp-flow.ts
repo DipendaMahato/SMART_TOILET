@@ -36,9 +36,7 @@ const sendOtpFlow = ai.defineFlow(
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 465,
-      secure: true, // use SSL
+      service: 'gmail',
       auth: {
         user: process.env.EMAIL_SERVER_USER,
         pass: process.env.EMAIL_SERVER_PASSWORD,
@@ -60,8 +58,8 @@ const sendOtpFlow = ai.defineFlow(
       await transporter.sendMail(mailOptions);
       console.log('OTP email sent to:', email);
       return { success: true, otp };
-    } catch (error) {
-      console.error('Error sending OTP email:', error);
+    } catch (error: any) {
+      console.error('Error sending OTP email:', error.message);
       // In a real app, you might not want to expose the OTP in the error case
       // For this prototype, we return it for easier testing.
       return { success: false, otp }; 

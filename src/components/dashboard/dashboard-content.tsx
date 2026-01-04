@@ -61,11 +61,11 @@ export function DashboardContent() {
                 <p className="text-sm font-medium">New Insights</p>
               </div>
             </div>
-            <Button asChild className="w-full">
-              <Link href="/dashboard/insights">
+            <Link href="/dashboard/insights" className="w-full">
+              <Button className="w-full">
                 View My Insights <ArrowRight className="ml-2" />
-              </Link>
-            </Button>
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       </div>

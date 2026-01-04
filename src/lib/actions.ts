@@ -1,4 +1,3 @@
-
 // @ts-nocheck
 'use server';
 
@@ -59,15 +58,11 @@ export async function sendOtpAction(email: string) {
       },
     });
 
-    const text = `Your Smart Toilet verification code is ${otp}. Please enter this code to securely verify your account. This OTP is valid for 5 minutes. Do not share it with anyone. Dipendra Mahato`;
-    const html = `<p>Your Smart Toilet verification code is <b>${otp}</b>. Please enter this code to securely verify your account. This OTP is valid for 5 minutes. Do not share it with anyone.</p><p>Dipendra Mahato</p>`;
-
     const mailOptions = {
       from: process.env.EMAIL_SERVER_USER,
       to: email,
-      subject: 'Your Smart Toilet for Real time Health Monitoring Verification Code',
-      text: text,
-      html: html,
+      subject: 'Your Verification Code',
+      text: `Your OTP is: ${otp}`,
     };
     
     await transporter.sendMail(mailOptions);

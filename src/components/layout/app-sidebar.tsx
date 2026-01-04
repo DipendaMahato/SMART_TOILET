@@ -69,14 +69,11 @@ export default function AppSidebar() {
             <p className="font-semibold">{mockMedicalProfile.name}</p>
             <p className="text-xs text-muted-foreground">Premium User</p>
           </div>
-          <Button variant="ghost" size="icon" className="ml-auto" asChild>
-            <Link href="/login">
-              <>
+          <Link href="/login" className="ml-auto">
+            <Button variant="ghost" size="icon" aria-label="Logout">
                 <LogOut className="h-5 w-5" />
-                <span className="sr-only">Logout</span>
-              </>
-            </Link>
-          </Button>
+            </Button>
+          </Link>
         </div>
       </div>
     </aside>

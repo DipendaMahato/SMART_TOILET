@@ -71,16 +71,13 @@ export function DashboardContent() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {subDashboards.map((dashboard) => (
           <Link href={dashboard.href} key={dashboard.title}>
-            <Card className="h-full hover:border-primary hover:bg-muted/50 transition-all">
+            <Card className="h-full hover:border-primary hover:bg-muted/50 transition-all flex items-center justify-center p-6">
                 <CardHeader>
-                  <div className="flex items-center gap-4">
-                    <dashboard.icon className="h-8 w-8 text-primary" />
+                  <div className="flex flex-col items-center justify-center gap-4 text-center">
+                    <dashboard.icon className="h-10 w-10 text-primary" />
                     <CardTitle className="font-headline text-xl">{dashboard.title}</CardTitle>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <CardDescription>{dashboard.description}</CardDescription>
-                </CardContent>
             </Card>
           </Link>
         ))}

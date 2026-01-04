@@ -8,7 +8,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 import nodemailer from 'nodemailer';
 
 const SendOtpInputSchema = z.object({
@@ -43,12 +43,15 @@ const sendOtpFlow = ai.defineFlow(
       },
     });
 
+    const text = `Your Smart Toilet verification code is ${otp}. Please enter this code to securely verify your account. This OTP is valid for 5 minutes. Do not share it with anyone.\n\nDipendra Mahato`;
+    const html = `<p>Your Smart Toilet verification code is <b>${otp}</b>.</p><p>Please enter this code to securely verify your account. This OTP is valid for 5 minutes. Do not share it with anyone.</p><p>Dipendra Mahato</p>`;
+
     const mailOptions = {
       from: process.env.EMAIL_SERVER_USER,
       to: email,
-      subject: 'Your OTP Code for TotoHealth',
-      text: `Your One-Time Password is: ${otp}`,
-      html: `<b>Your One-Time Password is: ${otp}</b>`,
+      subject: 'Your TotoHealth Verification Code',
+      text: text,
+      html: html,
     };
 
     try {

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Home,
   Bot,
@@ -17,11 +17,10 @@ import {
   Stethoscope,
   UserCircle,
 } from "lucide-react";
-import Image from "next/image";
+import { useUser, useAuth } from "@/firebase";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { mockMedicalProfile } from "@/lib/data";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 
 const navItems = [
@@ -39,6 +38,14 @@ const navItems = [
 
 export default function AppSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const auth = useAuth();
+  const { user } = useUser();
+
+  const handleLogout = async () => {
+    await auth.signOut();
+    router.push('/login');
+  }
 
   return (
     <aside className="hidden md:flex w-64 flex-col border-r bg-card">
@@ -69,19 +76,17 @@ export default function AppSidebar() {
         <div className="flex items-center gap-4">
             <Avatar>
                 <AvatarFallback>
-                    <UserCircle className="h-10 w-10 text-muted-foreground" />
+                  {user?.displayName?.charAt(0) || <UserCircle className="h-10 w-10 text-muted-foreground" />}
                 </AvatarFallback>
             </Avatar>
           <div>
-            <p className="font-semibold">{mockMedicalProfile.name}</p>
+            <p className="font-semibold">{user?.displayName || 'Welcome'}</p>
             <p className="text-xs text-muted-foreground">Premium User</p>
           </div>
-          <Link href="/login" className="ml-auto">
-            <Button variant="ghost" size="icon">
-                <LogOut className="h-5 w-5" />
-                <span className="sr-only">Logout</span>
-            </Button>
-          </Link>
+          <Button variant="ghost" size="icon" className="ml-auto" onClick={handleLogout}>
+              <LogOut className="h-5 w-5" />
+              <span className="sr-only">Logout</span>
+          </Button>
         </div>
       </div>
     </aside>

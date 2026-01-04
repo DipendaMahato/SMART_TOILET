@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Menu,
   Search,
@@ -19,7 +19,7 @@ import {
   Stethoscope,
   UserCircle,
 } from "lucide-react";
-import Image from "next/image";
+import { useUser, useAuth } from "@/firebase";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -31,7 +31,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { mockMedicalProfile } from "@/lib/data";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 
 const navItems = [
@@ -64,7 +63,15 @@ function getPageTitle(pathname: string) {
 
 export default function AppHeader() {
   const pathname = usePathname();
+  const router = useRouter();
+  const auth = useAuth();
+  const { user } = useUser();
   const pageTitle = getPageTitle(pathname);
+
+  const handleLogout = async () => {
+    await auth.signOut();
+    router.push('/login');
+  }
 
   return (
     <header className="flex h-16 items-center gap-4 border-b bg-card px-4 md:px-6 sticky top-0 z-30">
@@ -119,20 +126,20 @@ export default function AppHeader() {
               <Button variant="ghost" size="icon" className="rounded-full">
                 <Avatar className="h-8 w-8">
                   <AvatarFallback>
-                    <UserCircle className="h-full w-full text-muted-foreground" />
+                    {user?.displayName?.charAt(0) || <UserCircle className="h-full w-full text-muted-foreground" />}
                   </AvatarFallback>
                 </Avatar>
                 <span className="sr-only">Toggle user menu</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuLabel>{user?.displayName || 'My Account'}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild><Link href="/dashboard/profile">Profile</Link></DropdownMenuItem>
               <DropdownMenuItem asChild><Link href="/dashboard/settings">Settings</Link></DropdownMenuItem>
               <DropdownMenuItem>Support</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild><Link href="/login">Logout</Link></DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

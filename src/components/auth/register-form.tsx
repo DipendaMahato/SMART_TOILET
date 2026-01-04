@@ -1,4 +1,3 @@
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,6 +6,7 @@ import * as z from "zod";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -22,9 +22,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { RegisterSchema } from "@/lib/schemas";
 import { useToast } from "@/hooks/use-toast";
 import { sendOtpAction } from "@/lib/actions";
+import { useAuth } from "@/firebase";
 
 export function RegisterForm() {
   const router = useRouter();
+  const auth = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -53,6 +55,7 @@ export function RegisterForm() {
       });
       // Store user details and OTP to verify on the next page
       sessionStorage.setItem('otp', result.otp || '');
+      // We pass all form values, including the password, to the verify-otp page
       sessionStorage.setItem('user_details', JSON.stringify(values));
       router.push("/verify-otp");
     } else {

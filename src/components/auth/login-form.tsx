@@ -1,4 +1,3 @@
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,6 +6,7 @@ import * as z from "zod";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -21,9 +21,13 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { LoginSchema } from "@/lib/schemas";
 import Link from "next/link";
+import { useAuth } from "@/firebase";
+import { useToast } from "@/hooks/use-toast";
 
 export function LoginForm() {
   const router = useRouter();
+  const auth = useAuth();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -37,11 +41,19 @@ export function LoginForm() {
 
   async function onSubmit(values: z.infer<typeof LoginSchema>) {
     setLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    console.log(values);
-    setLoading(false);
-    router.push("/dashboard");
+    try {
+      await signInWithEmailAndPassword(auth, values.email, values.password);
+      router.push("/dashboard");
+    } catch (error: any) {
+      console.error("Login failed:", error);
+      toast({
+        variant: "destructive",
+        title: "Login Failed",
+        description: error.message || "An unexpected error occurred.",
+      });
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

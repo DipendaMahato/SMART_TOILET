@@ -3,10 +3,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { CalendarIcon, UserCircle } from "lucide-react";
 import { format } from "date-fns";
-import Image from "next/image";
+import { useFirestore, useUser, useMemoFirebase } from "@/firebase";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -24,15 +25,10 @@ import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { ProfileSchema } from "@/lib/schemas";
-import { mockMedicalProfile } from "@/lib/data";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 type ProfileFormValues = z.infer<typeof ProfileSchema>;
-
-const defaultValues: Partial<ProfileFormValues> = {
-  ...mockMedicalProfile,
-  dob: new Date(mockMedicalProfile.dob),
-};
 
 export function ProfileForm() {
   const { toast } = useToast();
@@ -40,21 +36,77 @@ export function ProfileForm() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
+
+  const profileRef = useMemoFirebase(() => {
+    if (!firestore || !user?.uid) return null;
+    return doc(firestore, "users", user.uid, "profile", user.uid);
+  }, [firestore, user?.uid]);
+
+
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(ProfileSchema),
-    defaultValues,
+    defaultValues: {
+      name: "",
+      gender: undefined,
+      bloodGroup: undefined,
+      height: "",
+      weight: "",
+    },
     mode: "onChange",
   });
 
+  useEffect(() => {
+    if (user && !isUserLoading) {
+        form.setValue("name", user.displayName || "");
+        
+        const fetchProfile = async () => {
+            if (!profileRef) return;
+            const docSnap = await getDoc(profileRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                form.reset({
+                    name: user.displayName || data.name,
+                    dob: data.dob ? new Date(data.dob.seconds * 1000) : undefined,
+                    gender: data.gender,
+                    bloodGroup: data.bloodGroup,
+                    height: data.height,
+                    weight: data.weight,
+                });
+            }
+        };
+        fetchProfile();
+    }
+  }, [user, isUserLoading, form, profileRef]);
+
   async function onSubmit(data: ProfileFormValues) {
+    if (!profileRef) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "User not authenticated. Unable to save profile.",
+        });
+        return;
+    }
     setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Convert date to a format Firestore understands
+    const profileData = {
+        ...data,
+        id: user?.uid,
+        email: user?.email,
+        dob: data.dob ? new Date(data.dob) : null,
+    };
+
+    // Use the non-blocking update
+    setDocumentNonBlocking(profileRef, profileData, { merge: true });
+
     setLoading(false);
     toast({
       title: "Profile Updated",
       description: "Your medical profile has been saved successfully.",
     });
-    console.log(data);
   }
 
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,6 +115,10 @@ export function ProfileForm() {
       setAvatarPreview(URL.createObjectURL(file));
     }
   };
+
+  if (isUserLoading) {
+    return <div>Loading profile...</div>
+  }
 
   return (
     <Form {...form}>
@@ -76,9 +132,9 @@ export function ProfileForm() {
                     <FormControl>
                         <div className="flex items-center gap-4">
                             <Avatar className="h-20 w-20">
-                                <AvatarImage src={avatarPreview || undefined} alt="User avatar"/>
+                                <AvatarImage src={avatarPreview || user?.photoURL || undefined} alt="User avatar"/>
                                 <AvatarFallback>
-                                    <UserCircle className="h-full w-full text-muted-foreground" />
+                                    {user?.displayName?.charAt(0) || <UserCircle className="h-full w-full text-muted-foreground" />}
                                 </AvatarFallback>
                             </Avatar>
                             <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
@@ -128,7 +184,7 @@ export function ProfileForm() {
                           )}
                         >
                           {field.value ? (
-                            format(field.value, "PPP")
+                            format(new Date(field.value), "PPP")
                           ) : (
                             <span>Pick a date</span>
                           )}
@@ -139,7 +195,7 @@ export function ProfileForm() {
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar
                         mode="single"
-                        selected={field.value}
+                        selected={field.value ? new Date(field.value) : undefined}
                         onSelect={field.onChange}
                         disabled={(date) =>
                           date > new Date() || date < new Date("1900-01-01")
@@ -158,7 +214,7 @@ export function ProfileForm() {
             render={({ field }) => (
                 <FormItem>
                 <FormLabel>Gender</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                     <SelectTrigger>
                         <SelectValue placeholder="Select your gender" />
@@ -180,7 +236,7 @@ export function ProfileForm() {
             render={({ field }) => (
                 <FormItem>
                 <FormLabel>Blood Group</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                     <SelectTrigger>
                         <SelectValue placeholder="Select your blood group" />

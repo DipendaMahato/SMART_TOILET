@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -26,12 +26,22 @@ import { Wifi, Bluetooth, Palette, Languages, Bell, FileDown, ShieldCheck, Lock 
 
 export function SettingsTabs() {
   const [biometric, setBiometric] = useState(false);
-  const [appLock, setAppLock] = useState(true);
-  const [emergencyAlerts, setEmergencyAlerts] = useState(true);
-  const [insightAlerts, setInsightAlerts] = useState(true);
+  const [appLock, setAppLock] = useState(false);
+  const [emergencyAlerts, setEmergencyAlerts] = useState(false);
+  const [insightAlerts, setInsightAlerts] = useState(false);
   const [weeklySummary, setWeeklySummary] = useState(false);
-  const [wifiSync, setWifiSync] = useState(true);
+  const [wifiSync, setWifiSync] = useState(false);
   const [bluetoothSync, setBluetoothSync] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+    setAppLock(true);
+    setEmergencyAlerts(true);
+    setInsightAlerts(true);
+    setWifiSync(true);
+  }, []);
+
 
   return (
     <Tabs defaultValue="account" className="w-full">
@@ -64,14 +74,14 @@ export function SettingsTabs() {
                     <Label className="text-base flex items-center gap-2"><ShieldCheck/> Biometric Login</Label>
                     <p className="text-sm text-muted-foreground">Use your fingerprint or face to log in.</p>
                 </div>
-                <Switch id="biometric" checked={biometric} onCheckedChange={setBiometric} />
+                {isClient && <Switch id="biometric" checked={biometric} onCheckedChange={setBiometric} />}
             </div>
             <div className="flex items-center justify-between space-x-2 rounded-lg border p-4">
                 <div className="space-y-0.5">
                     <Label className="text-base flex items-center gap-2"><Lock/> App Lock</Label>
                     <p className="text-sm text-muted-foreground">Require authentication every time you open the app.</p>
                 </div>
-                <Switch id="app-lock" checked={appLock} onCheckedChange={setAppLock} />
+                {isClient && <Switch id="app-lock" checked={appLock} onCheckedChange={setAppLock} />}
             </div>
           </CardContent>
           <CardFooter>
@@ -141,28 +151,28 @@ export function SettingsTabs() {
             <CardDescription>
               Choose what alerts you want to receive.
             </CardDescription>
-          </CardHeader>
+          </Header>
           <CardContent className="space-y-4">
              <div className="flex items-center justify-between space-x-2 rounded-lg border p-4">
                 <div className="space-y-0.5">
                     <Label className="text-base flex items-center gap-2"><Bell/> Emergency Alerts</Label>
                     <p className="text-sm text-muted-foreground">Receive critical health alerts immediately.</p>
                 </div>
-                <Switch id="emergency-alerts" checked={emergencyAlerts} onCheckedChange={setEmergencyAlerts}/>
+                {isClient && <Switch id="emergency-alerts" checked={emergencyAlerts} onCheckedChange={setEmergencyAlerts}/>}
             </div>
             <div className="flex items-center justify-between space-x-2 rounded-lg border p-4">
                 <div className="space-y-0.5">
                     <Label className="text-base">New Insight Alerts</Label>
                     <p className="text-sm text-muted-foreground">Get notified when new AI insights are ready.</p>
                 </div>
-                <Switch id="insight-alerts" checked={insightAlerts} onCheckedChange={setInsightAlerts} />
+                {isClient && <Switch id="insight-alerts" checked={insightAlerts} onCheckedChange={setInsightAlerts} />}
             </div>
              <div className="flex items-center justify-between space-x-2 rounded-lg border p-4">
                 <div className="space-y-0.5">
                     <Label className="text-base">Weekly Summary</Label>
                     <p className="text-sm text-muted-foreground">Receive a summary of your health trends every week.</p>
                 </div>
-                <Switch id="weekly-summary" checked={weeklySummary} onCheckedChange={setWeeklySummary} />
+                {isClient && <Switch id="weekly-summary" checked={weeklySummary} onCheckedChange={setWeeklySummary} />}
             </div>
           </CardContent>
           <CardFooter>
@@ -185,14 +195,14 @@ export function SettingsTabs() {
                     <Label className="text-base flex items-center gap-2"><Wifi/> Wi-Fi Sync</Label>
                     <p className="text-sm text-muted-foreground">Sync data automatically over Wi-Fi.</p>
                 </div>
-                <Switch id="wifi-sync" checked={wifiSync} onCheckedChange={setWifiSync}/>
+                {isClient && <Switch id="wifi-sync" checked={wifiSync} onCheckedChange={setWifiSync}/>}
             </div>
              <div className="flex items-center justify-between space-x-2 rounded-lg border p-4">
                 <div className="space-y-0.5">
                     <Label className="text-base flex items-center gap-2"><Bluetooth/> Bluetooth Sync</Label>
                     <p className="text-sm text-muted-foreground">Allow data sync via Bluetooth when Wi-Fi is unavailable.</p>
                 </div>
-                <Switch id="bluetooth-sync" checked={bluetoothSync} onCheckedChange={setBluetoothSync} />
+                {isClient && <Switch id="bluetooth-sync" checked={bluetoothSync} onCheckedChange={setBluetoothSync} />}
             </div>
             <div className="space-y-2">
                 <Label>AI Sensitivity</Label>

@@ -37,14 +37,14 @@ export function AiAssistantChat() {
     if (!input.trim() || loading) return;
 
     const userMessage: Message = { role: 'user', content: input };
-    setMessages(prev => [...prev, userMessage]);
+    const newMessages: Message[] = [...messages, userMessage];
+    setMessages(newMessages);
     setInput('');
     setLoading(true);
     
-    const chatHistory = [...messages, userMessage];
-
     try {
-      const result = await chatWithAi(chatHistory.slice(1), input); // Exclude initial greeting
+      // Pass the full history to the action
+      const result = await chatWithAi(newMessages, input);
       if (result.error) {
         throw new Error(result.error);
       }

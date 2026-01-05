@@ -10,6 +10,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
+import { part } from 'genkit';
 
 const ChatMessageSchema = z.object({
   role: z.enum(['user', 'model']),
@@ -52,9 +53,16 @@ const chatFlow = ai.defineFlow(
 
     const model = ai.getModel('googleai/gemini-2.5-flash');
 
+    const conversationHistory = [
+        // System instructions are now part of the history
+        part(systemPrompt, 'user'),
+        part('Understood. I am Aqua, your AI health assistant. How can I help you?', 'model'),
+        // Then, the actual conversation
+        ...history.map(h => part(h.content, h.role)),
+    ];
+
     const response = await model.generate({
-      system: systemPrompt,
-      history: history.map(h => ({ role: h.role, parts: [{ text: h.content }] })),
+      history: conversationHistory,
       prompt: message,
     });
 

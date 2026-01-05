@@ -16,13 +16,13 @@ import {
   Heart,
   Stethoscope,
   UserCircle,
+  Toilet,
 } from "lucide-react";
 import { useUser, useAuth } from "@/firebase";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "../ui/avatar";
-import Image from "next/image";
 
 const navItems = [
   { href: "/dashboard", icon: Home, label: "Dashboard" },
@@ -53,7 +53,7 @@ export default function AppSidebar() {
     <aside className="hidden md:flex w-64 flex-col border-r bg-card">
       <div className="flex h-16 items-center justify-center border-b px-6">
         <Link href="/dashboard" className="flex items-center gap-2 font-headline text-lg font-semibold text-primary">
-          <Image src="/logo.png" alt="Smart Toilet Logo" width={40} height={40} />
+          <Toilet className="h-8 w-8" />
           <span className="text-sm">Smart Toilet</span>
         </Link>
       </div>

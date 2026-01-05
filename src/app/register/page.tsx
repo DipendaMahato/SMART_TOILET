@@ -1,14 +1,16 @@
 
 import { RegisterForm } from "@/components/auth/register-form";
-import Image from "next/image";
 import Link from "next/link";
+import { Toilet } from 'lucide-react';
 
 export default function RegisterPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-4">
       <div className="w-full max-w-md">
          <div className="flex justify-center mb-6">
-            <Image src="/logo.png" alt="Smart Toilet Logo" width={100} height={100} />
+            <div className="bg-primary/20 text-primary p-4 rounded-full">
+                <Toilet className="w-12 h-12" />
+            </div>
         </div>
         <h1 className="font-headline text-3xl font-bold text-center mb-2 text-primary">
           Create an Account

@@ -8,6 +8,7 @@ import { CalendarIcon, UserCircle } from "lucide-react";
 import { format } from "date-fns";
 import { useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { doc, setDoc, getDoc } from "firebase/firestore";
+import { Timestamp } from "firebase/firestore";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -51,24 +52,23 @@ export function ProfileForm() {
       name: "",
       gender: undefined,
       bloodGroup: undefined,
-      height: "",
-      weight: "",
+      height: 0,
+      weight: 0,
     },
     mode: "onChange",
   });
 
   useEffect(() => {
-    if (user && !isUserLoading) {
+    if (user && !isUserLoading && profileRef) {
         form.setValue("name", user.displayName || "");
         
         const fetchProfile = async () => {
-            if (!profileRef) return;
             const docSnap = await getDoc(profileRef);
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 form.reset({
-                    name: user.displayName || data.name,
-                    dob: data.dob ? new Date(data.dob.seconds * 1000) : undefined,
+                    name: data.name || user.displayName,
+                    dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined,
                     gender: data.gender,
                     bloodGroup: data.bloodGroup,
                     height: data.height,
@@ -91,16 +91,13 @@ export function ProfileForm() {
     }
     setLoading(true);
     
-    // Convert date to a format Firestore understands
     const profileData = {
-        ...data,
-        id: user.uid,
-        email: user.email,
-        phoneNumber: user.phoneNumber, // Make sure to get this from user object if available
-        dob: data.dob ? new Date(data.dob) : null,
+      ...data,
+      id: user.uid,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
     };
 
-    // Use the non-blocking update
     setDocumentNonBlocking(profileRef, profileData, { merge: true });
 
     setLoading(false);
@@ -170,7 +167,7 @@ export function ProfileForm() {
             />
             <FormField
               control={form.control}
-              name="dob"
+              name="dateOfBirth"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
                   <FormLabel>Date of birth</FormLabel>
@@ -185,7 +182,7 @@ export function ProfileForm() {
                           )}
                         >
                           {field.value ? (
-                            format(new Date(field.value), "PPP")
+                            format(field.value, "PPP")
                           ) : (
                             <span>Pick a date</span>
                           )}
@@ -196,7 +193,7 @@ export function ProfileForm() {
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar
                         mode="single"
-                        selected={field.value ? new Date(field.value) : undefined}
+                        selected={field.value}
                         onSelect={field.onChange}
                         disabled={(date) =>
                           date > new Date() || date < new Date("1900-01-01")
@@ -258,9 +255,9 @@ export function ProfileForm() {
             name="height"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Height</FormLabel>
+                <FormLabel>Height (cm)</FormLabel>
                 <FormControl>
-                    <Input placeholder="e.g., 175 cm" {...field} />
+                    <Input type="number" placeholder="e.g., 175" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
                 </FormControl>
                 <FormMessage />
                 </FormItem>
@@ -271,9 +268,9 @@ export function ProfileForm() {
             name="weight"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Weight</FormLabel>
+                <FormLabel>Weight (kg)</FormLabel>
                 <FormControl>
-                    <Input placeholder="e.g., 70 kg" {...field} />
+                    <Input type="number" placeholder="e.g., 70" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
                 </FormControl>
                 <FormMessage />
                 </FormItem>

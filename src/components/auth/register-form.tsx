@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { doc } from "firebase/firestore";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -21,8 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { RegisterSchema } from "@/lib/schemas";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth, useFirestore, useMemoFirebase } from "@/firebase";
-import { doc } from "firebase/firestore";
+import { useAuth, useFirestore } from "@/firebase";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 export function RegisterForm() {
@@ -48,6 +48,9 @@ export function RegisterForm() {
   async function onSubmit(values: z.infer<typeof RegisterSchema>) {
     setLoading(true);
     try {
+      if (!auth || !firestore) {
+        throw new Error("Firebase not initialized");
+      }
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         values.email,
@@ -72,7 +75,7 @@ export function RegisterForm() {
         description: "Your account has been created successfully.",
       });
       
-      router.push("/dashboard/profile");
+      router.push("/dashboard");
     } catch (error: any) {
       toast({
         variant: "destructive",

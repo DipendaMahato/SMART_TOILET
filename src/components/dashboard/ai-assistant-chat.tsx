@@ -37,14 +37,14 @@ export function AiAssistantChat() {
     if (!input.trim() || loading) return;
 
     const userMessage: Message = { role: 'user', content: input };
-    const newMessages: Message[] = [...messages, userMessage];
-    setMessages(newMessages);
+    setMessages(prev => [...prev, userMessage]);
+    const currentInput = input;
     setInput('');
     setLoading(true);
     
     try {
-      // Pass the full history to the action
-      const result = await chatWithAi(newMessages, input);
+      // Pass the history *before* the new message, and the new message itself.
+      const result = await chatWithAi(messages, currentInput);
       if (result.error) {
         throw new Error(result.error);
       }

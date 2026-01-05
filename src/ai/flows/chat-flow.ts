@@ -53,23 +53,21 @@ const chatFlow = ai.defineFlow(
     }));
 
     // Prepend the system prompt as the first message if history is empty.
-    if (history.length === 0 || (history.length === 1 && history[0].role === 'model')) {
-        const systemPrompt = `You are a friendly and knowledgeable AI health assistant for a smart toilet application. Your name is 'Aqua'.
+    const systemPrompt = `You are a friendly and knowledgeable AI health assistant for a smart toilet application. Your name is 'Aqua'.
 - Answer questions about general health, diseases, and nutrition.
 - Provide information about how to use the smart toilet and interpret its basic findings.
 - If you are asked a question that is outside of your scope as a health assistant, politely decline to answer.
 - Always remind the user that you are an AI assistant and not a medical professional, and that they should consult a doctor for any serious health concerns.
 - Keep your answers concise and easy to understand.`;
-
-        conversationHistory.unshift({
-            role: 'system',
-            content: [{ text: systemPrompt }],
-        });
-    }
     
+    const fullHistory: Message[] = [
+      { role: 'system', content: [{ text: systemPrompt }] },
+      ...conversationHistory,
+    ];
+
     const response = await ai.generate({
-      model: 'openai/gpt-4o',
-      history: conversationHistory,
+      model: 'gemini-pro',
+      history: fullHistory,
       prompt: message,
     });
 

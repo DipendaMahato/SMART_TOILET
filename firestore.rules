@@ -67,23 +67,19 @@ service cloud.firestore {
     // ----------------------------------------------------------------------
 
     match /users/{userId} {
-
       /**
        * @description Secures a user's profile document. Only the owner can
        *   create, view, and manage their own profile.
-       * @path /users/{userId}/profile/{profileId}
+       * @path /users/{userId}
        * @allow User 'abc' (create) their own profile with `{ "id": "abc", ... }`.
        * @deny User 'xyz' (get) the profile of user 'abc'.
        * @principle Restricts access to a user's own data tree and validates
        *   relational integrity on creation and updates.
        */
-      match /profile/{profileId} {
-        allow get: if isOwner(userId);
-        allow list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.id == userId;
-        allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-        allow delete: if isExistingOwner(userId);
-      }
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
 
       /**
        * @description Secures a user's private health insights. Only the owner can

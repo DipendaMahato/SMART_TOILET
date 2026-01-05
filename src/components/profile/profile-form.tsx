@@ -41,7 +41,7 @@ export function ProfileForm() {
 
   const profileRef = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
-    return doc(firestore, "users", user.uid, "profile", user.uid);
+    return doc(firestore, "users", user.uid);
   }, [firestore, user?.uid]);
 
 
@@ -81,7 +81,7 @@ export function ProfileForm() {
   }, [user, isUserLoading, form, profileRef]);
 
   async function onSubmit(data: ProfileFormValues) {
-    if (!profileRef) {
+    if (!profileRef || !user) {
         toast({
             variant: "destructive",
             title: "Error",
@@ -94,8 +94,9 @@ export function ProfileForm() {
     // Convert date to a format Firestore understands
     const profileData = {
         ...data,
-        id: user?.uid,
-        email: user?.email,
+        id: user.uid,
+        email: user.email,
+        phoneNumber: user.phoneNumber, // Make sure to get this from user object if available
         dob: data.dob ? new Date(data.dob) : null,
     };
 

@@ -163,84 +163,29 @@
     ]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/users/{userId}/profile",
-        "definition": {
-          "entityName": "UserProfile",
-          "schema": {
-            "$ref": "#/backend/entities/UserProfile"
-          },
-          "description": "Stores user profile information. The path ensures that only the authenticated user can access their profile data.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            }
-          ]
-        }
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
       },
-      {
-        "path": "/users/{userId}/healthInsights/{healthInsightId}",
-        "definition": {
-          "entityName": "HealthInsight",
-          "schema": {
-            "$ref": "#/backend/entities/HealthInsight"
-          },
-          "description": "Stores health insights generated for a specific user. Includes denormalized 'userId' field for authorization independence.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            },
-            {
-              "name": "healthInsightId",
-              "description": "The unique identifier for the health insight."
-            }
-          ]
-        }
+      "description": "Stores user profile information. The path ensures that only the authenticated user can access their profile data."
+    },
+    "/users/{userId}/healthInsights/{healthInsightId}": {
+      "schema": {
+        "$ref": "#/entities/HealthInsight"
       },
-      {
-        "path": "/users/{userId}/sensorData/{sensorDataId}",
-        "definition": {
-          "entityName": "SensorData",
-          "schema": {
-            "$ref": "#/backend/entities/SensorData"
-          },
-          "description": "Stores sensor data collected from the smart toilet for a specific user. Includes denormalized 'userId' field for authorization independence.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            },
-            {
-              "name": "sensorDataId",
-              "description": "The unique identifier for the sensor data record."
-            }
-          ]
-        }
+      "description": "Stores health insights generated for a specific user. Includes denormalized 'userId' field for authorization independence."
+    },
+    "/users/{userId}/sensorData/{sensorDataId}": {
+      "schema": {
+        "$ref": "#/entities/SensorData"
       },
-      {
-        "path": "/users/{userId}/emergencyAlerts/{emergencyAlertId}",
-        "definition": {
-          "entityName": "EmergencyAlert",
-          "schema": {
-            "$ref": "#/backend/entities/EmergencyAlert"
-          },
-          "description": "Stores emergency alerts triggered for a specific user. Includes denormalized 'userId' field for authorization independence.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            },
-            {
-              "name": "emergencyAlertId",
-              "description": "The unique identifier for the emergency alert."
-            }
-          ]
-        }
-      }
-    ],
-    "reasoning": "The Firestore data structure is designed to ensure security, scalability, and ease of debugging, following the principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs. User profiles and related data (health insights, sensor data, emergency alerts) are stored in a hierarchical structure under the `/users/{userId}` path to enforce ownership and simplify security rules.\n\n**Authorization Independence (Denormalization):**\n*   `HealthInsight`, `SensorData`, and `EmergencyAlert` collections are subcollections of `/users/{userId}`. This allows direct ownership-based security rules without needing to fetch parent user data. The `userId` field in these subcollections ensures that access control can be enforced based on `request.auth.uid == resource.data.userId`.\n\n**Structural Segregation:**\n*   Each collection serves a specific purpose, ensuring homogeneous security posture. User profiles are stored separately from health insights, sensor data, and emergency alerts.\n\n**Access Modeling:**\n*   Private Data: User profiles are stored using path-based ownership (`/users/{userId}/profile`).\n*   User-Owned Data: Health insights, sensor data, and emergency alerts are structured as subcollections of users (`/users/{userId}/healthInsights`, `/users/{userId}/sensorData`, `/users/{userId}/emergencyAlerts`).\n\n**QAPs (Rules are not Filters):**\n*   The structure enables secure `list` operations for user-specific data because each subcollection is directly tied to a user's ID. Security rules can efficiently filter based on `request.auth.uid` without needing to iterate through documents or use complex queries.\n\n**Invariants:**\n*   The `userId` field in the subcollections maintains the integrity of ownership. Timestamps are included for all time-sensitive data (health insights, sensor data, emergency alerts)."
+      "description": "Stores sensor data collected from the smart toilet for a specific user. Includes denormalized 'userId' field for authorization independence."
+    },
+    "/users/{userId}/emergencyAlerts/{emergencyAlertId}": {
+      "schema": {
+        "$ref": "#/entities/EmergencyAlert"
+      },
+      "description": "Stores emergency alerts triggered for a specific user. Includes denormalized 'userId' field for authorization independence."
+    }
   }
 }

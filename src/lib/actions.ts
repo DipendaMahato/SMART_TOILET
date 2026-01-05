@@ -50,7 +50,6 @@ export async function sendOtpAction(email: string) {
   try {
     const { otp } = await generateOtp();
 
-    // Use service: 'gmail' for robust, library-managed connection
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {

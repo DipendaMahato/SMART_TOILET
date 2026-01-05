@@ -10,7 +10,8 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { part } from 'genkit';
+import { Message,Role } from 'genkit/model';
+
 
 const ChatMessageSchema = z.object({
   role: z.enum(['user', 'model']),
@@ -51,15 +52,21 @@ const chatFlow = ai.defineFlow(
 - Always remind the user that you are an AI assistant and not a medical professional, and that they should consult a doctor for any serious health concerns.
 - Keep your answers concise and easy to understand.`;
 
-    const model = ai.getModel('googleai/gemini-2.5-flash');
+    const model = ai.getModel('openai/gpt-4o');
+    
+    // Convert the Zod-validated history to the Genkit Message type
+    const conversationHistory: Message[] = history.map(h => ({
+      role: h.role as Role,
+      content: [{ text: h.content }],
+    }));
 
-    const conversationHistory = [
-        // System instructions are now part of the history
-        part(systemPrompt, 'user'),
-        part('Understood. I am Aqua, your AI health assistant. How can I help you?', 'model'),
-        // Then, the actual conversation
-        ...history.map(h => part(h.content, h.role)),
-    ];
+    // Prepend the system prompt as the first message if history is empty.
+    if (history.length === 0) {
+      conversationHistory.unshift({
+        role: 'system',
+        content: [{ text: systemPrompt }],
+      });
+    }
 
     const response = await model.generate({
       history: conversationHistory,

@@ -8,15 +8,15 @@ body {
 
 @layer base {
   :root {
-    --background: 210 40% 98%; /* #F7FAFC */
+    --background: 210 40% 98%;
     --foreground: 224 71.4% 4.1%;
-    --card: 0 0% 100%; /* #FFFFFF */
+    --card: 0 0% 100%;
     --card-foreground: 224 71.4% 4.1%;
     --popover: 0 0% 100%;
     --popover-foreground: 224 71.4% 4.1%;
-    --primary: 185 86% 47%; /* #0FA4AF */
+    --primary: 185 86% 47%;
     --primary-foreground: 0 0% 98%;
-    --secondary: 211 77% 48%; /* #1E88E5 */
+    --secondary: 211 77% 48%;
     --secondary-foreground: 0 0% 98%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
@@ -26,14 +26,14 @@ body {
     --destructive-foreground: 0 0% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 185 86% 47%; /* Teal Blue for ring */
+    --ring: 185 86% 47%;
     --radius: 0.5rem;
 
     /* Custom Status Colors */
-    --status-green: 142 71% 45%; /* #22C55E */
-    --status-yellow: 48 96% 59%; /* #FACC15 */
-    --status-orange: 25 95% 61%; /* #FB923C */
-    --status-red: 0 84% 60%; /* #EF4444 */
+    --status-green: 142 71% 45%;
+    --status-yellow: 48 96% 59%;
+    --status-orange: 25 95% 61%;
+    --status-red: 0 84% 60%;
     
     --chart-1: 185 86% 47%;
     --chart-2: 211 77% 48%;

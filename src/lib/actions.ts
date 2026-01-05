@@ -9,6 +9,8 @@ import { z } from 'zod';
 import { generateHealthInsights } from '@/ai/flows/generate-health-insights';
 import { refineInsightsWithReasoning } from '@/ai/flows/refine-insights-with-reasoning';
 import { sendOtp as sendOtpFlow, SendOtpInput } from '@/ai/flows/send-otp-flow';
+import { chatWithAi as chatWithAiFlow } from '@/ai/flows/chat-flow';
+
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -52,5 +54,15 @@ export async function sendOtp(input: SendOtpInput) {
     } catch (error) {
         console.error('Error sending OTP:', error);
         return { error: 'Failed to send OTP. Please check the email address and try again.' };
+    }
+}
+
+export async function chatWithAi(history: { role: 'user' | 'model'; content: string }[], message: string) {
+    try {
+        const result = await chatWithAiFlow(history, message);
+        return { response: result.response };
+    } catch (error) {
+        console.error('Error in AI chat:', error);
+        return { error: 'Sorry, I encountered an error. Please try again.' };
     }
 }

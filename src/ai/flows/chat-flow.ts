@@ -45,7 +45,6 @@ const chatFlow = ai.defineFlow(
     outputSchema: ChatOutputSchema,
   },
   async ({ history, message }) => {
-    const model = ai.getModel('googleai/gemini-1.5-flash-latest');
     
     // Convert the Zod-validated history to the Genkit Message type
     const conversationHistory: Message[] = history.map(h => ({
@@ -54,7 +53,7 @@ const chatFlow = ai.defineFlow(
     }));
 
     // Prepend the system prompt as the first message if history is empty.
-    if (history.length === 0) {
+    if (history.length === 0 || (history.length === 1 && history[0].role === 'model')) {
         const systemPrompt = `You are a friendly and knowledgeable AI health assistant for a smart toilet application. Your name is 'Aqua'.
 - Answer questions about general health, diseases, and nutrition.
 - Provide information about how to use the smart toilet and interpret its basic findings.
@@ -68,7 +67,8 @@ const chatFlow = ai.defineFlow(
         });
     }
     
-    const response = await model.generate({
+    const response = await ai.generate({
+      model: 'openai/gpt-4o',
       history: conversationHistory,
       prompt: message,
     });

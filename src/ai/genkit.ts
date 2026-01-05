@@ -7,7 +7,7 @@ config();
 export const ai = genkit({
   plugins: [
     googleAI({
-        apiKey: process.env.GEMINI_API_KEY
+        apiKey: process.env.OPENROUTER_API_KEY || process.env.GEMINI_API_KEY
     }),
   ],
   logLevel: 'debug',

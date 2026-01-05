@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 
 export const LoginSchema = z.object({
@@ -19,9 +20,11 @@ export const RegisterSchema = z.object({
 export const ProfileSchema = z.object({
   avatar: z.any().optional(),
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  dateOfBirth: z.date({ required_error: "Date of birth is required."}).optional(),
+  dateOfBirth: z.date({ required_error: "Date of birth is required."}).optional().nullable(),
   gender: z.enum(["male", "female", "other"], { required_error: "Please select a gender."}),
   bloodGroup: z.enum(["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"], { required_error: "Please select a blood group."}),
   height: z.coerce.number().positive({ message: "Height must be a positive number." }),
   weight: z.coerce.number().positive({ message: "Weight must be a positive number." }),
 });
+
+    

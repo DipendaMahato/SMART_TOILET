@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,7 +28,6 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { ProfileSchema } from "@/lib/schemas";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 type ProfileFormValues = z.infer<typeof ProfileSchema>;
 
@@ -102,20 +102,32 @@ export function ProfileForm() {
     }
     setLoading(true);
     
-    const profileData = {
-      ...data,
-      id: user.uid,
-      email: user.email,
-      dateOfBirth: data.dateOfBirth ? data.dateOfBirth.toISOString() : null,
-    };
+    try {
+      const { avatar, ...restData } = data;
+      
+      const profileData = {
+        ...restData,
+        id: user.uid,
+        email: user.email,
+        dateOfBirth: data.dateOfBirth ? Timestamp.fromDate(data.dateOfBirth) : null,
+      };
 
-    setDocumentNonBlocking(profileRef, profileData, { merge: true });
+      await setDoc(profileRef, profileData, { merge: true });
 
-    setLoading(false);
-    toast({
-      title: "Profile Updated",
-      description: "Your medical profile has been saved successfully.",
-    });
+      toast({
+        title: "Profile Updated",
+        description: "Your medical profile has been saved successfully.",
+      });
+
+    } catch (error: any) {
+       toast({
+        variant: "destructive",
+        title: "Profile Update Failed",
+        description: error.message || "An unexpected error occurred.",
+      });
+    } finally {
+        setLoading(false);
+    }
   }
 
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -268,7 +280,7 @@ export function ProfileForm() {
                 <FormItem>
                 <FormLabel>Height (cm)</FormLabel>
                 <FormControl>
-                    <Input type="number" placeholder="e.g., 175" {...field} />
+                    <Input type="number" placeholder="e.g., 175" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} />
                 </FormControl>
                 <FormMessage />
                 </FormItem>
@@ -281,7 +293,7 @@ export function ProfileForm() {
                 <FormItem>
                 <FormLabel>Weight (kg)</FormLabel>
                 <FormControl>
-                    <Input type="number" placeholder="e.g., 70" {...field} />
+                    <Input type="number" placeholder="e.g., 70" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} />
                 </FormControl>
                 <FormMessage />
                 </FormItem>
@@ -293,3 +305,5 @@ export function ProfileForm() {
     </Form>
   );
 }
+
+    

@@ -66,7 +66,7 @@ export default function AppSidebar() {
               href={item.href}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground transition-all hover:text-primary hover:bg-primary/10",
-                pathname === item.href && "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
+                pathname === item.href && "bg-primary/10 text-primary"
               )}
             >
               <item.icon className="h-5 w-5" />

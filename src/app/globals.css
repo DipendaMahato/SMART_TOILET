@@ -8,7 +8,7 @@ body {
 
 @layer base {
   :root {
-    --background: 220 14% 96%;
+    --background: 210 20% 98%;
     --foreground: 224 71.4% 4.1%;
     --card: 0 0% 100%;
     --card-foreground: 224 71.4% 4.1%;
@@ -27,7 +27,7 @@ body {
     --border: 220 13% 89%;
     --input: 220 13% 89%;
     --ring: 175 80% 40%; /* Teal from logo */
-    --radius: 0.5rem;
+    --radius: 1.25rem;
 
     /* Custom Status Colors */
     --status-green: 142 71% 45%;

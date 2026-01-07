@@ -60,7 +60,7 @@ const subDashboards = [
     href: '/dashboard/health-status',
     gradient: 'from-rose-50 to-pink-100',
     iconColor: 'text-rose-600',
-iconBg: 'bg-rose-100',
+    iconBg: 'bg-rose-100',
   },
   {
     title: 'Clinical Care & Doctor Support',
@@ -87,7 +87,7 @@ export function DashboardContent() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {subDashboards.map((dashboard, index) => (
           <Link href={dashboard.href} key={dashboard.title} className="group" style={{ animationDelay: `${300 + index * 50}ms`, animationFillMode: 'backwards' }}>
-            <Card className="h-full overflow-hidden transition-all duration-300 ease-in-out hover:shadow-soft hover:border-primary/20 hover:-translate-y-1 animate-slide-up bg-glass-white backdrop-blur-lg border border-white/20">
+            <Card className="h-full overflow-hidden transition-all duration-300 ease-in-out hover:shadow-soft hover:border-primary/20 hover:-translate-y-1 animate-slide-up bg-glass-white/80 backdrop-blur-lg border border-white/20">
               <CardContent className="p-6 flex flex-col justify-between h-full">
                 <div>
                   <div className={`p-3 rounded-lg w-fit ${dashboard.iconBg}`}>

@@ -1,25 +1,13 @@
+
 'use client';
 
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Rectangle, ReferenceLine } from 'recharts';
-
-const data = [
-  { name: 'JAN', value: 12 },
-  { name: 'FEB', value: 15 },
-  { name: 'MAR', value: 20 },
-  { name: 'APR', value: 18 },
-  { name: 'MAY', value: 25 },
-  { name: 'JUN', value: 22 },
-  { name: 'JUL', value: 30 },
-  { name: 'AUG', value: 28 },
-  { name: 'SEP', value: 35 },
-  { name: 'OCT', value: 32 },
-];
 
 const CustomTooltip = (props: any) => {
     if (props.active && props.payload && props.payload.length) {
         return (
             <div className="bg-card/80 backdrop-blur-sm border border-border rounded-lg p-2 text-sm shadow-lg">
-                <p className="font-semibold text-foreground">{`Month: ${props.label}`}</p>
+                <p className="font-semibold text-foreground">{`${props.label}`}</p>
                 <p style={{ color: '#c084fc' }}>{`Urine pH: ${props.payload[0].value}`}</p>
             </div>
         );
@@ -27,7 +15,7 @@ const CustomTooltip = (props: any) => {
     return null;
 };
 
-export function UrinePhTrendChart() {
+export function UrinePhTrendChart({ data }: { data: any[] }) {
   return (
     <div className="h-64 w-full">
       <ResponsiveContainer width="100%" height="100%">
@@ -43,9 +31,9 @@ export function UrinePhTrendChart() {
             </linearGradient>
           </defs>
           <Area type="monotone" dataKey="value" stroke="#c084fc" strokeWidth={3} fill="url(#phGradient)" />
-          <ReferenceLine y={24} stroke="hsl(var(--status-green))" strokeDasharray="4 4" />
-          <ReferenceLine y={36} stroke="hsl(var(--status-green))" strokeDasharray="4 4" />
-          <ReferenceArea y1={24} y2={36} fill="hsl(var(--status-green) / 0.1)" />
+          <ReferenceLine y={6.0} stroke="hsl(var(--status-green))" strokeDasharray="4 4" />
+          <ReferenceLine y={7.5} stroke="hsl(var(--status-green))" strokeDasharray="4 4" />
+          <ReferenceArea y1={6.0} y2={7.5} fill="hsl(var(--status-green) / 0.1)" />
         </AreaChart>
       </ResponsiveContainer>
        <div className="flex justify-center items-center gap-4 text-xs text-muted-foreground mt-2">
@@ -65,5 +53,7 @@ export function UrinePhTrendChart() {
 const ReferenceArea = (props: any) => {
     const { y1, y2, ...rest } = props;
     if (y1 === undefined || y2 === undefined) return null;
-    return <Rectangle {...rest} y={y2} height={y1-y2} />;
+    const yMax = Math.max(y1, y2);
+    const yMin = Math.min(y1, y2);
+    return <Rectangle {...rest} y={yMin} height={yMax - yMin} />;
 };

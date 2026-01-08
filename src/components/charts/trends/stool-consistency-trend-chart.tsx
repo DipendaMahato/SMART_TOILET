@@ -1,22 +1,12 @@
+
 'use client';
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-
-const data = [
-  { name: '02', bristol: 18, highRisk: 30 },
-  { name: '2/19', bristol: 25, highRisk: 30 },
-  { name: '3/03', bristol: 15, highRisk: 30 },
-  { name: '4/08', bristol: 28, highRisk: 30 },
-  { name: '5/00', bristol: 12, highRisk: 30 },
-  { name: '6/05', bristol: 22, highRisk: 30 },
-  { name: '7/18', bristol: 18, highRisk: 30 },
-  { name: '8/09', bristol: 35, highRisk: 30 },
-];
 
 const CustomTooltip = (props: any) => {
     if (props.active && props.payload && props.payload.length) {
         return (
             <div className="bg-card/80 backdrop-blur-sm border border-border rounded-lg p-2 text-sm shadow-lg">
-                <p className="font-semibold text-foreground">{`Date: ${props.label}`}</p>
+                <p className="font-semibold text-foreground">{`${props.label}`}</p>
                 <p style={{ color: '#67e8f9' }}>{`Bristol Type: ${props.payload[0].value}`}</p>
             </div>
         );
@@ -24,7 +14,7 @@ const CustomTooltip = (props: any) => {
     return null;
 };
 
-export function StoolConsistencyTrendChart() {
+export function StoolConsistencyTrendChart({ data }: { data: any[] }) {
   return (
     <div className="h-64 w-full">
       <ResponsiveContainer width="100%" height="100%">

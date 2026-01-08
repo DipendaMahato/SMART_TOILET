@@ -1,25 +1,15 @@
+
 'use client';
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Rectangle } from 'recharts';
 import { ChartTooltipContent } from '@/components/ui/chart';
 
-const data = [
-  { name: '01', glucose: 25, glucoseDetections: 1 },
-  { name: '02', glucose: 40, glucoseDetections: 1 },
-  { name: '04', glucose: 30, glucoseDetections: 1 },
-  { name: '05', glucose: 45, glucoseDetections: 1 },
-  { name: '06', glucose: 35, glucoseDetections: 1 },
-  { name: '07', glucose: 50, glucoseDetections: 1 },
-  { name: '08', glucose: 40, glucoseDetections: 1 },
-  { name: '10', glucose: 60, glucoseDetections: 1 },
-];
-
 const CustomTooltip = (props: any) => {
     if (props.active && props.payload && props.payload.length) {
-        const { payload } = props;
+        const { payload, label } = props;
         return (
             <div className="bg-card/80 backdrop-blur-sm border border-border rounded-lg p-2 text-sm shadow-lg">
-                <p className="font-semibold text-foreground">{`Day: ${props.label}`}</p>
+                <p className="font-semibold text-foreground">{`${label}`}</p>
                 <p style={{ color: payload[0].color }}>{`Hydration Level: ${payload[0].value}%`}</p>
             </div>
         );
@@ -27,7 +17,7 @@ const CustomTooltip = (props: any) => {
     return null;
 };
 
-export function HydrationTrendChart() {
+export function HydrationTrendChart({ data }: { data: any[] }) {
   return (
     <div className="h-64 w-full">
       <ResponsiveContainer width="100%" height="100%">

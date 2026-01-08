@@ -1,24 +1,12 @@
+
 'use client';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-
-const data = [
-  { name: 'JAN', value: 46 },
-  { name: 'FEB', value: 270 },
-  { name: 'MAR', value: 229 },
-  { name: 'APR', value: 233 },
-  { name: 'MAY', value: 237 },
-  { name: 'JUN', value: 321 },
-  { name: 'JUL', value: 7.16 },
-  { name: 'AUG', value: 851 },
-  { name: 'SEP', value: 450 },
-  { name: 'OCT', value: 600 },
-];
 
 const CustomTooltip = (props: any) => {
     if (props.active && props.payload && props.payload.length) {
         return (
             <div className="bg-card/80 backdrop-blur-sm border border-border rounded-lg p-2 text-sm shadow-lg">
-                <p className="font-semibold text-foreground">{`Month: ${props.label}`}</p>
+                <p className="font-semibold text-foreground">{`${props.label}`}</p>
                 <p style={{ color: '#2dd4bf' }}>{`Occurrences: ${props.payload[0].value}`}</p>
             </div>
         );
@@ -26,7 +14,7 @@ const CustomTooltip = (props: any) => {
     return null;
 };
 
-export function UrineBiomarkerTrendChart() {
+export function UrineBiomarkerTrendChart({ data }: { data: any[] }) {
   return (
     <div className="h-64 w-full">
       <ResponsiveContainer width="100%" height="100%">

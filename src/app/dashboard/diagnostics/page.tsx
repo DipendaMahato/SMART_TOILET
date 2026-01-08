@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -90,7 +91,7 @@ export default function DiagnosticsPage() {
                 <div className="bg-white/5 border border-teal-500/30 rounded-2xl p-6 shadow-lg shadow-teal-500/10 relative">
                     <div className="absolute inset-0 rounded-2xl border-2 border-teal-500/50 animate-pulse" style={{ pointerEvents: 'none' }}></div>
                     <p className="text-gray-400">
-                        Based on recent sensor health data, your trending stable, but, your nitroo detected, but of uinds ph imbaleke and yourhe paulle atth Al recommends inceaitir a physician if a yınstoms pereist. Detected risk patterns includes...
+                        Based on the latest sensor readings, your health indicators are within normal ranges. Minor variations are common and not clinically significant at this time. Please continue maintaining healthy habits and regular hydration. This report is for routine monitoring only; consult a physician if symptoms persist.
                     </p>
                     <div className="text-center mt-6">
                         <Button onClick={handleDownload} size="lg" className="bg-primary/80 hover:bg-primary text-white rounded-xl shadow-lg shadow-primary/20 transition-all duration-300 hover:shadow-primary/40">

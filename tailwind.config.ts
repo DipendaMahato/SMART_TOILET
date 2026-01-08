@@ -24,6 +24,7 @@ export default {
         code: ['monospace'],
       },
       colors: {
+        navy: '#0B1120',
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         card: {
@@ -106,6 +107,7 @@ export default {
       },
       boxShadow: {
         'soft': '0 4px 12px 0 rgba(0, 0, 0, 0.05)',
+        'glow-teal': '0 0 15px 0 rgba(80, 200, 200, 0.3)',
       }
     },
   },

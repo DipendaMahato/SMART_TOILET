@@ -8,25 +8,25 @@ body {
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 224 71.4% 4.1%;
-    --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
-    --primary: 175 80% 40%; /* Teal from logo */
-    --primary-foreground: 0 0% 98%;
+    --background: 222 84% 5%; /* Deep Navy */
+    --foreground: 210 40% 98%;
+    --card: 222 84% 6%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 175 48% 55%; /* Teal from logo #50C8C8 */
+    --primary-foreground: 222 84% 5%;
     --secondary: 211 77% 48%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 220 13% 91%;
+    --muted: 220 13% 15%;
     --muted-foreground: 220 9% 46%;
     --accent: 84 79% 50%; /* Lime Green from logo */
     --accent-foreground: 220 9% 46%;
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 63% 31%;
     --destructive-foreground: 0 0% 98%;
-    --border: 220 13% 89%;
-    --input: 220 13% 89%;
-    --ring: 175 80% 40%; /* Teal from logo */
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 175 48% 55%;
     --radius: 1.25rem;
 
     /* Custom Status Colors */
@@ -43,14 +43,14 @@ body {
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 222 84% 5%; /* Deep Navy */
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    --card: 222 84% 6%;
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 175 80% 40%; /* Teal from logo */
-    --primary-foreground: 210 40% 98%;
+    --primary: 175 48% 55%; /* Teal from logo */
+    --primary-foreground: 222 84% 5%;
     --secondary: 211 77% 48%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
@@ -61,7 +61,7 @@ body {
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 175 80% 40%;
+    --ring: 175 48% 55%;
     
     /* Custom Status Colors */
     --status-green: 142 71% 45%;

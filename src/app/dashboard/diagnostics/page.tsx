@@ -11,17 +11,17 @@ type Status = "Normal" | "Needs Attention" | "Abnormal";
 const urineDiagnostics = [
     { title: "Overall Urine Health Status", subtitle: "Hydration Status", status: "Normal" as Status },
     { title: "pH Balance Status", subtitle: "Mheds Attention", status: "Normal" as Status },
-    { title: "Possible UTI Risk Indicator", subtitle: "Harmal risk wator", status: "Abnormal" as Status },
-    { title: "Kidney Stress Indicator", subtitle: "Hsewred rick factor", status: "Abnormal" as Status },
+    { title: "Possible UTI Risk Indicator", subtitle: "Harmal risk wator", status: "Normal" as Status },
+    { title: "Kidney Stress Indicator", subtitle: "Hsewred rick factor", status: "Normal" as Status },
     { title: "Urine Clarity Status", subtitle: "Normal nak tisator", status: "Normal" as Status },
     { title: "Urine Concentration", subtitle: "Normal nak tistor", status: "Normal" as Status },
 ];
 
 const stoolDiagnostics = [
-    { title: "Overall Stool Health", subtitle: "Normal risk tictor", status: "Abnormal" as Status },
+    { title: "Overall Stool Health", subtitle: "Normal risk tictor", status: "Normal" as Status },
     { title: "Stool Consistency Indicator", subtitle: "normal nak fastoe", status: "Normal" as Status },
     { title: "Bowel Regularity", subtitle: "Normal risk tisator", status: "Normal" as Status },
-    { title: "Possible Infection Risk", subtitle: "normal nsk tlostor", status: "Abnormal" as Status },
+    { title: "Possible Infection Risk", subtitle: "normal nsk tlostor", status: "Normal" as Status },
 ];
 
 const StatusBadge = ({ status }: { status: Status }) => {

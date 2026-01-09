@@ -12,8 +12,6 @@ const dashboards = [
         textColor: 'text-green-400',
         details: [
             { label: 'WELLNESS SCORE', value: 'GOOD' },
-            { label: 'Heart Rate', value: 'STABLE' },
-            { label: 'Hydration', value: 'OPTIMAL' },
         ],
     },
     {
@@ -23,8 +21,6 @@ const dashboards = [
         textColor: 'text-teal-400',
         details: [
             { label: 'URINE ANALYSIS', value: 'LOW RISK' },
-            { label: 'pH Level', value: 'NORMAL' },
-            { label: 'Leukocytes', value: 'NEGATIVE' },
         ],
     },
     {
@@ -34,8 +30,6 @@ const dashboards = [
         textColor: 'text-yellow-400',
         details: [
             { label: 'BOWEL REGULARITY', value: 'NORMAL' },
-            { label: 'Microbiome', value: 'BALANCED' },
-            { label: 'Occult Blood', value: 'NEGATIVE' },
         ],
     },
     {
@@ -45,8 +39,6 @@ const dashboards = [
         textColor: 'text-purple-400',
         details: [
             { label: 'GLUCOSE', value: 'STABLE' },
-            { label: 'Activity Level', value: 'ADEQUATE' },
-            { label: 'Sleep Quality', value: 'GOOD' },
         ],
     },
 ];
@@ -58,12 +50,12 @@ const HealthDashboardCard = ({ title, icon: Icon, color, textColor, details }: t
             <CardTitle className="font-headline text-sm tracking-wider text-muted-foreground">{title}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-            {details.map((item, index) => (
+            {details.slice(0, 1).map((item, index) => (
                 <div key={index} className="flex items-center gap-4">
-                    {index === 0 && <Icon className={cn("w-6 h-6", textColor)} />}
-                    <div className={cn(index === 0 ? '' : 'ml-10')}>
-                         <p className={cn("font-semibold", index === 0 ? 'text-lg' : 'text-md')}>
-                            {item.label}: <span className={cn(index > 0 ? 'text-muted-foreground' : '', textColor)}>{item.value}</span>
+                    <Icon className={cn("w-6 h-6", textColor)} />
+                    <div>
+                         <p className="font-semibold text-lg">
+                            {item.label}: <span className={cn(textColor)}>{item.value}</span>
                         </p>
                     </div>
                 </div>

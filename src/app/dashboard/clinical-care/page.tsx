@@ -108,36 +108,45 @@ const BrowseProfilesAndConsult = () => (
     </SectionCard>
 );
 
-const ShareHealthData = () => (
-    <SectionCard title="Share Health Data & Reports">
-        <p className="text-sm font-semibold mb-2">Securely Share Your Data</p>
-        <div className="space-y-3">
-             <Input placeholder="Select Doctor/Hospital" className="bg-muted/50"/>
-             <div className="flex items-center space-x-2">
-                <Checkbox id="urine-reports" />
-                <label htmlFor="urine-reports" className="text-sm">Urine Diagnostic Reports</label>
-             </div>
-             <div className="flex items-center space-x-2">
-                <Checkbox id="stool-reports" />
-                <label htmlFor="stool-reports" className="text-sm">Stool Trend Reports</label>
-             </div>
-             <div className="flex items-center space-x-2">
-                <Checkbox id="health-trends" />
-                <label htmlFor="health-trends" className="text-sm">Health Trend Records (Last 30 Days)</label>
-             </div>
-             <Button className="w-full">Confirm Booking</Button>
-        </div>
-        <Separator className="my-4"/>
-        <p className="text-sm font-semibold mb-2">Shared Reports with Doctors</p>
-        <div className="text-sm text-muted-foreground space-y-2">
-            <p>We retain little information about the usage of the terms.</p>
-            <div className="flex justify-between items-center bg-muted/30 p-2 rounded-md">
-                <span>/dev/health-report.pdf</span>
-                <Button variant="ghost" size="sm">Download</Button>
+const ShareHealthData = () => {
+    const [isClient, setIsClient] = useState(false);
+    useEffect(() => { setIsClient(true) }, []);
+
+    return (
+        <SectionCard title="Share Health Data & Reports">
+            <p className="text-sm font-semibold mb-2">Securely Share Your Data</p>
+            <div className="space-y-3">
+                <Input placeholder="Select Doctor/Hospital" className="bg-muted/50"/>
+                {isClient && (
+                    <>
+                        <div className="flex items-center space-x-2">
+                            <Checkbox id="urine-reports" />
+                            <label htmlFor="urine-reports" className="text-sm">Urine Diagnostic Reports</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Checkbox id="stool-reports" />
+                            <label htmlFor="stool-reports" className="text-sm">Stool Trend Reports</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Checkbox id="health-trends" />
+                            <label htmlFor="health-trends" className="text-sm">Health Trend Records (Last 30 Days)</label>
+                        </div>
+                    </>
+                )}
+                <Button className="w-full">Confirm Booking</Button>
             </div>
-        </div>
-    </SectionCard>
-);
+            <Separator className="my-4"/>
+            <p className="text-sm font-semibold mb-2">Shared Reports with Doctors</p>
+            <div className="text-sm text-muted-foreground space-y-2">
+                <p>We retain little information about the usage of the terms.</p>
+                <div className="flex justify-between items-center bg-muted/30 p-2 rounded-md">
+                    <span>/dev/health-report.pdf</span>
+                    <Button variant="ghost" size="sm">Download</Button>
+                </div>
+            </div>
+        </SectionCard>
+    );
+}
 
 
 const daysInMonth = (month: number, year: number) => new Date(year, month + 1, 0).getDate();
@@ -197,81 +206,109 @@ const AppointmentCalendar = () => {
 };
 
 
-const BookAppointment = () => (
-    <SectionCard title="Book an Appointment">
-        <Input placeholder="Select Doctor/Hospital" className="bg-muted/50 mb-4" />
-        <AppointmentCalendar />
-    </SectionCard>
-);
+const BookAppointment = () => {
+    const [isClient, setIsClient] = useState(false);
+    useEffect(() => { setIsClient(true) }, []);
 
-const MedicalHistory = () => (
-    <SectionCard title="My Medical History">
-        <Button variant="outline" className="w-full justify-start mb-4"><FileText className="mr-2"/> Session Sheet</Button>
-        <div className="space-y-2 mb-4">
-            <div className="flex items-center space-x-2">
-                <Checkbox id="urine-reports-hist" />
-                <label htmlFor="urine-reports-hist" className="text-sm">Urine Diagnostic Reports</label>
-            </div>
-            <div className="flex items-center space-x-2">
-                <Checkbox id="health-trends-hist" />
-                <label htmlFor="health-trends-hist" className="text-sm">Health Trend Records (Last 30 Days)</label>
-            </div>
-        </div>
-        <Input placeholder="Search Prescriptions" className="mb-4 bg-muted/50" />
-        <Button className="w-full"><FlaskConical className="mr-2"/> Schedule Home Sample Collection</Button>
-    </SectionCard>
-);
+    return (
+        <SectionCard title="Book an Appointment">
+            <Input placeholder="Select Doctor/Hospital" className="bg-muted/50 mb-4" />
+            {isClient ? <AppointmentCalendar /> : <div className="p-2 rounded-md border min-h-[228px] flex items-center justify-center">Loading Calendar...</div>}
+        </SectionCard>
+    );
+}
 
-const ClinicalNotes = () => (
-    <SectionCard title="Clinical Notes & Prescriptions">
-        <Tabs defaultValue="clinical-notes">
-            <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="clinical-notes">Clinical Notes</TabsTrigger>
-                <TabsTrigger value="e-prescriptions">E-Prescriptions</TabsTrigger>
-                <TabsTrigger value="medicines">Medicines</TabsTrigger>
-            </TabsList>
-            <TabsContent value="clinical-notes" className="mt-4 space-y-3">
-                <div className="flex items-start space-x-3">
-                    <Checkbox id="note1" />
-                    <label htmlFor="note1" className="text-sm">Urine Diagnosis: mots 284-30 2339</label>
-                </div>
-                 <div className="flex items-start space-x-3">
-                    <Checkbox id="note2" />
-                    <label htmlFor="note2" className="text-sm">Ahse ipreid altrieetiniseed is stleythe tersert instiegs</label>
-                </div>
-                <div className="flex items-start space-x-3">
-                    <Checkbox id="note3" />
-                    <label htmlFor="note3" className="text-sm">Thee def/Aestire 200-90 2008</label>
-                </div>
-            </TabsContent>
-        </Tabs>
-    </SectionCard>
-);
+const MedicalHistory = () => {
+    const [isClient, setIsClient] = useState(false);
+    useEffect(() => { setIsClient(true) }, []);
 
-const LabAndPharmacyServices = () => (
-    <SectionCard title="Lab & Pharmacy Services">
-        <div className="grid grid-cols-2 gap-4">
-            <div>
-                <h3 className="font-semibold mb-2">Book Lab Tests</h3>
-                <div className="space-y-2">
-                     <div className="flex items-start space-x-3">
-                        <Checkbox id="lab1" />
-                        <label htmlFor="lab1" className="text-sm">Uved Presciption 293-00 2223</label>
+    return (
+        <SectionCard title="My Medical History">
+            <Button variant="outline" className="w-full justify-start mb-4"><FileText className="mr-2"/> Session Sheet</Button>
+            {isClient && (
+                <div className="space-y-2 mb-4">
+                    <div className="flex items-center space-x-2">
+                        <Checkbox id="urine-reports-hist" />
+                        <label htmlFor="urine-reports-hist" className="text-sm">Urine Diagnostic Reports</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <Checkbox id="health-trends-hist" />
+                        <label htmlFor="health-trends-hist" className="text-sm">Health Trend Records (Last 30 Days)</label>
                     </div>
                 </div>
-            </div>
-             <div>
-                <h3 className="font-semibold mb-2">Order Medicines</h3>
-                <div className="space-y-2">
-                     <div className="flex items-start space-x-3">
-                        <Checkbox id="med1" />
-                        <label htmlFor="med1" className="text-sm">Sesad Presciption 303-30 2027</label>
+            )}
+            <Input placeholder="Search Prescriptions" className="mb-4 bg-muted/50" />
+            <Button className="w-full"><FlaskConical className="mr-2"/> Schedule Home Sample Collection</Button>
+        </SectionCard>
+    );
+}
+
+const ClinicalNotes = () => {
+    const [isClient, setIsClient] = useState(false);
+    useEffect(() => { setIsClient(true) }, []);
+
+    return (
+        <SectionCard title="Clinical Notes & Prescriptions">
+            <Tabs defaultValue="clinical-notes">
+                <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="clinical-notes">Clinical Notes</TabsTrigger>
+                    <TabsTrigger value="e-prescriptions">E-Prescriptions</TabsTrigger>
+                    <TabsTrigger value="medicines">Medicines</TabsTrigger>
+                </TabsList>
+                <TabsContent value="clinical-notes" className="mt-4 space-y-3">
+                    {isClient ? (
+                        <>
+                            <div className="flex items-start space-x-3">
+                                <Checkbox id="note1" />
+                                <label htmlFor="note1" className="text-sm">Urine Diagnosis: mots 284-30 2339</label>
+                            </div>
+                            <div className="flex items-start space-x-3">
+                                <Checkbox id="note2" />
+                                <label htmlFor="note2" className="text-sm">Ahse ipreid altrieetiniseed is stleythe tersert instiegs</label>
+                            </div>
+                            <div className="flex items-start space-x-3">
+                                <Checkbox id="note3" />
+                                <label htmlFor="note3" className="text-sm">Thee def/Aestire 200-90 2008</label>
+                            </div>
+                        </>
+                    ) : null}
+                </TabsContent>
+            </Tabs>
+        </SectionCard>
+    );
+}
+
+const LabAndPharmacyServices = () => {
+    const [isClient, setIsClient] = useState(false);
+    useEffect(() => { setIsClient(true) }, []);
+
+    return (
+        <SectionCard title="Lab & Pharmacy Services">
+            {isClient ? (
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <h3 className="font-semibold mb-2">Book Lab Tests</h3>
+                        <div className="space-y-2">
+                            <div className="flex items-start space-x-3">
+                                <Checkbox id="lab1" />
+                                <label htmlFor="lab1" className="text-sm">Uved Presciption 293-00 2223</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 className="font-semibold mb-2">Order Medicines</h3>
+                        <div className="space-y-2">
+                            <div className="flex items-start space-x-3">
+                                <Checkbox id="med1" />
+                                <label htmlFor="med1" className="text-sm">Sesad Presciption 303-30 2027</label>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </SectionCard>
-);
+            ) : null}
+        </SectionCard>
+    );
+}
 
 const LabAndPharmacySupport = () => (
     <SectionCard title="Lab & Pharmacy Support">

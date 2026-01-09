@@ -44,7 +44,6 @@ const navItems = [
   { href: "/dashboard/vitals-trends", icon: Activity, label: "Vitals & Trends" },
   { href: "/dashboard/health-status", icon: Heart, label: "Health Status" },
   { href: "/dashboard/clinical-care", icon: Stethoscope, label: "Clinical Care" },
-  { href: "/dashboard/insights", icon: Bot, label: "Real-Time Health Insights" },
   { href: "/dashboard/profile", icon: User, label: "Medical Profile" },
   { href: "/dashboard/settings", icon: Settings, label: "Settings" },
 ];
@@ -58,7 +57,6 @@ function getPageTitle(pathname: string) {
       { href: "/dashboard/vitals-trends", icon: Activity, label: "Vitals & Trends" },
       { href: "/dashboard/health-status", icon: Heart, label: "Health Status" },
       { href: "/dashboard/clinical-care", icon: Stethoscope, label: "Clinical Care" },
-      { href: "/dashboard/insights", icon: Bot, label: "Real-Time Health Insights" },
       { href: "/dashboard/profile", icon: User, label: "Medical Profile" },
       { href: "/dashboard/settings", icon: Settings, label: "Settings" },
     ];

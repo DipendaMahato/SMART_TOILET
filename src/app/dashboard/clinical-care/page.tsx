@@ -52,10 +52,10 @@ const HealthDashboardCard = ({ title, icon: Icon, color, textColor, details }: t
         <CardContent className="space-y-4">
             {details.slice(0, 1).map((item, index) => (
                 <div key={index} className="flex items-center gap-4">
-                    <Icon className={cn("w-6 h-6", textColor)} />
+                    <Icon className={cn("w-8 h-8", textColor)} />
                     <div>
-                         <p className="font-semibold text-lg">
-                            {item.label}: <span className={cn(textColor)}>{item.value}</span>
+                         <p className={cn("font-semibold text-2xl", textColor)}>
+                            {item.value}
                         </p>
                     </div>
                 </div>

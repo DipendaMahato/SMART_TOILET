@@ -147,10 +147,12 @@ const AppointmentCalendar = () => {
     const [date, setDate] = useState<Date | null>(null);
 
     useEffect(() => {
+        // Set the initial date only on the client side
         setDate(new Date());
     }, []);
 
     if (!date) {
+        // Render a placeholder or loading state on the server and initial client render
         return <div className="p-2 rounded-md border min-h-[228px] flex items-center justify-center">Loading Calendar...</div>;
     }
 

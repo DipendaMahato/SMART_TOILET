@@ -172,7 +172,7 @@ const AppointmentCalendar = () => {
          <div className="p-2 rounded-md border">
             <div className="flex justify-between items-center mb-2">
                 <Button variant="ghost" size="icon" onClick={() => setDate(new Date(year, month - 1, 1))}><ChevronLeft/></Button>
-                <span className="font-semibold text-sm">{date.toLocaleString('default', { month: 'long', year: 'long' })}</span>
+                <span className="font-semibold text-sm">{date.toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
                 <Button variant="ghost" size="icon" onClick={() => setDate(new Date(year, month + 1, 1))}><ChevronRight/></Button>
             </div>
              <div className="grid grid-cols-7 text-center text-xs text-muted-foreground">
@@ -335,3 +335,5 @@ export default function ClinicalCarePage() {
     </div>
   );
 }
+
+    

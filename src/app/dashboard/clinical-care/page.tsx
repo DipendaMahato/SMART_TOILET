@@ -14,14 +14,14 @@ const services = [
         href: '#',
     },
     {
-        title: 'URINARY HEALTH',
+        title: 'URINARY HEALTH CHECKUP',
         icon: Droplet,
         color: 'border-teal-400',
         textColor: 'text-teal-400',
         href: '#',
     },
     {
-        title: 'DIGESTIVE HEALTH',
+        title: 'DIGESTIVE HEALTH CHECKUP',
         icon: Footprints,
         color: 'border-yellow-400',
         textColor: 'text-yellow-400',

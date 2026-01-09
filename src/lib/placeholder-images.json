@@ -1,3 +1,34 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "doctor-1",
+      "description": "Profile picture of a female doctor.",
+      "imageUrl": "https://images.unsplash.com/photo-1659353887488-b3c443982a57?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxkb2N0b3IlMjBwcm9maWxlfGVufDB8fHx8MTc2NzgyMTc2MXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "doctor profile"
+    },
+    {
+      "id": "doctor-2",
+      "description": "Profile picture of a male doctor.",
+      "imageUrl": "https://images.unsplash.com/photo-1659353885824-1199aeeebfc6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxkb2N0b3IlMjBwcm9maWxlfGVufDB8fHx8MTc2NzgyMTc2MXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "doctor profile"
+    },
+    {
+      "id": "doctor-3",
+      "description": "Profile picture of another female doctor.",
+      "imageUrl": "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxkb2N0b3IlMjBwcm9maWxlfGVufDB8fHx8MTc2NzgyMTc2MXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "doctor profile"
+    },
+    {
+      "id": "hospital-1",
+      "description": "Image of a modern hospital building.",
+      "imageUrl": "https://images.unsplash.com/photo-1533042789716-e9a9c97cf4ee?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxob3NwaXRhbCUyMGJ1aWxkaW5nfGVufDB8fHx8MTc2NzkyODAxNXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "hospital building"
+    },
+    {
+      "id": "hospital-2",
+      "description": "Image of another hospital building.",
+      "imageUrl": "https://images.unsplash.com/photo-1739185069005-8cb46fef2702?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxob3NwaXRhbCUyMGV4dGVyaW9yfGVufDB8fHx8MTc2NzkyODAxNXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "hospital exterior"
+    }
+  ]
 }

@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { MoreHorizontal, Search, Star, Phone, Video, MessageSquare, Calendar, ChevronRight, ChevronLeft, Building, User, Hospital, Stethoscope, FileText, FlaskConical, Pill, Siren } from 'lucide-react';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 const SectionCard = ({ title, children, className }: { title: string, children: React.ReactNode, className?: string }) => (
   <Card className={cn("bg-card/50 border border-border/50", className)}>
@@ -144,7 +144,16 @@ const daysInMonth = (month: number, year: number) => new Date(year, month + 1, 0
 const firstDayOfMonth = (month: number, year: number) => new Date(year, month, 1).getDay();
 
 const AppointmentCalendar = () => {
-    const [date, setDate] = React.useState(new Date());
+    const [date, setDate] = useState<Date | null>(null);
+
+    useEffect(() => {
+        setDate(new Date());
+    }, []);
+
+    if (!date) {
+        return <div className="p-2 rounded-md border min-h-[228px] flex items-center justify-center">Loading Calendar...</div>;
+    }
+
     const month = date.getMonth();
     const year = date.getFullYear();
 
@@ -335,7 +344,3 @@ export default function ClinicalCarePage() {
     </div>
   );
 }
-
-    
-
-    

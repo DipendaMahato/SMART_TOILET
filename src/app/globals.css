@@ -93,4 +93,36 @@ body {
         background-color: rgba(255, 255, 255, 0.5);
         backdrop-filter: blur(12px);
     }
+    .animated-border {
+        position: relative;
+        overflow: hidden;
+    }
+    .animated-border::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 200%;
+        height: 200%;
+        background: conic-gradient(
+            transparent,
+            var(--border-color, hsl(var(--primary))),
+            transparent 30%
+        );
+        transform-origin: center center;
+        animation: rotate 4s linear infinite;
+        z-index: 0;
+    }
+    .animated-border > * {
+        position: relative;
+        z-index: 1;
+    }
+    @keyframes rotate {
+        from {
+            transform: translate(-50%, -50%) rotate(0deg);
+        }
+        to {
+            transform: translate(-50%, -50%) rotate(360deg);
+        }
+    }
 }

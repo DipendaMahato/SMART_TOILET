@@ -2,66 +2,55 @@
 'use client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { Heart, Droplet, Footprints, Clock, ShieldPlus, Siren } from 'lucide-react';
+import { Heart, Droplet, Footprints, Clock, ShieldPlus, Siren, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 
-const dashboards = [
+const services = [
     {
         title: 'GENERAL HEALTH CHECKUP',
         icon: Heart,
         color: 'border-green-400',
         textColor: 'text-green-400',
-        details: [
-            { label: 'WELLNESS SCORE', value: 'GOOD' },
-        ],
+        href: '#',
     },
     {
         title: 'URINARY HEALTH',
         icon: Droplet,
         color: 'border-teal-400',
         textColor: 'text-teal-400',
-        details: [
-            { label: 'URINE ANALYSIS', value: 'LOW RISK' },
-        ],
+        href: '#',
     },
     {
         title: 'DIGESTIVE HEALTH',
         icon: Footprints,
         color: 'border-yellow-400',
         textColor: 'text-yellow-400',
-        details: [
-            { label: 'BOWEL REGULARITY', value: 'NORMAL' },
-        ],
+        href: '#',
     },
     {
         title: 'EMERGENCY CARE',
         icon: Siren,
         color: 'border-red-400',
         textColor: 'text-red-400',
-        details: [
-            { label: 'STATUS', value: 'URGENT' },
-        ],
+        href: '#',
     },
 ];
 
 
-const HealthDashboardCard = ({ title, icon: Icon, color, textColor, details }: typeof dashboards[0]) => (
-    <Card className={cn("bg-card/50 border-2 hover:-translate-y-1 transition-transform duration-300", color)}>
-        <CardHeader>
-            <CardTitle className="font-headline text-sm tracking-wider text-muted-foreground">{title}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-            {details.slice(0, 1).map((item, index) => (
-                <div key={index} className="flex items-center gap-4">
-                    <Icon className={cn("w-8 h-8", textColor)} />
-                    <div>
-                         <p className={cn("font-semibold text-2xl", textColor)}>
-                            {item.value}
-                        </p>
-                    </div>
+const ServiceDashboardCard = ({ title, icon: Icon, color, textColor, href }: typeof services[0]) => (
+    <Link href={href} className="group">
+        <Card className={cn("bg-card/50 border-2 h-full flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300 group-hover:shadow-lg", color, `hover:shadow-${color.split('-')[1]}-500/20`)}>
+            <CardHeader>
+                <CardTitle className="font-headline text-sm tracking-wider text-muted-foreground">{title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="flex items-center justify-between">
+                     <Icon className={cn("w-10 h-10", textColor)} />
+                     <ArrowRight className="w-6 h-6 text-muted-foreground group-hover:text-foreground transition-colors" />
                 </div>
-            ))}
-        </CardContent>
-    </Card>
+            </CardContent>
+        </Card>
+    </Link>
 );
 
 export default function ClinicalCarePage() {
@@ -73,8 +62,8 @@ export default function ClinicalCarePage() {
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-slide-up" style={{ animationDelay: '300ms' }}>
-            {dashboards.map((dashboard, index) => (
-                <HealthDashboardCard key={index} {...dashboard} />
+            {services.map((service, index) => (
+                <ServiceDashboardCard key={index} {...service} />
             ))}
         </div>
 

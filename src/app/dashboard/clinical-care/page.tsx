@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Heart, Droplet, Footprints, Clock, ShieldPlus, Siren, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 const services = [
     {
@@ -55,6 +56,27 @@ const ServiceDashboardCard = ({ title, icon: Icon, color, textColor, href }: typ
 export default function ClinicalCarePage() {
   return (
     <div className="space-y-8 animate-fade-in p-4 md:p-0">
+        <div className="relative w-full rounded-2xl overflow-hidden mb-8">
+            <Image 
+                src="https://images.unsplash.com/photo-1533042789716-e9a9c97cf4ee?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxob3NwaXRhbCUyMGJ1aWxkaW5nfGVufDB8fHx8MTc2NzkyODAxNXww&ixlib=rb-4.1.0&q=80&w=1080"
+                alt="Hospital Building"
+                width={1200}
+                height={400}
+                className="w-full h-auto object-cover"
+                data-ai-hint="hospital building"
+            />
+            <div className="absolute inset-0 bg-black/40" />
+            <div className="absolute top-4 left-4 p-2 bg-white/80 backdrop-blur-sm rounded-lg">
+                <Image
+                    src="https://picsum.photos/seed/hospitallogo/150/50"
+                    alt="Hospital Logo"
+                    width={150}
+                    height={50}
+                    data-ai-hint="hospital logo"
+                />
+            </div>
+        </div>
+
         <div className="flex items-center gap-4 animate-slide-up">
             <ShieldPlus className="w-8 h-8 text-primary" />
             <h1 className="text-2xl font-headline font-bold">CLINICAL CARE & HOSPITAL SERVICES</h1>

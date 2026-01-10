@@ -2,11 +2,10 @@
 'use client';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Phone, Calendar, AlertTriangle, Building2, MapPin, Clock, X } from 'lucide-react';
+import { Phone, Calendar, Building2, MapPin, Clock, X } from 'lucide-react';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import Link from 'next/link';
 import React, { useState } from 'react';
 
 const doctors = [
@@ -70,7 +69,7 @@ const doctors = [
         experience: '09 Years of Experience',
         availability: 'Full Time',
         floor: 'Ground Floor – (Multi-Speciality)',
-        bio: 'As the head of the emergency department, Dr. Manjunathan leads a team of dedicated professionals to provide immediate and life-saving care to patients in critical condition.',
+        bio: 'Dr. N. Manjunathan leads a dedicated team of emergency physicians, nurses, and support staff, available 24/7. Our state-of-the-art emergency department is equipped to handle all medical emergencies, from minor injuries to life-threatening conditions, ensuring rapid diagnosis and treatment.',
         theme: {
             border: 'border-red-500/30',
             shadow: 'shadow-red-500/20',
@@ -184,5 +183,3 @@ export default function ClinicalCarePage() {
     </div>
   );
 }
-
-    

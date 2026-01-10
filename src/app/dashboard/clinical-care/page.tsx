@@ -33,7 +33,7 @@ const doctors = [
         qualifications: 'MBBS, MRCP, (U.K.), CCST (Int-Medicine) (London), CCST (Diabetology and Endocrinology ) (London)',
         experience: '29 Years of Experience',
         availability: 'MON - SAT (08:00 AM – 04:00 PM)',
-        floor: 'First Floor – (Multi-Speciality), Bay 15 C',
+        floor: 'First Floor – (Multi-Speciality)',
         theme: {
             border: 'border-secondary/30',
             shadow: 'shadow-secondary/10',

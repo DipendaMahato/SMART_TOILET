@@ -13,7 +13,7 @@ const services = [
         icon: Heart,
         color: 'border-green-400',
         textColor: 'text-green-400',
-        href: '#',
+        href: '/dashboard/general-health-checkup',
     },
     {
         title: 'URINARY HEALTH CHECKUP',

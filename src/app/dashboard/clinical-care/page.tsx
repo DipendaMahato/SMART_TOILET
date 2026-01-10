@@ -68,7 +68,7 @@ export default function ClinicalCarePage() {
             className="w-16 h-16 object-contain rounded-lg mt-1"
           />
           <div>
-            <h1 className="text-3xl font-bold tracking-tight font-headline">Sri Ramakrishna Hospital</h1>
+            <h1 className="text-4xl font-bold tracking-tight font-headline animate-text-gradient bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Sri Ramakrishna Hospital</h1>
             <p className="text-muted-foreground mt-2 max-w-4xl">
               Access specialized checkups and emergency care services from our trusted hospital partner.
             </p>

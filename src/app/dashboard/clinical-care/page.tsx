@@ -59,7 +59,7 @@ export default function ClinicalCarePage() {
         
       {/* HEADER SECTION */}
       <header className="mb-8 animate-slide-up">
-        <div className="flex items-start gap-4 mb-6">
+        <div className="flex items-center gap-4 mb-6">
           <Image 
             src="/hospital_logo.png" 
             alt="Hospital Logo" 
@@ -70,7 +70,7 @@ export default function ClinicalCarePage() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight font-headline">Clinical Care</h1>
             <p className="text-muted-foreground mt-2 max-w-4xl">
-              Our service is directly connected with Sri Ramakrishna Hospital, Coimbatore’s trusted multi-specialty healthcare center, delivering advanced medical care with a strong focus on patient comfort, dignity, and quality treatment through modern technology.
+              Access specialized checkups and emergency care services from our trusted hospital partner.
             </p>
           </div>
         </div>
@@ -84,6 +84,9 @@ export default function ClinicalCarePage() {
             className="w-full h-48 md:h-64 object-cover object-center opacity-90 hover:opacity-100 transition-opacity"
           />
         </div>
+         <p className="text-muted-foreground mt-4 text-center md:text-left max-w-4xl mx-auto md:mx-0">
+          Our service is directly connected with Sri Ramakrishna Hospital, Coimbatore’s trusted multi-specialty healthcare center, delivering advanced medical care with a strong focus on patient comfort, dignity, and quality treatment through modern technology.
+        </p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-slide-up" style={{ animationDelay: '300ms' }}>

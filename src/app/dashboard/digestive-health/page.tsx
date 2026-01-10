@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, Phone } from 'lucide-react';
+import { Calendar, Clock, MapPin, Phone } from 'lucide-react';
 
 export default function DigestiveHealthPage() {
   return (
@@ -37,9 +37,9 @@ export default function DigestiveHealthPage() {
                             <div className="absolute bottom-0 right-2 bg-green-500 rounded-full w-5 h-5 border-2 border-card" title="Online"></div>
                          </div>
                         <h3 className="text-2xl font-bold font-headline">Honorary Dr. V. Arulselvan</h3>
-                        <p className="text-status-green font-semibold">Gastroenterology Specialist</p>
-                        <p className="text-sm text-muted-foreground mt-2">MS, M.Ch (Surgical Gastroenterology)</p>
-                        <p className="text-sm text-muted-foreground">20+ Years of Experience</p>
+                        <p className="text-status-green font-semibold">Consultant Medical Gastroenterologist & Hepatologist</p>
+                        <p className="text-sm text-muted-foreground mt-2">MBBS, MD, DM(GASTRO)</p>
+                        <p className="text-sm text-muted-foreground">12 Years of Experience</p>
 
                         <div className="mt-6 w-full space-y-3">
                             <Button className="w-full bg-status-green hover:bg-status-green/90">
@@ -57,12 +57,15 @@ export default function DigestiveHealthPage() {
             <div className="lg:col-span-2 space-y-6 animate-slide-up" style={{animationDelay: '300ms'}}>
                 <Card>
                     <CardHeader>
-                        <CardTitle className="font-headline">About Dr. V. Arulselvan</CardTitle>
+                        <CardTitle className="font-headline">Experience</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-muted-foreground">
-                            Dr. V. Arulselvan is a renowned gastroenterologist with over two decades of expertise in managing complex digestive disorders. He is a pioneer in advanced endoscopic procedures and is committed to providing evidence-based, patient-centric care. His research focuses on inflammatory bowel disease (IBD) and liver diseases, contributing significantly to the field.
-                        </p>
+                        <ul className="list-disc list-inside text-muted-foreground space-y-2">
+                           <li>Worked as Assistant Professor in Dept.of Pharmacology, PSG IMS&R.</li>
+                           <li>Served as Medical officer at Govt – PHC, Valparai & Periapodu.</li>
+                           <li>Worked as Assistant professor at the department of Medicine, Coimbatore Medical College Hospital, Coimbatore.</li>
+                           <li>Served as a Consultant Physician, RVS Hospital, Sulur.</li>
+                        </ul>
                     </CardContent>
                 </Card>
                  <Card>
@@ -72,11 +75,11 @@ export default function DigestiveHealthPage() {
                     <CardContent className="space-y-3">
                         <div className="flex items-center gap-4 text-muted-foreground">
                             <Clock className="h-5 w-5 text-status-green"/>
-                            <span>Monday, Wednesday, Friday: 11:00 AM - 6:00 PM</span>
+                            <span>MON - SAT: 01:00 PM – 05:00 PM</span>
                         </div>
                          <div className="flex items-center gap-4 text-muted-foreground">
-                            <Clock className="h-5 w-5 text-status-green"/>
-                            <span>Tuesday, Thursday (Procedures): By Appointment</span>
+                            <MapPin className="h-5 w-5 text-status-green"/>
+                            <span>First Floor – (Multi-Speciality)</span>
                         </div>
                     </CardContent>
                 </Card>

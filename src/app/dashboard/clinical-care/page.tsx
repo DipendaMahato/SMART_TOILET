@@ -126,8 +126,8 @@ export default function ClinicalCarePage() {
 
   return (
     <div className="min-h-full w-full bg-mesh-gradient animate-mesh-flow p-4 md:p-8">
-      <header className="mb-12 animate-slide-up text-center">
-        <div className="flex items-center justify-center gap-4 mb-2">
+      <header className="mb-12 text-center">
+        <div className="flex items-center justify-center gap-4 mb-2 animate-float [animation-delay:0.5s]">
           <Image 
             src="/hospital_logo.png" 
             alt="Hospital Logo" 
@@ -136,8 +136,8 @@ export default function ClinicalCarePage() {
             className="w-20 h-20 object-contain rounded-lg bg-white/50 p-2 shadow-sm"
           />
         </div>
-        <h1 className="text-4xl font-bold tracking-tight font-headline text-slate-800">Clinical Care Dashboard</h1>
-        <p className="text-slate-600 mt-2 max-w-2xl mx-auto">
+        <h1 className="text-4xl font-bold tracking-tight font-headline text-slate-800 animate-float">Clinical Care Dashboard</h1>
+        <p className="text-slate-600 mt-2 max-w-2xl mx-auto animate-float [animation-delay:0.2s]">
           Access specialized checkups and emergency care from our trusted hospital partner, Sri Ramakrishna Hospital.
         </p>
       </header>

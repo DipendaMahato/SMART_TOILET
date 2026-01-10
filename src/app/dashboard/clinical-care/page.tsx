@@ -58,40 +58,39 @@ export default function ClinicalCarePage() {
     <div className="space-y-8 animate-fade-in p-4 md:p-0">
         
       {/* HEADER SECTION */}
-      <header className="flex flex-col md:flex-row items-center justify-between mb-10 bg-card p-6 rounded-2xl border border-border shadow-xl">
-        
-        {/* Hospital Branding */}
-        <div className="flex items-center gap-4">
+      <header className="mb-8 animate-slide-up">
+        <div className="flex items-start gap-4 mb-6">
           <Image 
             src="/hospital_logo.png" 
             alt="Hospital Logo" 
             width={64}
             height={64}
-            className="w-16 h-16 object-contain rounded-lg"
+            className="w-16 h-16 object-contain rounded-lg mt-1"
           />
           <div>
-            <h1 className="text-2xl font-bold tracking-tight font-headline">CLINICAL CARE</h1>
-            <p className="text-teal-400 text-sm font-medium uppercase tracking-widest">Hospital Services</p>
+            <h1 className="text-3xl font-bold tracking-tight font-headline">Clinical Care</h1>
+            <p className="text-muted-foreground mt-2 max-w-4xl">
+              Our service is directly connected with Sri Ramakrishna Hospital, Coimbatore’s trusted multi-specialty healthcare center, delivering advanced medical care with a strong focus on patient comfort, dignity, and quality treatment through modern technology.
+            </p>
           </div>
         </div>
 
-        {/* Hospital Hero Banner */}
-        <div className="mt-4 md:mt-0 overflow-hidden rounded-xl border border-border w-full md:w-1/3">
+        <div className="overflow-hidden rounded-2xl border border-border shadow-lg">
           <Image 
             src="/sri-ramakrishna-hospital.jpg" 
             alt="Sri Ramakrishna Hospital" 
-            width={400}
-            height={96}
-            className="w-full h-24 object-cover opacity-80 hover:opacity-100 transition-opacity"
+            width={1200}
+            height={250}
+            className="w-full h-48 md:h-64 object-cover object-center opacity-90 hover:opacity-100 transition-opacity"
           />
         </div>
       </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-slide-up" style={{ animationDelay: '300ms' }}>
-            {services.map((service, index) => (
-                <ServiceDashboardCard key={index} {...service} />
-            ))}
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-slide-up" style={{ animationDelay: '300ms' }}>
+          {services.map((service, index) => (
+              <ServiceDashboardCard key={index} {...service} />
+          ))}
+      </div>
     </div>
   );
 }

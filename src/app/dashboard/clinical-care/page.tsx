@@ -40,7 +40,7 @@ const services = [
 
 const slidingImages = [
   '/sri-ramakrishna-hospital.jpg',
-  'https://images.unsplash.com/photo-1538108149393-fbbd81895907?q=80&w=2128&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
+  '/hospital.jpg'
 ];
 
 const ServiceDashboardCard = ({ title, icon: Icon, color, textColor, href }: typeof services[0]) => (

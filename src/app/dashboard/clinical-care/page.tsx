@@ -2,7 +2,7 @@
 'use client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { Heart, Droplet, Footprints, Clock, ShieldPlus, Siren, ArrowRight } from 'lucide-react';
+import { Heart, Droplet, Footprints, Siren, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -63,12 +63,11 @@ export default function ClinicalCarePage() {
         {/* Hospital Branding */}
         <div className="flex items-center gap-4">
           <Image 
-            src="https://picsum.photos/seed/hospitallogo/64/64" 
+            src="/hospital_logo.png" 
             alt="Hospital Logo" 
             width={64}
             height={64}
             className="w-16 h-16 object-contain rounded-lg"
-            data-ai-hint="hospital logo"
           />
           <div>
             <h1 className="text-2xl font-bold tracking-tight font-headline">CLINICAL CARE</h1>
@@ -79,12 +78,11 @@ export default function ClinicalCarePage() {
         {/* Hospital Hero Banner */}
         <div className="mt-4 md:mt-0 overflow-hidden rounded-xl border border-border w-full md:w-1/3">
           <Image 
-            src="https://images.unsplash.com/photo-1533042789716-e9a9c97cf4ee?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxob3NwaXRhbCUyMGJ1aWxkaW5nfGVufDB8fHx8MTc2NzkyODAxNXww&ixlib=rb-4.1.0&q=80&w=1080" 
+            src="/sri-ramakrishna-hospital.jpg" 
             alt="Sri Ramakrishna Hospital" 
             width={400}
             height={96}
             className="w-full h-24 object-cover opacity-80 hover:opacity-100 transition-opacity"
-            data-ai-hint="hospital building"
           />
         </div>
       </header>
@@ -93,11 +91,6 @@ export default function ClinicalCarePage() {
             {services.map((service, index) => (
                 <ServiceDashboardCard key={index} {...service} />
             ))}
-        </div>
-
-        <div className="flex items-center justify-start gap-2 text-xs text-muted-foreground animate-slide-up" style={{ animationDelay: '500ms' }}>
-            <Clock className="w-4 h-4" />
-            <span>LAST SYNC: 19 MIN AGO</span>
         </div>
     </div>
   );

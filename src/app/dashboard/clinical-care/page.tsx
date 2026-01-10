@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { Heart, Droplet, Footprints, Siren, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useState, useEffect } from 'react';
 
 const services = [
     {
@@ -37,6 +38,11 @@ const services = [
     },
 ];
 
+const slidingImages = [
+  '/sri-ramakrishna-hospital.jpg',
+  'https://images.unsplash.com/photo-1538108149393-fbbd81895907?q=80&w=2128&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
+];
+
 const ServiceDashboardCard = ({ title, icon: Icon, color, textColor, href }: typeof services[0]) => (
     <Link href={href} className="group">
         <Card className={cn("bg-card/90 h-full flex flex-col justify-between transition-all duration-300 group-hover:bg-card/80 group-hover:-translate-y-1 group-hover:shadow-lg group-hover:shadow-primary/10 border-2 border-transparent hover:border-primary/20", color)}>
@@ -54,6 +60,15 @@ const ServiceDashboardCard = ({ title, icon: Icon, color, textColor, href }: typ
 );
 
 export default function ClinicalCarePage() {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % slidingImages.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <div className="space-y-8 animate-fade-in p-4 md:p-0">
         
@@ -75,14 +90,19 @@ export default function ClinicalCarePage() {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-border shadow-lg">
-          <Image 
-            src="/sri-ramakrishna-hospital.jpg" 
-            alt="Sri Ramakrishna Hospital" 
-            width={1200}
-            height={250}
-            className="w-full h-48 md:h-64 object-cover object-center opacity-90 hover:opacity-100 transition-opacity"
-          />
+        <div className="overflow-hidden rounded-2xl border border-border shadow-lg relative h-48 md:h-64">
+          {slidingImages.map((src, index) => (
+             <Image 
+                key={src}
+                src={src}
+                alt="Sri Ramakrishna Hospital" 
+                fill
+                className={cn(
+                    "w-full h-full object-cover object-center transition-opacity duration-1000",
+                    index === currentImageIndex ? 'opacity-90' : 'opacity-0'
+                )}
+            />
+          ))}
         </div>
          <p className="text-muted-foreground mt-4 text-center md:text-left max-w-4xl mx-auto md:mx-0">
           Our service is directly connected with Sri Ramakrishna Hospital, Coimbatore’s trusted multi-specialty healthcare center, delivering advanced medical care with a strong focus on patient comfort, dignity, and quality treatment through modern technology.

@@ -102,6 +102,10 @@ export default {
           'to': {
             'background-position': '200% center',
           }
+        },
+        'marquee': {
+          '0%': { transform: 'translateX(0%)' },
+          '100%': { transform: 'translateX(-50%)' },
         }
       },
       animation: {
@@ -110,6 +114,7 @@ export default {
         'fade-in': 'fade-in 0.5s ease-out',
         'slide-up': 'slide-up 0.5s ease-out forwards',
         'text-gradient': 'text-gradient 3s linear infinite',
+        'marquee': 'marquee 20s linear infinite',
       },
       boxShadow: {
         'soft': '0 4px 12px 0 rgba(0, 0, 0, 0.05)',
@@ -117,5 +122,14 @@ export default {
       }
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [
+      require('tailwindcss-animate'),
+      function({ addUtilities }: { addUtilities: any }) {
+        addUtilities({
+            '.pause': {
+                'animation-play-state': 'paused',
+            },
+        });
+      },
+  ],
 } satisfies Config;

@@ -2,7 +2,7 @@
 'use client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { Heart, Droplet, Footprints, Siren, ArrowRight } from 'lucide-react';
+import { Heart, Droplet, Footprints, Siren, ArrowRight, Activity } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
@@ -30,6 +30,13 @@ const services = [
         href: '/dashboard/digestive-health',
     },
     {
+        title: 'METABOLIC HEALTH CHECKUP',
+        icon: Activity,
+        color: 'border-purple-400',
+        textColor: 'text-purple-400',
+        href: '/dashboard/metabolic-health',
+    },
+    {
         title: 'EMERGENCY CARE',
         icon: Siren,
         color: 'border-red-400',
@@ -43,7 +50,7 @@ const slidingImages = [
   '/hospital.jpg'
 ];
 
-const ServiceDashboardCard = ({ title, icon: Icon, color, textColor, href }: typeof services[0]) => (
+const ServiceDashboardCard = ({ title, icon: Icon, color, textColor, href }: (typeof services)[0]) => (
     <Link href={href} className="group">
         <Card className={cn("bg-card/90 h-full flex flex-col justify-between transition-all duration-300 group-hover:bg-card/80 group-hover:-translate-y-1 group-hover:shadow-lg group-hover:shadow-primary/10 border-2 border-transparent hover:border-primary/20", color)}>
             <CardHeader>
@@ -109,7 +116,7 @@ export default function ClinicalCarePage() {
         </p>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-slide-up" style={{ animationDelay: '300ms' }}>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-slide-up" style={{ animationDelay: '300ms' }}>
           {services.map((service, index) => (
               <ServiceDashboardCard key={index} {...service} />
           ))}

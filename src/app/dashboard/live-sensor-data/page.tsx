@@ -13,7 +13,7 @@ import { Switch } from '@/components/ui/switch';
 
 export default function LiveSensorDataPage() {
     const [usageStatus, setUsageStatus] = useState(1);
-    const [waterTank, setWaterTank] = useState(77);
+    const [urineClarity, setUrineClarity] = useState(88);
     const [flushCount, setFlushCount] = useState(42);
     const [ammonia, setAmmonia] = useState(5.18);
     const [turbidity, setTurbidity] = useState(35);
@@ -26,7 +26,7 @@ export default function LiveSensorDataPage() {
     useEffect(() => {
         const interval = setInterval(() => {
             setUsageStatus(Math.round(Math.random()));
-            setWaterTank(Math.floor(Math.random() * 20) + 70);
+            setUrineClarity(Math.floor(Math.random() * 20) + 75); // Clarity index between 75-95%
             setAmmonia(Math.random() * 2 + 4);
             setTurbidity(Math.floor(Math.random() * 40) + 20);
             setBattery(Math.floor(Math.random() * 15) + 80);
@@ -90,8 +90,8 @@ export default function LiveSensorDataPage() {
 
                 {/* Row 2 */}
                 <SensorCard className="flex flex-col items-center justify-center animate-slide-up" style={{ animationDelay: '500ms' }}>
-                    <h3 className="font-semibold text-gray-300 mb-2 self-start">Water Tank Level</h3>
-                    <SemiCircleGauge value={waterTank} />
+                    <h3 className="font-semibold text-gray-300 mb-2 self-start">Urine Clarity Index</h3>
+                    <SemiCircleGauge value={urineClarity} />
                 </SensorCard>
                 
                 <SensorCard className="flex flex-col justify-between animate-slide-up" style={{ animationDelay: '600ms' }}>
@@ -187,6 +187,8 @@ export default function LiveSensorDataPage() {
 }
 
   
+
+    
 
     
 

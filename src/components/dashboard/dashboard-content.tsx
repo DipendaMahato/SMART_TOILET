@@ -38,7 +38,7 @@ const subDashboards = [
     shadowColor: 'shadow-glow-purple-violet/20',
     bgColor: 'bg-gradient-to-br from-glow-purple-violet-start/20 to-glow-purple-violet-end/20',
     textColor: 'text-glow-purple-violet',
-    animation: 'animate-pulse-glow-soft',
+    animation: '',
   },
   {
     title: 'Urine & Stool Diagnostics',
@@ -137,7 +137,7 @@ export function DashboardContent() {
   return (
     <div className="space-y-8 animate-fade-in">
       <div style={{ animationDelay: '200ms', animationFillMode: 'backwards' }} className="animate-slide-up">
-        <h1 className="text-3xl font-headline font-bold">Dashboard</h1>
+        <h1 className="text-3xl font-headline font-bold text-transparent bg-clip-text bg-gradient-to-r from-glow-mint to-glow-cyan animate-text-gradient bg-400">Dashboard</h1>
         <p className="text-muted-foreground">
           Select a dashboard below to explore your health data in detail.
         </p>

@@ -119,7 +119,7 @@ export default function AppHeader() {
       </Sheet>
 
       <div className="flex w-full items-center gap-4 md:gap-2 lg:gap-4">
-        <h1 className="text-xl font-semibold font-headline">{pageTitle}</h1>
+        <h1 className="text-xl font-semibold font-headline text-transparent bg-clip-text bg-gradient-to-r from-glow-mint to-glow-cyan animate-text-gradient bg-400">{pageTitle}</h1>
         <div className="ml-auto flex items-center gap-2">
             <Button variant="ghost" size="icon" className="rounded-full">
                 <Search className="h-5 w-5" />

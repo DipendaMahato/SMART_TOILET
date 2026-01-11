@@ -88,20 +88,25 @@ export function DashboardContent() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {subDashboards.map((dashboard, index) => (
           <Link href={dashboard.href} key={dashboard.title} className="group" style={{ animationDelay: `${300 + index * 50}ms`, animationFillMode: 'backwards' }}>
-            <Card className={`h-full overflow-hidden transition-all duration-300 ease-in-out hover:shadow-lg hover:border-primary/20 hover:-translate-y-1 animate-slide-up bg-gradient-to-br ${dashboard.gradient}`}>
-              <CardContent className="p-6 flex flex-col justify-between h-full">
-                <div>
-                  <div className={`p-3 rounded-lg w-fit ${dashboard.iconBg}`}>
-                    <dashboard.icon className={`h-6 w-6 ${dashboard.iconColor}`} />
-                  </div>
-                  <h2 className="font-headline text-lg font-semibold mt-4 text-gray-800">{dashboard.title}</h2>
-                  <p className="text-gray-600 text-sm mt-1">{dashboard.description}</p>
-                </div>
-                <div className="mt-6 flex items-center justify-end">
-                    <ArrowRight className="h-5 w-5 text-gray-400 transition-all duration-300 group-hover:text-primary group-hover:translate-x-1" />
-                </div>
-              </CardContent>
-            </Card>
+             <div className="relative p-[2px] rounded-2xl overflow-hidden transition-all duration-300 ease-in-out group-hover:-translate-y-1">
+                 <div className="absolute inset-0 w-full h-full bg-[conic-gradient(from_0deg,theme(colors.cyan.400),theme(colors.sky.400),theme(colors.purple.400),theme(colors.green.400),theme(colors.cyan.400))] animate-border-rotate -z-10"></div>
+                 <div className="bg-background rounded-[22px] h-full">
+                    <Card className={`h-full overflow-hidden transition-all duration-300 ease-in-out bg-card/80 backdrop-blur-sm group-hover:shadow-lg group-hover:border-primary/20 animate-slide-up`}>
+                    <CardContent className="p-6 flex flex-col justify-between h-full">
+                        <div>
+                        <div className="p-3 rounded-lg w-fit bg-primary/10">
+                            <dashboard.icon className="h-6 w-6 text-primary" />
+                        </div>
+                        <h2 className="font-headline text-lg font-semibold mt-4 text-foreground">{dashboard.title}</h2>
+                        <p className="text-muted-foreground text-sm mt-1">{dashboard.description}</p>
+                        </div>
+                        <div className="mt-6 flex items-center justify-end">
+                            <ArrowRight className="h-5 w-5 text-gray-400 transition-all duration-300 group-hover:text-primary group-hover:translate-x-1" />
+                        </div>
+                    </CardContent>
+                    </Card>
+                 </div>
+            </div>
           </Link>
         ))}
       </div>

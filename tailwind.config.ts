@@ -127,7 +127,7 @@ export default {
           '50%': { 'background-position': '100% 50%' },
           '100%': { 'background-position': '0% 50%' },
         },
-        'border-rotate': {
+        'border-spin': {
             '100%': { transform: 'rotate(1turn)' },
         }
       },
@@ -142,7 +142,7 @@ export default {
         'marquee': 'marquee 20s linear infinite',
         'marquee-lr': 'marquee-lr 30s linear infinite',
         'mesh-flow': 'mesh-flow 15s ease infinite',
-        'border-rotate': 'border-rotate 10s linear infinite',
+        'border-spin': 'border-spin 10s linear infinite',
       },
       boxShadow: {
         'soft': '0 4px 12px 0 rgba(0, 0, 0, 0.05)',

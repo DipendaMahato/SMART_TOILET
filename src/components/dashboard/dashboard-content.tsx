@@ -16,6 +16,7 @@ import {
   Bot,
 } from 'lucide-react';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 const subDashboards = [
   {
@@ -23,54 +24,48 @@ const subDashboards = [
     description: 'Real-time IoT sensor readings and device status.',
     icon: RadioTower,
     href: '/dashboard/live-sensor-data',
-    gradient: 'from-cyan-50 to-blue-100',
-    iconColor: 'text-cyan-600',
-    iconBg: 'bg-cyan-100',
+    borderColor: 'border-cyan-400',
+    shadowColor: 'shadow-cyan-400/20',
   },
   {
     title: 'AI Process Tracker',
     description: 'Visualize AI stages from data capture to insights.',
     icon: BrainCircuit,
     href: '/dashboard/ai-process-tracker',
-    gradient: 'from-violet-50 to-purple-100',
-    iconColor: 'text-violet-600',
-    iconBg: 'bg-violet-100',
+    borderColor: 'border-purple-400',
+    shadowColor: 'shadow-purple-400/20',
   },
   {
     title: 'Urine & Stool Diagnostics',
     description: 'Analysis, classifications, and risk indicators.',
     icon: FlaskConical,
     href: '/dashboard/diagnostics',
-    gradient: 'from-teal-50 to-cyan-100',
-    iconColor: 'text-teal-600',
-    iconBg: 'bg-teal-100',
+    borderColor: 'border-teal-400',
+    shadowColor: 'shadow-teal-400/20',
   },
   {
     title: 'Health Vitals & Trends',
     description: 'Daily, weekly, and long-term trend graphs.',
     icon: Activity,
     href: '/dashboard/vitals-trends',
-    gradient: 'from-orange-50 to-amber-100',
-    iconColor: 'text-orange-600',
-    iconBg: 'bg-orange-100',
+    borderColor: 'border-green-400',
+    shadowColor: 'shadow-green-400/20',
   },
   {
     title: 'Overall Health Status',
     description: 'AI-derived health scores and conclusions.',
     icon: Heart,
     href: '/dashboard/health-status',
-    gradient: 'from-rose-50 to-pink-100',
-    iconColor: 'text-rose-600',
-    iconBg: 'bg-rose-100',
+    borderColor: 'border-blue-400',
+    shadowColor: 'shadow-blue-400/20',
   },
   {
     title: 'Clinical Care & Doctor Support',
     description: 'Doctor profiles, consultations, and facilities.',
     icon: Stethoscope,
     href: '/dashboard/clinical-care',
-    gradient: 'from-emerald-50 to-green-100',
-    iconColor: 'text-emerald-600',
-    iconBg: 'bg-emerald-100',
+    borderColor: 'border-red-400',
+    shadowColor: 'shadow-red-400/20',
   },
 ];
 
@@ -88,25 +83,25 @@ export function DashboardContent() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {subDashboards.map((dashboard, index) => (
           <Link href={dashboard.href} key={dashboard.title} className="group" style={{ animationDelay: `${300 + index * 50}ms`, animationFillMode: 'backwards' }}>
-             <div className="relative p-[2px] rounded-2xl overflow-hidden transition-all duration-300 ease-in-out group-hover:-translate-y-1">
-                 <div className="absolute inset-0 w-full h-full bg-[conic-gradient(from_0deg,theme(colors.cyan.400),theme(colors.sky.400),theme(colors.purple.400),theme(colors.green.400),theme(colors.cyan.400))] animate-border-rotate -z-10"></div>
-                 <div className="bg-background rounded-[22px] h-full">
-                    <Card className={`h-full overflow-hidden transition-all duration-300 ease-in-out bg-card/80 backdrop-blur-sm group-hover:shadow-lg group-hover:border-primary/20 animate-slide-up`}>
-                    <CardContent className="p-6 flex flex-col justify-between h-full">
-                        <div>
-                        <div className="p-3 rounded-lg w-fit bg-primary/10">
-                            <dashboard.icon className="h-6 w-6 text-primary" />
-                        </div>
-                        <h2 className="font-headline text-lg font-semibold mt-4 text-foreground">{dashboard.title}</h2>
-                        <p className="text-muted-foreground text-sm mt-1">{dashboard.description}</p>
-                        </div>
-                        <div className="mt-6 flex items-center justify-end">
-                            <ArrowRight className="h-5 w-5 text-gray-400 transition-all duration-300 group-hover:text-primary group-hover:translate-x-1" />
-                        </div>
-                    </CardContent>
-                    </Card>
-                 </div>
-            </div>
+             <div className={cn("relative p-px rounded-2xl overflow-hidden transition-all duration-300 ease-in-out group-hover:-translate-y-1", dashboard.borderColor)}>
+                 <div className="absolute inset-0 w-full h-full bg-background rounded-[23px] -z-10"></div>
+                 <div className="absolute -z-10 w-[200%] h-[200%] -top-1/2 -left-1/2 bg-[conic-gradient(from_0deg_at_50%_50%,rgba(255,255,255,0.15)_0%,rgba(255,255,255,0)_40%,rgba(255,255,255,0)_100%)] animate-border-spin"></div>
+
+                <Card className={cn("h-full overflow-hidden transition-all duration-300 ease-in-out bg-card/80 backdrop-blur-sm group-hover:shadow-lg animate-slide-up border-none", dashboard.shadowColor)}>
+                  <CardContent className="p-6 flex flex-col justify-between h-full">
+                      <div>
+                      <div className="p-3 rounded-lg w-fit bg-primary/10">
+                          <dashboard.icon className="h-6 w-6 text-primary" />
+                      </div>
+                      <h2 className="font-headline text-lg font-semibold mt-4 text-foreground">{dashboard.title}</h2>
+                      <p className="text-muted-foreground text-sm mt-1">{dashboard.description}</p>
+                      </div>
+                      <div className="mt-6 flex items-center justify-end">
+                          <ArrowRight className="h-5 w-5 text-gray-400 transition-all duration-300 group-hover:text-primary group-hover:translate-x-1" />
+                      </div>
+                  </CardContent>
+                </Card>
+             </div>
           </Link>
         ))}
       </div>

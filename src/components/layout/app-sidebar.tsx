@@ -50,31 +50,36 @@ export default function AppSidebar() {
   }
 
   return (
-    <aside className="hidden md:flex w-64 flex-col border-r bg-card">
-      <div className="flex h-16 items-center justify-center border-b px-6">
+    <aside className="hidden md:flex w-64 flex-col border-r bg-card/80 backdrop-blur-sm border-border/20">
+      <div className="flex h-16 items-center justify-center border-b border-border/20 px-6">
         <Link href="/dashboard" className="flex items-center gap-2 font-headline text-lg font-semibold text-primary">
           <Image src="/logo.png" alt="App Logo" width={32} height={32} />
           <span className="text-sm">Smart Toilet</span>
         </Link>
       </div>
       <div className="flex-1 overflow-y-auto">
-        <nav className="flex flex-col gap-1 p-4">
-          {navItems.map((item) => (
+        <nav className="flex flex-col gap-2 p-4">
+          {navItems.map((item) => {
+            const isActive = pathname === item.href;
+            return (
             <Link
               key={item.label}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground transition-all hover:text-primary hover:bg-primary/10",
-                pathname === item.href && "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
+                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground transition-all hover:text-primary relative",
+                isActive && "text-glow-mint"
               )}
             >
-              <item.icon className="h-5 w-5" />
-              {item.label}
+              {isActive && (
+                 <div className="absolute inset-0 rounded-lg bg-glow-mint/10 border border-glow-mint/50 animate-pulse-glow-soft"></div>
+              )}
+              <item.icon className={cn("h-5 w-5", isActive && "text-glow-mint drop-shadow-[0_0_5px_hsl(var(--glow-mint))]")} />
+              <span className="relative">{item.label}</span>
             </Link>
-          ))}
+          )})}
         </nav>
       </div>
-      <div className="mt-auto border-t p-4">
+      <div className="mt-auto border-t border-border/20 p-4">
         <div className="flex items-center gap-4">
             <Avatar>
                 <AvatarImage src={user?.photoURL || undefined} alt="User avatar" />

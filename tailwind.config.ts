@@ -78,61 +78,62 @@ export default {
         'clinical-title': '#0B3C5D',
         'clinical-subtitle': '#5F6F81',
         'clinical-highlight': '#1FA2A8',
+        'glow-green': '#3CFF9E',
+        'glow-cyan': '#3ADFFF',
+        'glow-blue': '#5B9DFF',
+        'glow-mint': '#5CFFB1',
+        'glow-cyan-blue': { DEFAULT: '#4DDFFF', start: '#4DDFFF', end: '#1BA6C9' },
+        'glow-purple-violet': { DEFAULT: '#B983FF', start: '#B983FF', end: '#7A4DFF' },
+        'glow-teal-green': '#3AFFD8',
+        'glow-lime-emerald': { DEFAULT: '#9BFF57', start: '#9BFF57', end: '#3AFF75' },
+        'glow-sky-royal-blue': { DEFAULT: '#6BCBFF', start: '#6BCBFF', end: '#4A90E2' },
+        'glow-red-rose': { DEFAULT: '#FF6B6B', start: '#FF6B6B', end: '#FF8E8E' },
       },
       keyframes: {
-        'accordion-down': {
-          from: {
-            height: '0',
-          },
-          to: {
-            height: 'var(--radix-accordion-content-height)',
-          },
-        },
-        'accordion-up': {
-          from: {
-            height: 'var(--radix-accordion-content-height)',
-          },
-          to: {
-            height: '0',
-          },
-        },
-        'fade-in': {
-          from: { opacity: '0', transform: 'translateY(10px)' },
-          to: { opacity: '1', transform: 'translateY(0)' },
-        },
-        'float': {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-8px)' },
-        },
-        'slide-up': {
-            from: { transform: 'translateY(20px)', opacity: '0'},
-            to: { transform: 'translateY(0)', opacity: '1'},
-        },
-        'slide-up-fast': {
-            from: { transform: 'translateY(20px)', opacity: '0'},
-            to: { transform: 'translateY(0)', opacity: '1'},
-        },
-        'text-gradient': {
-          'to': {
-            'background-position': '200% center',
-          }
-        },
-        'marquee': {
-          '0%': { transform: 'translateX(0%)' },
-          '100%': { transform: 'translateX(-50%)' },
-        },
-        'marquee-lr': {
-          '0%': { transform: 'translateX(-100%)' },
-          '100%': { transform: 'translateX(100%)' },
-        },
-        'mesh-flow': {
-          '0%': { 'background-position': '0% 50%' },
+        'accordion-down': { from: { height: '0' }, to: { height: 'var(--radix-accordion-content-height)' } },
+        'accordion-up': { from: { height: 'var(--radix-accordion-content-height)' }, to: { height: '0' } },
+        'fade-in': { from: { opacity: '0', transform: 'translateY(10px)' }, to: { opacity: '1', transform: 'translateY(0)' } },
+        'float': { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-8px)' } },
+        'slide-up': { from: { transform: 'translateY(20px)', opacity: '0'}, to: { transform: 'translateY(0)', opacity: '1'} },
+        'slide-up-fast': { from: { transform: 'translateY(20px)', opacity: '0'}, to: { transform: 'translateY(0)', opacity: '1'} },
+        'text-gradient': { 'to': { 'background-position': '200% center' } },
+        'marquee': { '0%': { transform: 'translateX(0%)' }, '100%': { transform: 'translateX(-50%)' } },
+        'marquee-lr': { '0%': { transform: 'translateX(-100%)' }, '100%': { transform: 'translateX(100%)' } },
+        'mesh-flow': { '0%': { 'background-position': '0% 50%' }, '50%': { 'background-position': '100% 50%' }, '100%': { 'background-position': '0% 50%' } },
+        'flow-border': {
+          '0%, 100%': { 'background-position': '0% 50%' },
           '50%': { 'background-position': '100% 50%' },
-          '100%': { 'background-position': '0% 50%' },
         },
-        'border-spin': {
-            '100%': { transform: 'rotate(1turn)' },
-        }
+        'pulse-glow-soft': {
+          '0%, 100%': { opacity: '0.7', 'box-shadow': '0 0 8px 2px hsl(var(--glow-mint) / 0.4)' },
+          '50%': { opacity: '1', 'box-shadow': '0 0 12px 4px hsl(var(--glow-mint) / 0.6)' },
+        },
+        'light-trace': {
+          '0%': { 'background-position': '-100% 0' },
+          '100%': { 'background-position': '200% 0' },
+        },
+        'rotate-glow': {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg)' },
+        },
+        'orbit-glow': {
+          '0%': { 'border-color': 'hsl(var(--glow-teal-green) / 0.2)', transform: 'scale(1)' },
+          '50%': { 'border-color': 'hsl(var(--glow-teal-green) / 1)', transform: 'scale(1.02)' },
+          '100%': { 'border-color': 'hsl(var(--glow-teal-green) / 0.2)', transform: 'scale(1)' },
+        },
+        'heartbeat-pulse': {
+          '0%': { 'box-shadow': '0 0 0 0 hsl(var(--glow-lime-emerald) / 0.7)' },
+          '70%': { 'box-shadow': '0 0 0 10px hsl(var(--glow-lime-emerald) / 0)' },
+          '100%': { 'box-shadow': '0 0 0 0 hsl(var(--glow-lime-emerald) / 0)' },
+        },
+        'breathing-glow': {
+          '0%, 100%': { opacity: '0.7' },
+          '50%': { opacity: '1' },
+        },
+        'alert-glow': {
+          '0%, 100%': { 'box-shadow': '0 0 5px hsl(var(--glow-red-rose))', 'border-color': 'hsl(var(--glow-red-rose) / 0.5)'},
+          '50%': { 'box-shadow': '0 0 15px hsl(var(--glow-red-rose))', 'border-color': 'hsl(var(--glow-red-rose) / 1)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -145,7 +146,14 @@ export default {
         'marquee': 'marquee 20s linear infinite',
         'marquee-lr': 'marquee-lr 30s linear infinite',
         'mesh-flow': 'mesh-flow 15s ease infinite',
-        'border-spin': 'border-spin 10s linear infinite',
+        'flow-border': 'flow-border 4s ease-in-out infinite',
+        'pulse-glow-soft': 'pulse-glow-soft 3s ease-in-out infinite',
+        'light-trace': 'light-trace 4s linear infinite',
+        'rotate-glow': 'rotate-glow 10s linear infinite',
+        'orbit-glow': 'orbit-glow 5s ease-in-out infinite',
+        'heartbeat-pulse': 'heartbeat-pulse 2s infinite',
+        'breathing-glow': 'breathing-glow 4s ease-in-out infinite',
+        'alert-glow': 'alert-glow 3s ease-in-out infinite',
       },
       boxShadow: {
         'soft': '0 4px 12px 0 rgba(0, 0, 0, 0.05)',

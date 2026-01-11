@@ -75,6 +75,9 @@ export default {
           '4': 'hsl(var(--chart-4))',
           '5': 'hsl(var(--chart-5))',
         },
+        'clinical-title': '#0B3C5D',
+        'clinical-subtitle': '#5F6F81',
+        'clinical-highlight': '#1FA2A8',
       },
       keyframes: {
         'accordion-down': {

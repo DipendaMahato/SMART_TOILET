@@ -72,9 +72,19 @@ export function ProfileForm() {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     const fullName = [data.firstName, data.lastName].filter(Boolean).join(' ');
+                    
+                    let dateOfBirth: Date | undefined = undefined;
+                    if (data.dateOfBirth) {
+                        if (data.dateOfBirth instanceof Timestamp) {
+                            dateOfBirth = data.dateOfBirth.toDate();
+                        } else if (typeof data.dateOfBirth === 'string') {
+                            dateOfBirth = new Date(data.dateOfBirth);
+                        }
+                    }
+
                     form.reset({
                         name: fullName || user.displayName || "",
-                        dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined,
+                        dateOfBirth: dateOfBirth,
                         gender: data.gender,
                         bloodGroup: data.bloodGroup,
                         height: data.height || 0,

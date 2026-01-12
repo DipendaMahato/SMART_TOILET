@@ -7,7 +7,7 @@ import * as z from "zod";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { doc } from "firebase/firestore";
+import { doc, Timestamp } from "firebase/firestore";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -93,13 +93,12 @@ export function VerifyOtpForm() {
             lastName: lastName,
             email: userDetails.email,
             phoneNumber: userDetails.phone,
-            photoURL: userCredential.user.photoURL,
             // Add default values for other required fields from UserProfile entity
             gender: "other",
             bloodGroup: "O+",
             height: 0,
             weight: 0,
-            dateOfBirth: new Date().toISOString()
+            dateOfBirth: Timestamp.fromDate(new Date()),
         };
 
         const profileRef = doc(firestore, "users", userCredential.user.uid);

@@ -62,7 +62,7 @@ export function ProfileForm() {
   });
 
   useEffect(() => {
-    if (user) {
+    if (user && user.photoURL) {
         setAvatarPreview(user.photoURL);
     }
     if (user && !isUserLoading && profileRef) {
@@ -71,8 +71,9 @@ export function ProfileForm() {
                 const docSnap = await getDoc(profileRef);
                 if (docSnap.exists()) {
                     const data = docSnap.data();
+                    const fullName = [data.firstName, data.lastName].filter(Boolean).join(' ');
                     form.reset({
-                        name: data.name || user.displayName || "",
+                        name: fullName || user.displayName || "",
                         dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined,
                         gender: data.gender,
                         bloodGroup: data.bloodGroup,
@@ -125,9 +126,13 @@ export function ProfileForm() {
           photoURL: photoURL,
       });
 
+      const [firstName, ...lastNameParts] = data.name.split(' ');
+      const lastName = lastNameParts.join(' ');
+
       const profileData = {
         id: user.uid,
-        name: data.name,
+        firstName: firstName,
+        lastName: lastName,
         email: user.email,
         photoURL: photoURL,
         gender: data.gender,
@@ -334,5 +339,3 @@ export function ProfileForm() {
     </Form>
   );
 }
-
-    

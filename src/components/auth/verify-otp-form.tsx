@@ -85,9 +85,13 @@ export function VerifyOtpForm() {
           displayName: userDetails.name,
         });
         
+        const [firstName, ...lastNameParts] = userDetails.name.split(' ');
+        const lastName = lastNameParts.join(' ');
+
         const profileData = {
             id: userCredential.user.uid,
-            name: userDetails.name,
+            firstName: firstName,
+            lastName: lastName,
             email: userDetails.email,
             phoneNumber: userDetails.phone,
             photoURL: userCredential.user.photoURL,

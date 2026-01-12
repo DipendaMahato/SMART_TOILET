@@ -1,9 +1,8 @@
 export const firebaseConfig = {
-  "projectId": "studio-4897018311-c7624",
-  "appId": "1:231722190452:web:e7e1ff5d19fbc91871b321",
-  "apiKey": "AIzaSyBHyHUEKnwm9PJdmkGLMSeUobDAMV3ubUI",
-  "authDomain": "studio-4897018311-c7624.firebaseapp.com",
-  "storageBucket": "studio-4897018311-c7624.appspot.com",
+  "projectId": "smart-toilet-31317760-e89ba",
+  "appId": "1:729044739156:web:2864cdea949c3e8aff39c1",
+  "apiKey": "AIzaSyCD-XZ5lwOv7MNPhxTARP0hSEchkvg3WBY",
+  "authDomain": "smart-toilet-31317760-e89ba.firebaseapp.com",
   "measurementId": "",
-  "messagingSenderId": "231722190452"
+  "messagingSenderId": "729044739156"
 };

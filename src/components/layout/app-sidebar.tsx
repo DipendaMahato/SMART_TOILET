@@ -26,15 +26,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 
 const navItems = [
-  { href: "/dashboard", icon: Home, label: "Dashboard" },
-  { href: "/dashboard/live-sensor-data", icon: RadioTower, label: "Live Sensor Data" },
-  { href: "/dashboard/ai-process-tracker", icon: BrainCircuit, label: "AI Process Tracker" },
-  { href: "/dashboard/diagnostics", icon: FlaskConical, label: "Diagnostics" },
-  { href: "/dashboard/vitals-trends", icon: Activity, label: "Vitals & Trends" },
-  { href: "/dashboard/health-status", icon: Heart, label: "Health Status" },
-  { href: "/dashboard/clinical-care", icon: Stethoscope, label: "Clinical Care" },
-  { href: "/dashboard/profile", icon: User, label: "Medical Profile" },
-  { href: "/dashboard/settings", icon: Settings, label: "Settings" },
+  { href: "/dashboard", icon: Home, label: "Dashboard", color: "text-glow-cyan-blue" },
+  { href: "/dashboard/live-sensor-data", icon: RadioTower, label: "Live Sensor Data", color: "text-glow-cyan-blue" },
+  { href: "/dashboard/ai-process-tracker", icon: BrainCircuit, label: "AI Process Tracker", color: "text-glow-purple-violet" },
+  { href: "/dashboard/diagnostics", icon: FlaskConical, label: "Diagnostics", color: "text-glow-teal-green" },
+  { href: "/dashboard/vitals-trends", icon: Activity, label: "Vitals & Trends", color: "text-glow-lime-emerald" },
+  { href: "/dashboard/health-status", icon: Heart, label: "Health Status", color: "text-glow-sky-royal-blue" },
+  { href: "/dashboard/clinical-care", icon: Stethoscope, label: "Clinical Care", color: "text-glow-red-rose" },
+  { href: "/dashboard/profile", icon: User, label: "Medical Profile", color: "text-primary" },
+  { href: "/dashboard/settings", icon: Settings, label: "Settings", color: "text-muted-foreground" },
 ];
 
 export default function AppSidebar() {
@@ -66,14 +66,18 @@ export default function AppSidebar() {
               key={item.label}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground transition-all hover:text-primary relative",
-                isActive && "text-glow-mint"
+                "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground transition-all hover:text-primary relative",
+                isActive && item.color
               )}
             >
               {isActive && (
-                 <div className="absolute inset-0 rounded-lg bg-glow-mint/10 border border-glow-mint/50 animate-pulse-glow-soft"></div>
+                 <div className={cn(
+                    "absolute inset-0 rounded-lg animate-pulse-glow-soft",
+                    `bg-${item.color.replace('text-','')}/10`,
+                    `border border-${item.color.replace('text-','')}/50`,
+                 )}></div>
               )}
-              <item.icon className={cn("h-5 w-5", isActive && "text-glow-mint drop-shadow-[0_0_5px_hsl(var(--glow-mint))]")} />
+              <item.icon className={cn("h-5 w-5 transition-all", isActive ? `${item.color} drop-shadow-[0_0_5px_currentColor]` : 'group-hover:text-primary')} />
               <span className="relative">{item.label}</span>
             </Link>
           )})}
@@ -101,4 +105,3 @@ export default function AppSidebar() {
     </aside>
   );
 }
-

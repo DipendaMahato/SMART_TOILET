@@ -1,8 +1,20 @@
 
 import type {Config} from 'tailwindcss';
 
+const colorSafelist = [
+  'bg-glow-cyan-blue/10', 'border-glow-cyan-blue/50',
+  'bg-glow-purple-violet/10', 'border-glow-purple-violet/50',
+  'bg-glow-teal-green/10', 'border-glow-teal-green/50',
+  'bg-glow-lime-emerald/10', 'border-glow-lime-emerald/50',
+  'bg-glow-sky-royal-blue/10', 'border-glow-sky-royal-blue/50',
+  'bg-glow-red-rose/10', 'border-glow-red-rose/50',
+  'bg-primary/10', 'border-primary/50',
+  'bg-muted-foreground/10', 'border-muted-foreground/50',
+];
+
 export default {
   darkMode: ['class'],
+  safelist: process.env.NODE_ENV === 'production' ? colorSafelist : [],
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
@@ -105,8 +117,8 @@ export default {
           '50%': { 'background-position': '100% 50%' },
         },
         'pulse-glow-soft': {
-          '0%, 100%': { opacity: '0.7', 'box-shadow': '0 0 8px 2px hsl(var(--glow-mint) / 0.4)' },
-          '50%': { opacity: '1', 'box-shadow': '0 0 12px 4px hsl(var(--glow-mint) / 0.6)' },
+          '0%, 100%': { opacity: '0.7', 'box-shadow': '0 0 8px 2px currentColor' },
+          '50%': { opacity: '1', 'box-shadow': '0 0 12px 4px currentColor' },
         },
         'light-trace': {
           '0%': { 'background-position': '-100% 0' },

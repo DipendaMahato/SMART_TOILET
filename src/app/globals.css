@@ -13,7 +13,7 @@ body {
     --foreground: 210 40% 98%;
     --card: 222 84% 6%;
     --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
+    --popover: 222 84% 6%; /* Use card color for popover */
     --popover-foreground: 210 40% 98%;
     --primary: 175 48% 55%; /* Teal from logo #50C8C8 */
     --primary-foreground: 222 84% 5%;
@@ -48,7 +48,7 @@ body {
     --foreground: 210 40% 98%;
     --card: 222 84% 6%;
     --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
+    --popover: 222 84% 6%;
     --popover-foreground: 210 40% 98%;
     --primary: 175 48% 55%; /* Teal from logo */
     --primary-foreground: 222 84% 5%;
@@ -86,6 +86,40 @@ body {
     @apply bg-background text-foreground;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* New Calendar Styles */
+  .rdp {
+    --rdp-cell-size: 40px;
+    --rdp-caption-font-size: 18px;
+    --rdp-accent-color: hsl(var(--primary));
+    --rdp-background-color: hsl(var(--card));
+    --rdp-accent-color-dark: hsl(var(--primary));
+    --rdp-background-color-dark: hsl(var(--card));
+    --rdp-outline: 2px solid var(--rdp-accent-color);
+    --rdp-outline-selected: 2px solid hsla(var(--primary), 0.5);
+    --rdp-selected-color: hsl(var(--primary-foreground));
+  }
+
+  .rdp-caption_dropdowns {
+    @apply flex gap-2 mb-4;
+  }
+
+  .rdp-caption_dropdowns .rdp-vhidden {
+      @apply hidden;
+  }
+  
+  .rdp-caption_dropdowns .rdp-dropdown_month,
+  .rdp-caption_dropdowns .rdp-dropdown_year {
+    @apply flex-1;
+  }
+
+  .rdp-dropdown {
+    @apply w-full;
+  }
+
+  .rdp-dropdown select {
+    @apply w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
   }
 }
 

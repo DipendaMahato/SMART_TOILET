@@ -61,7 +61,7 @@ export default function DiagnosticsPage() {
     return (
         <div className="space-y-8 animate-fade-in">
             <div className="animate-slide-up">
-                <h1 className="text-3xl font-headline font-bold">Urine & Stool Diagnostics</h1>
+                <h1 className="text-3xl font-headline font-bold text-transparent bg-clip-text bg-gradient-to-r from-glow-teal-green to-glow-lime-emerald animate-text-gradient bg-400">Urine & Stool Diagnostics</h1>
                 <p className="text-muted-foreground">
                     Diagnostic dashboards for urine and stool analysis, classifications, and risk indicators.
                 </p>

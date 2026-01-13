@@ -43,11 +43,21 @@ const sendOtpFlow = ai.defineFlow(
     });
 
     const mailOptions = {
-      from: process.env.EMAIL_USER,
+      from: 'Smart Toilet App <smarttoiletapp5@gmail.com>',
       to: email,
       subject: 'Your OTP for Smart Toilet App',
-      text: `Your One-Time Password is: ${otp}`,
-      html: `<p>Your One-Time Password is: <b>${otp}</b></p>`,
+      text: `Your OTP for the Smart Toilet App is ${otp}.
+
+Use this code to verify your account.
+Do not share this OTP with anyone.
+— Team Smart Toilet
+
+Developed by Dipendra Mahato`,
+      html: `<p>Your OTP for the Smart Toilet App is <b>${otp}</b>.</p>
+<p>Use this code to verify your account. Do not share this OTP with anyone.</p>
+<p>— Team Smart Toilet</p>
+<br>
+<p>Developed by Dipendra Mahato</p>`,
     };
 
     await transporter.sendMail(mailOptions);

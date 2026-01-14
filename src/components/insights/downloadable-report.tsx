@@ -15,8 +15,10 @@ const getAge = (dob: Date | string | Timestamp) => {
     let birthDate: Date;
     if (dob instanceof Timestamp) {
         birthDate = dob.toDate();
-    } else {
+    } else if (typeof dob === 'string' || dob instanceof Date) {
         birthDate = new Date(dob);
+    } else {
+        return 'N/A';
     }
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
@@ -24,7 +26,7 @@ const getAge = (dob: Date | string | Timestamp) => {
     if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
         age--;
     }
-    return age;
+    return isNaN(age) ? 'N/A' : age;
 };
 
 const getStatusStyle = (isNormal: boolean) => ({
@@ -40,15 +42,20 @@ export const DownloadableReport = forwardRef<HTMLDivElement, ReportProps>(({ dat
     const age = getAge(user?.dateOfBirth);
     const gender = user?.gender ? user.gender.charAt(0).toUpperCase() + user.gender.slice(1) : 'N/A';
     
-    // Urine Data Processing
+    // Safely process health data, providing defaults
     const calculatedPH = health?.ph_level ? (health.ph_level / 2187.5).toFixed(2) : 'N/A';
-    const isPhNormal = parseFloat(calculatedPH) >= 5.0 && parseFloat(calculatedPH) <= 7.5;
-    const isSgNormal = health?.specificGravity >= 1.005 && health?.specificGravity <= 1.030;
-    const isGlucoseNormal = (health?.glucoseValue ?? 0) <= 0;
+    const isPhNormal = calculatedPH !== 'N/A' && parseFloat(calculatedPH) >= 5.0 && parseFloat(calculatedPH) <= 7.5;
     
-    // Stool Data Processing
-    const isBristolNormal = health?.stoolStatus === 'Type 3' || health?.stoolStatus === 'Type 4';
+    const specificGravity = health?.specificGravity ?? 'N/A';
+    const isSgNormal = specificGravity !== 'N/A' && specificGravity >= 1.005 && specificGravity <= 1.030;
 
+    const glucoseValue = health?.glucoseValue ?? 'N/A';
+    const isGlucoseNormal = glucoseValue === 'N/A' || glucoseValue <= 0;
+
+    const bloodDetected = health?.bloodDetected ?? false;
+
+    const stoolStatus = health?.stoolStatus ?? 'N/A';
+    const isBristolNormal = stoolStatus === 'Type 3' || stoolStatus === 'Type 4';
 
     return (
         <div ref={ref} style={{ width: '790px', padding: '40px', background: 'white', color: 'black', fontFamily: "'Arial', sans-serif" }}>
@@ -89,9 +96,9 @@ export const DownloadableReport = forwardRef<HTMLDivElement, ReportProps>(({ dat
                 </thead>
                 <tbody>
                     <tr><td style={{ border: '1px solid #ddd', padding: '8px' }}>pH Level</td><td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>{calculatedPH}</td><td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>5.0 - 7.5</td><td style={{ ...getStatusStyle(isPhNormal), border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>{isPhNormal ? 'NORMAL' : 'ABNORMAL'}</td></tr>
-                    <tr><td style={{ border: '1px solid #ddd', padding: '8px' }}>Specific Gravity</td><td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>{health?.specificGravity || 'N/A'}</td><td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>1.005 - 1.030</td><td style={{ ...getStatusStyle(isSgNormal), border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>{isSgNormal ? 'NORMAL' : 'ABNORMAL'}</td></tr>
-                    <tr><td style={{ border: '1px solid #ddd', padding: '8px' }}>Urine Glucose (Sugar)</td><td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>{isGlucoseNormal ? 'Absent' : 'Present'}</td><td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>Absent</td><td style={{ ...getStatusStyle(isGlucoseNormal), border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>{isGlucoseNormal ? 'NORMAL' : 'ABNORMAL'}</td></tr>
-                    <tr><td style={{ border: '1px solid #ddd', padding: '8px' }}>Blood Detection</td><td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>{health?.bloodDetected ? 'Detected' : 'Negative'}</td><td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>Negative</td><td style={{ ...getStatusStyle(!health?.bloodDetected), border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>{health?.bloodDetected ? 'ABNORMAL' : 'NORMAL'}</td></tr>
+                    <tr><td style={{ border: '1px solid #ddd', padding: '8px' }}>Specific Gravity</td><td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>{specificGravity}</td><td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>1.005 - 1.030</td><td style={{ ...getStatusStyle(isSgNormal), border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>{isSgNormal ? 'NORMAL' : 'ABNORMAL'}</td></tr>
+                    <tr><td style={{ border: '1px solid #ddd', padding: '8px' }}>Urine Glucose (Sugar)</td><td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>{glucoseValue === 'N/A' ? 'N/A' : (isGlucoseNormal ? 'Absent' : 'Present')}</td><td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>Absent</td><td style={{ ...getStatusStyle(isGlucoseNormal), border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>{isGlucoseNormal ? 'NORMAL' : 'ABNORMAL'}</td></tr>
+                    <tr><td style={{ border: '1px solid #ddd', padding: '8px' }}>Blood Detection</td><td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>{bloodDetected ? 'Detected' : 'Negative'}</td><td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>Negative</td><td style={{ ...getStatusStyle(!bloodDetected), border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>{!bloodDetected ? 'NORMAL' : 'ABNORMAL'}</td></tr>
                 </tbody>
             </table>
 
@@ -106,7 +113,7 @@ export const DownloadableReport = forwardRef<HTMLDivElement, ReportProps>(({ dat
                     </tr>
                 </thead>
                 <tbody>
-                    <tr><td style={{ border: '1px solid #ddd', padding: '8px' }}>Bristol Stool Scale</td><td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>{health?.stoolStatus || 'N/A'}</td><td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>Type 3 - Type 4</td><td style={{ ...getStatusStyle(isBristolNormal), border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>{isBristolNormal ? 'NORMAL' : 'ABNORMAL'}</td></tr>
+                    <tr><td style={{ border: '1px solid #ddd', padding: '8px' }}>Bristol Stool Scale</td><td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>{stoolStatus}</td><td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>Type 3 - Type 4</td><td style={{ ...getStatusStyle(isBristolNormal), border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>{isBristolNormal ? 'NORMAL' : 'ABNORMAL'}</td></tr>
                 </tbody>
             </table>
 
@@ -123,4 +130,3 @@ export const DownloadableReport = forwardRef<HTMLDivElement, ReportProps>(({ dat
 });
 
 DownloadableReport.displayName = 'DownloadableReport';
-

@@ -107,8 +107,8 @@ export default function HealthStatusPage() {
                       margin:       0,
                       filename:     `Health_Report_${user.displayName?.replace(' ', '_') || 'User'}.pdf`,
                       image:        { type: 'jpeg', quality: 0.98 },
-                      html2canvas:  { scale: 3, useCORS: true, y: 0 },
-                      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                      html2canvas:  { scale: 3, useCORS: true },
+                      jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
                   };
                   window.html2pdf().from(element).set(opt).save();
               }

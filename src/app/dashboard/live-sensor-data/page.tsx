@@ -1,8 +1,9 @@
 
 'use client';
 import { useState } from 'react';
-import { useUser, useDatabase, useRtdbValue, useMemoFirebase } from '@/firebase';
-import { ref } from 'firebase/database';
+import { useUser } from '@/firebase';
+import { useDatabase, useRtdbValue, useMemoFirebase } from '@/firebase';
+import { ref, update } from 'firebase/database';
 import { SensorCard } from '@/components/dashboard/sensor-card';
 import { CircularGauge } from '@/components/charts/circular-gauge';
 import { SemiCircleGauge } from '@/components/charts/semi-circle-gauge';
@@ -18,18 +19,21 @@ export default function LiveSensorDataPage() {
     const database = useDatabase();
 
     // The user ID '1O2EApXi4cUEZVieIjWVKivS7Xr1' is hardcoded for demonstration.
-    // In a real app, you would use the logged-in user's ID: user.uid
-    const targetUid = '1O2EApXi4cUEZVieIjWVKivS7Xr1';
+    // In a real app, you would use the logged-in user's ID: user?.uid
+    const targetUid = user?.uid || '1O2EApXi4cUEZVieIjWVKivS7Xr1';
 
     const sensorDataRef = useMemoFirebase(() => {
         if (!database) return null;
         return ref(database, `Users/${targetUid}/sensorData`);
     }, [database, targetUid]);
 
-    const { data: latestData, isLoading } = useRtdbValue(sensorDataRef);
+    const { data: latestData } = useRtdbValue(sensorDataRef);
 
-    const [autoFlush, setAutoFlush] = useState(true);
-    const [lightControl, setLightControl] = useState(false);
+    const sendCommand = (key: string, value: boolean) => {
+        if (!sensorDataRef) return;
+        update(sensorDataRef, { [key]: value })
+            .catch((err) => alert("Error sending command: " + err.message));
+    };
 
     const StatusBadge = ({ label, status }: { label: string, status: 'OK' | 'HIGH' | 'MED' }) => {
         const statusClasses = {
@@ -176,11 +180,17 @@ export default function LiveSensorDataPage() {
                     <div className="space-y-2 mt-2">
                         <div className='flex justify-between items-center'>
                             <p className='text-sm text-gray-400'>Auto Flush</p>
-                            <Switch checked={autoFlush} onCheckedChange={setAutoFlush} />
+                            <Switch 
+                                checked={latestData?.autoFlushEnable || false} 
+                                onCheckedChange={(checked) => sendCommand('autoFlushEnable', checked)} 
+                            />
                         </div>
                         <div className='flex justify-between items-center'>
                             <p className='text-sm text-gray-400'>Light Control</p>
-                            <Switch checked={lightControl} onCheckedChange={setLightControl} />
+                            <Switch
+                                checked={latestData?.lightStatus || false} 
+                                onCheckedChange={(checked) => sendCommand('lightStatus', checked)} 
+                            />
                         </div>
                     </div>
                 </SensorCard>

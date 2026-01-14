@@ -1,6 +1,8 @@
 
 'use client';
 import { useState, useEffect } from 'react';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy, limit } from 'firebase/firestore';
 import { SensorCard } from '@/components/dashboard/sensor-card';
 import { CircularGauge } from '@/components/charts/circular-gauge';
 import { SemiCircleGauge } from '@/components/charts/semi-circle-gauge';
@@ -12,29 +14,23 @@ import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 
 export default function LiveSensorDataPage() {
-    const [usageStatus, setUsageStatus] = useState(1);
-    const [specificGravity, setSpecificGravity] = useState(1.015);
-    const [flushCount, setFlushCount] = useState(42);
-    const [ammonia, setAmmonia] = useState(5.18);
-    const [turbidity, setTurbidity] = useState(35);
-    const [battery, setBattery] = useState(82);
-    const [connectivity, setConnectivity] = useState(true);
+    const { user } = useUser();
+    const firestore = useFirestore();
+
+    const healthDataQuery = useMemoFirebase(() => {
+        if (!user || !firestore) return null;
+        return query(
+            collection(firestore, `users/${user.uid}/healthData`),
+            orderBy('timestamp', 'desc'),
+            limit(1)
+        );
+    }, [user, firestore]);
+
+    const { data: healthData, isLoading } = useCollection(healthDataQuery);
+    const latestData = healthData?.[0];
+
     const [autoFlush, setAutoFlush] = useState(true);
     const [lightControl, setLightControl] = useState(false);
-    const [chemicalLevel, setChemicalLevel] = useState(85);
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setUsageStatus(Math.round(Math.random()));
-            // Normal range: 1.005 to 1.030
-            setSpecificGravity(1.005 + Math.random() * (1.030 - 1.005));
-            setAmmonia(Math.random() * 2 + 4);
-            setTurbidity(Math.floor(Math.random() * 40) + 20);
-            setBattery(Math.floor(Math.random() * 15) + 80);
-            setChemicalLevel(Math.floor(Math.random() * 100));
-        }, 3000);
-        return () => clearInterval(interval);
-    }, []);
 
     const StatusBadge = ({ label, status }: { label: string, status: 'OK' | 'HIGH' | 'MED' }) => {
         const statusClasses = {
@@ -73,14 +69,14 @@ export default function LiveSensorDataPage() {
                 {/* Row 1 */}
                 <SensorCard className="lg:col-span-1 flex flex-col items-center justify-center animate-slide-up" style={{ animationDelay: '200ms' }}>
                     <h3 className="font-semibold text-gray-300 mb-4">Toilet Usage Status</h3>
-                    <CircularGauge value={usageStatus === 1 ? 100 : 0} label={usageStatus === 1 ? "NOT IN USE" : "IN USE"} />
-                    <p className="text-xs text-gray-500 mt-4">{usageStatus === 1 ? 'Status: Available' : 'Status: Occupied'}</p>
+                    <CircularGauge value={latestData?.isOccupied ? 100 : 0} label={latestData?.isOccupied ? "IN USE" : "NOT IN USE"} />
+                    <p className="text-xs text-gray-500 mt-4">{latestData?.isOccupied ? 'Status: Occupied' : 'Status: Available'}</p>
                 </SensorCard>
 
                 <SensorCard className="border-green-500/50 shadow-green-500/20 lg:col-span-1 flex flex-col items-center justify-center animate-slide-up" style={{ animationDelay: '300ms' }}>
                      <h3 className="font-semibold text-green-400 mb-2">Leakage Alert Status</h3>
                      <ShieldCheck className="text-green-500 h-10 w-10" />
-                     <p className="text-sm font-bold text-green-400 my-2">CRITICAL LEAK NOT DETECTED!</p>
+                     <p className="text-sm font-bold text-green-400 my-2">{latestData?.leakageDetected ? 'CRITICAL LEAK DETECTED!' : 'NO LEAKS DETECTED'}</p>
                      <div className="w-full h-16">
                         <JaggedLineChart />
                      </div>
@@ -90,16 +86,16 @@ export default function LiveSensorDataPage() {
                     <h3 className="font-semibold text-gray-300 mb-4">Urine Test Analysis</h3>
                     <CircularGauge value={85} />
                     <div className="flex gap-4 mt-4">
-                       <StatusBadge label="Glucose" status="OK" />
-                       <StatusBadge label="Nitrite" status="HIGH" />
+                       <StatusBadge label="Glucose" status={latestData?.urineGlucose > 140 ? 'HIGH' : 'OK'} />
+                       <StatusBadge label="Protein" status={latestData?.urineProtein > 20 ? 'HIGH' : 'OK'} />
                     </div>
                 </SensorCard>
 
                 {/* Row 2 */}
                 <SensorCard className="flex flex-col items-center justify-center animate-slide-up" style={{ animationDelay: '500ms' }}>
                     <h3 className="font-semibold text-gray-300 mb-2 self-start">Specific Gravity</h3>
-                    <SemiCircleGauge value={normalizeSpecificGravity(specificGravity)} />
-                    <p className="text-xl font-bold text-gray-200 mt-2">{specificGravity.toFixed(3)}</p>
+                    <SemiCircleGauge value={normalizeSpecificGravity(latestData?.urineSpecificGravity || 1.015)} />
+                    <p className="text-xl font-bold text-gray-200 mt-2">{(latestData?.urineSpecificGravity || 0).toFixed(3)}</p>
                     <p className="text-xs text-gray-500">Normal Range: 1.005 - 1.030</p>
                 </SensorCard>
                 
@@ -108,20 +104,20 @@ export default function LiveSensorDataPage() {
                     <div className="w-full h-24">
                         <TinyAreaChart />
                     </div>
-                    <p className="text-sm text-gray-400 text-right">2.4 L/min</p>
+                    <p className="text-sm text-gray-400 text-right">{latestData?.waterFlowRate || 0} L/min</p>
                 </SensorCard>
                 
                 <div className="grid grid-rows-2 gap-6">
                     <SensorCard className="flex flex-col items-center justify-center text-center animate-slide-up" style={{ animationDelay: '700ms' }}>
                         <h3 className="font-semibold text-gray-300">Flush Usage Counter</h3>
-                        <p className="text-5xl font-bold text-teal-400 my-1">{flushCount}</p>
+                        <p className="text-5xl font-bold text-teal-400 my-1">{latestData?.flushCount || 0}</p>
                         <p className="text-xs text-gray-500">Flushes Today</p>
                     </SensorCard>
                      <SensorCard className="animate-slide-up" style={{ animationDelay: '800ms' }}>
                         <h3 className="font-semibold text-gray-300 text-sm mb-2">Analysis in progress...</h3>
                         <div className="space-y-1">
-                            <StatusBadge label="Glucose" status="OK" />
-                            <StatusBadge label="Protein" status="HIGH" />
+                            <StatusBadge label="Urine pH" status={latestData?.urinePH > 7.5 ? 'HIGH' : 'OK'} />
+                            <StatusBadge label="Protein" status={latestData?.urineProtein > 20 ? 'HIGH' : 'OK'} />
                         </div>
                     </SensorCard>
                 </div>
@@ -129,20 +125,20 @@ export default function LiveSensorDataPage() {
                 {/* Row 3 */}
                 <SensorCard className="flex flex-col items-center justify-center animate-slide-up" style={{ animationDelay: '900ms' }}>
                      <h3 className="font-semibold text-gray-300 mb-2">Chemical Level Status</h3>
-                     <FlaskConical className={cn("h-10 w-10", getChemicalColor(chemicalLevel))} />
-                     <p className={cn("text-lg font-bold mt-2", getChemicalColor(chemicalLevel))}>{chemicalLevel}%</p>
+                     <FlaskConical className={cn("h-10 w-10", getChemicalColor(latestData?.chemicalLevel || 0))} />
+                     <p className={cn("text-lg font-bold mt-2", getChemicalColor(latestData?.chemicalLevel || 0))}>{latestData?.chemicalLevel || 0}%</p>
                 </SensorCard>
 
                 <div className="grid grid-cols-2 gap-6">
                      <SensorCard className="flex flex-col items-center justify-center animate-slide-up" style={{ animationDelay: '1000ms' }}>
                         <h3 className="font-semibold text-gray-300 text-sm mb-2">Ammonia Gas</h3>
-                        <SemiCircleGauge value={(ammonia / 10) * 100} size="sm" />
-                        <p className="text-xs text-gray-500 mt-1">{ammonia.toFixed(2)} ppm</p>
+                        <SemiCircleGauge value={((latestData?.ammoniaLevel || 0) / 10) * 100} size="sm" />
+                        <p className="text-xs text-gray-500 mt-1">{(latestData?.ammoniaLevel || 0).toFixed(2)} ppm</p>
                     </SensorCard>
                      <SensorCard className="flex flex-col items-center justify-center animate-slide-up" style={{ animationDelay: '1100ms' }}>
                         <h3 className="font-semibold text-gray-300 text-sm mb-2">Turbidity</h3>
-                        <SemiCircleGauge value={turbidity} size="sm" />
-                        <p className="text-xs text-gray-500 mt-1">{turbidity} NTU</p>
+                        <SemiCircleGauge value={latestData?.turbidity || 0} size="sm" />
+                        <p className="text-xs text-gray-500 mt-1">{latestData?.turbidity || 0} NTU</p>
                     </SensorCard>
                 </div>
 
@@ -150,14 +146,14 @@ export default function LiveSensorDataPage() {
                      <SensorCard className="flex items-center justify-between px-4 animate-slide-up" style={{ animationDelay: '1200ms' }}>
                         <h3 className="font-semibold text-gray-300 text-sm">Battery</h3>
                         <div className="flex items-center gap-2">
-                           <p className="text-sm font-bold text-gray-200">{battery}%</p>
+                           <p className="text-sm font-bold text-gray-200">{latestData?.batteryLevel || 0}%</p>
                            <BatteryFull className="h-6 w-6 text-green-400"/>
                         </div>
                     </SensorCard>
                     <SensorCard className="flex items-center justify-between px-4 animate-slide-up" style={{ animationDelay: '1300ms' }}>
                         <h3 className="font-semibold text-gray-300 text-sm">Connectivity</h3>
                          <div className="flex items-center gap-2">
-                           <p className="text-sm font-bold text-gray-200">ONLINE</p>
+                           <p className="text-sm font-bold text-gray-200">{latestData?.isOnline ? 'ONLINE' : 'OFFLINE'}</p>
                            <Wifi className="h-6 w-6 text-teal-400"/>
                         </div>
                     </SensorCard>
@@ -165,7 +161,7 @@ export default function LiveSensorDataPage() {
                  <SensorCard className="flex items-center justify-between px-4 animate-slide-up" style={{ animationDelay: '1400ms' }}>
                     <h3 className="font-semibold text-gray-300 text-sm">System Connectivity</h3>
                     <div className="flex items-center gap-2">
-                        <p className="text-2xl font-bold text-gray-200">{battery}%</p>
+                        <p className="text-2xl font-bold text-gray-200">{latestData?.signalStrength || 0}%</p>
                         <Signal className="h-6 w-6 text-green-400"/>
                     </div>
                 </SensorCard>
@@ -174,7 +170,7 @@ export default function LiveSensorDataPage() {
                     <h3 className="font-semibold text-gray-300 mb-2">Stool Test Analysis</h3>
                     <div className="flex items-center gap-2">
                        <Calendar className="h-5 w-5 text-gray-500"/>
-                       <p className="text-sm font-bold text-green-400">LAST TEST: NORMAL</p>
+                       <p className="text-sm font-bold text-green-400">LAST TEST: {latestData?.stoolConsistency || 'N/A'}</p>
                     </div>
                 </SensorCard>
                  <SensorCard className="animate-slide-up" style={{ animationDelay: '1600ms' }}>
@@ -194,11 +190,3 @@ export default function LiveSensorDataPage() {
         </div>
     );
 }
-
-  
-
-    
-
-    
-
-    

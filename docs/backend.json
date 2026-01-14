@@ -104,6 +104,46 @@
         "stoolColor": {
           "type": "string",
           "description": "Stool color description."
+        },
+        "isOccupied": {
+          "type": "boolean",
+          "description": "Indicates if the toilet is currently occupied."
+        },
+        "leakageDetected": {
+          "type": "boolean",
+          "description": "Indicates if a water leak is detected."
+        },
+        "waterFlowRate": {
+          "type": "number",
+          "description": "Current water flow rate in L/min."
+        },
+        "flushCount": {
+          "type": "number",
+          "description": "Number of flushes in a given period."
+        },
+        "chemicalLevel": {
+          "type": "number",
+          "description": "Remaining cleaning chemical level in percent."
+        },
+        "ammoniaLevel": {
+          "type": "number",
+          "description": "Ammonia gas level in ppm."
+        },
+        "turbidity": {
+          "type": "number",
+          "description": "Water turbidity level in NTU."
+        },
+        "batteryLevel": {
+          "type": "number",
+          "description": "Device battery level in percent."
+        },
+        "isOnline": {
+          "type": "boolean",
+          "description": "Indicates if the device is connected to the internet."
+        },
+        "signalStrength": {
+            "type": "number",
+            "description": "Device network signal strength in percent."
         }
       },
       "required": [

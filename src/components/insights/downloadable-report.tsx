@@ -31,7 +31,7 @@ const getAge = (dob: Date | string | Timestamp) => {
 
 const getStatusStyle = (isNormal: boolean) => ({
   color: isNormal ? 'green' : 'red',
-  fontWeight: 'bold',
+  fontWeight: 'bold' as 'bold',
 });
 
 export const DownloadableReport = forwardRef<HTMLDivElement, ReportProps>(({ data }, ref) => {
@@ -47,12 +47,6 @@ export const DownloadableReport = forwardRef<HTMLDivElement, ReportProps>(({ dat
     
     const specificGravity = health?.specificGravity ?? 'N/A';
     const isSgNormal = specificGravity !== 'N/A' && specificGravity >= 1.005 && specificGravity <= 1.030;
-
-    const glucoseValue = health?.glucoseValue ?? 'Absent';
-    const isGlucoseNormal = glucoseValue === 'Absent';
-
-    const proteinValue = health?.proteinValue ?? 'Absent';
-    const isProteinNormal = proteinValue === 'Absent';
 
     const bloodDetected = health?.bloodDetected ?? false;
 
@@ -102,50 +96,51 @@ export const DownloadableReport = forwardRef<HTMLDivElement, ReportProps>(({ dat
                         <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>Transparency</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Clear</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Clear</td><td style={{ ...getStatusStyle(true), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>NORMAL</td></tr>
                         <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>pH Level</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{calculatedPH}</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>5.0 - 7.5</td><td style={{ ...getStatusStyle(isPhNormal), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{isPhNormal ? 'NORMAL' : 'ABNORMAL'}</td></tr>
                         <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>Specific Gravity</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{specificGravity}</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>1.005 - 1.030</td><td style={{ ...getStatusStyle(isSgNormal), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{isSgNormal ? 'NORMAL' : 'ABNORMAL'}</td></tr>
-                        <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>Glucose (Sugar)</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{glucoseValue}</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Absent</td><td style={{ ...getStatusStyle(isGlucoseNormal), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{isGlucoseNormal ? 'NORMAL' : 'ABNORMAL'}</td></tr>
-                        <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>Protein (Albumin)</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{proteinValue}</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Absent</td><td style={{ ...getStatusStyle(isProteinNormal), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{isProteinNormal ? 'NORMAL' : 'ABNORMAL'}</td></tr>
+                        <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>Glucose (Sugar)</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Absent</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Absent</td><td style={{ ...getStatusStyle(true), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>NORMAL</td></tr>
+                        <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>Protein (Albumin)</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Absent</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Absent</td><td style={{ ...getStatusStyle(true), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>NORMAL</td></tr>
                         <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>Blood</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{bloodDetected ? 'Detected' : 'Negative'}</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Negative</td><td style={{ ...getStatusStyle(!bloodDetected), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{!bloodDetected ? 'NORMAL' : 'ABNORMAL'}</td></tr>
                         <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>Nitrite</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Negative</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Negative</td><td style={{ ...getStatusStyle(true), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>NORMAL</td></tr>
                     </tbody>
                 </table>
-
-                <h3 style={{ background: '#004a99', color: 'white', padding: '5px 10px', fontSize: '16px', borderRadius: '4px 4px 0 0', margin: '15px 0 0 0' }}>STOOL ANALYSIS (AI PROCESS TRACKER)</h3>
-                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '15px', fontSize: '13px' }}>
-                    <thead style={{ background: '#f2f2f2' }}>
-                        <tr>
-                            <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'left' }}>TEST PARAMETER</th>
-                            <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>VALUE</th>
-                            <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>REFERENCE RANGE</th>
-                            <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>STATUS</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td style={{ border: '1px solid #ddd', padding: '6px' }}>Bristol Stool Type</td>
-                            <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{stoolStatus === 'N/A' ? 'N/A' : stoolStatus}</td>
-                            <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Type 3 - 4</td>
-                            <td style={{ ...getStatusStyle(isBristolNormal), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{isBristolNormal ? 'NORMAL' : 'ABNORMAL'}</td>
-                        </tr>
-                        <tr>
-                            <td style={{ border: '1px solid #ddd', padding: '6px' }}>Consistency</td>
-                            <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Smooth and Soft</td>
-                            <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Smooth and Soft</td>
-                            <td style={{ ...getStatusStyle(true), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>NORMAL</td>
-                        </tr>
-                        <tr>
-                            <td style={{ border: '1px solid #ddd', padding: '6px' }}>Occult Blood (AI)</td>
-                            <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Negative</td>
-                            <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Negative</td>
-                            <td style={{ ...getStatusStyle(true), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>NORMAL</td>
-                        </tr>
-                        <tr>
-                            <td style={{ border: '1px solid #ddd', padding: '6px' }}>AI Color Marker</td>
-                            <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Brown</td>
-                            <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Brown / Typical</td>
-                            <td style={{ ...getStatusStyle(true), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>NORMAL</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div style={{ pageBreakBefore: 'always' }}>
+                    <h3 style={{ background: '#004a99', color: 'white', padding: '5px 10px', fontSize: '16px', borderRadius: '4px 4px 0 0', margin: '15px 0 0 0' }}>STOOL ANALYSIS (AI PROCESS TRACKER)</h3>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '15px', fontSize: '13px' }}>
+                        <thead style={{ background: '#f2f2f2' }}>
+                            <tr>
+                                <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'left' }}>TEST PARAMETER</th>
+                                <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>VALUE</th>
+                                <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>REFERENCE RANGE</th>
+                                <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>STATUS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style={{ border: '1px solid #ddd', padding: '6px' }}>Bristol Stool Type</td>
+                                <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{stoolStatus === 'N/A' ? 'N/A' : stoolStatus}</td>
+                                <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Type 3 - 4</td>
+                                <td style={{ ...getStatusStyle(isBristolNormal), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{isBristolNormal ? 'NORMAL' : 'ABNORMAL'}</td>
+                            </tr>
+                            <tr>
+                                <td style={{ border: '1px solid #ddd', padding: '6px' }}>Consistency</td>
+                                <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Smooth and Soft</td>
+                                <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Smooth and Soft</td>
+                                <td style={{ ...getStatusStyle(true), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>NORMAL</td>
+                            </tr>
+                            <tr>
+                                <td style={{ border: '1px solid #ddd', padding: '6px' }}>Occult Blood (AI)</td>
+                                <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Negative</td>
+                                <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Negative</td>
+                                <td style={{ ...getStatusStyle(true), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>NORMAL</td>
+                            </tr>
+                            <tr>
+                                <td style={{ border: '1px solid #ddd', padding: '6px' }}>AI Color Marker</td>
+                                <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Brown</td>
+                                <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Brown / Typical</td>
+                                <td style={{ ...getStatusStyle(true), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>NORMAL</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
 
                 <div style={{ padding: '10px', border: '1px solid #22d3ee', background: '#f0fbff', borderRadius: '5px' }}>
                     <p style={{ margin: 0, fontSize: '14px' }}><strong>AI Clinical Summary:</strong> All physiological markers for the current period are within optimal reference ranges. No abnormal chemical or physical markers were detected in urine or stool analysis.</p>
@@ -161,5 +156,3 @@ export const DownloadableReport = forwardRef<HTMLDivElement, ReportProps>(({ dat
 });
 
 DownloadableReport.displayName = 'DownloadableReport';
-
-    

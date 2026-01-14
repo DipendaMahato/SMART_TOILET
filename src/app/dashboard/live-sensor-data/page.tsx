@@ -1,6 +1,6 @@
 
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, limit } from 'firebase/firestore';
 import { SensorCard } from '@/components/dashboard/sensor-card';
@@ -190,3 +190,5 @@ export default function LiveSensorDataPage() {
         </div>
     );
 }
+
+    

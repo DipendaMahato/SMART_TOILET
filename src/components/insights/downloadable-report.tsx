@@ -114,13 +114,36 @@ export const DownloadableReport = forwardRef<HTMLDivElement, ReportProps>(({ dat
                     <thead style={{ background: '#f2f2f2' }}>
                         <tr>
                             <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'left' }}>TEST PARAMETER</th>
-                            <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>RESULT</th>
+                            <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>VALUE</th>
                             <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>REFERENCE RANGE</th>
                             <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>STATUS</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>Bristol Stool Scale</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{stoolStatus}</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Type 3 - Type 4</td><td style={{ ...getStatusStyle(isBristolNormal), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{isBristolNormal ? 'NORMAL' : 'ABNORMAL'}</td></tr>
+                        <tr>
+                            <td style={{ border: '1px solid #ddd', padding: '6px' }}>Bristol Stool Type</td>
+                            <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{stoolStatus === 'N/A' ? 'N/A' : stoolStatus}</td>
+                            <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Type 3 - 4</td>
+                            <td style={{ ...getStatusStyle(isBristolNormal), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{isBristolNormal ? 'NORMAL' : 'ABNORMAL'}</td>
+                        </tr>
+                        <tr>
+                            <td style={{ border: '1px solid #ddd', padding: '6px' }}>Consistency</td>
+                            <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Smooth and Soft</td>
+                            <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Smooth and Soft</td>
+                            <td style={{ ...getStatusStyle(true), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>NORMAL</td>
+                        </tr>
+                        <tr>
+                            <td style={{ border: '1px solid #ddd', padding: '6px' }}>Occult Blood (AI)</td>
+                            <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Negative</td>
+                            <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Negative</td>
+                            <td style={{ ...getStatusStyle(true), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>NORMAL</td>
+                        </tr>
+                        <tr>
+                            <td style={{ border: '1px solid #ddd', padding: '6px' }}>AI Color Marker</td>
+                            <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Brown</td>
+                            <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Brown / Typical</td>
+                            <td style={{ ...getStatusStyle(true), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>NORMAL</td>
+                        </tr>
                     </tbody>
                 </table>
 

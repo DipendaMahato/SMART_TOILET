@@ -74,6 +74,8 @@ export default {
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
         'glass-white': 'rgba(255, 255, 255, 0.5)',
+        'slate-900': '#0f172a',
+        'slate-600': '#475569',
         status: {
           green: 'hsl(var(--status-green))',
           yellow: 'hsl(var(--status-yellow))',

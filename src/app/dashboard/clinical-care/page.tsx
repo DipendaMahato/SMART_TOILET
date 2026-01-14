@@ -169,6 +169,7 @@ export default function ClinicalCarePage() {
                         )}
                         <h3 className="font-headline text-xl font-semibold text-slate-900">{doctor.name}</h3>
                         <p className={cn("font-medium text-sm", doctor.theme.text)}>{doctor.category}</p>
+                        <p className="text-xs text-slate-600 mt-1">{doctor.experience}</p>
                     </CardContent>
                   </Card>
               </div>

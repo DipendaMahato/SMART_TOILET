@@ -20,9 +20,6 @@ export default function LiveSensorDataPage() {
     useEffect(() => {
         if (!user?.uid) return;
         
-        // It's safer to initialize database inside useEffect when it depends on client-side state/config,
-        // but since useDatabase hook handles context, we can call it at the top level.
-        // For direct SDK usage, you'd do it here.
         const database = getDatabase();
         const sensorDataRef = ref(database, `Users/${user.uid}/sensorData`);
         
@@ -61,8 +58,10 @@ export default function LiveSensorDataPage() {
         return 'text-green-400';
     }
 
-    const calculatedPH = latestData?.ph_level ? (latestData.ph_level / 2187.5).toFixed(2) : '6.8';
-    const phStatus = parseFloat(calculatedPH) > 8.0 ? "HIGH" : "NORMAL";
+    const calculatedPH = latestData?.ph_level ? parseFloat(latestData.ph_level).toFixed(2) : '6.8';
+    const isPhNormal = parseFloat(calculatedPH) >= 4.5 && parseFloat(calculatedPH) <= 8.0;
+    const phStatus = isPhNormal ? "NORMAL" : "WARNING";
+
 
     return (
         <div className="bg-navy p-4 md:p-8 rounded-2xl animate-fade-in min-h-full">
@@ -79,7 +78,7 @@ export default function LiveSensorDataPage() {
                             <h3 className="font-semibold text-gray-300">Urine pH Level</h3>
                              <StatusBadge 
                                 status={phStatus} 
-                                className={phStatus === 'HIGH' ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-green-500/20 text-green-400 border-green-500/30'}
+                                className={!isPhNormal ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-green-500/20 text-green-400 border-green-500/30'}
                             />
                         </div>
                         <p className="text-5xl font-bold text-gray-200 my-4">{calculatedPH}</p>

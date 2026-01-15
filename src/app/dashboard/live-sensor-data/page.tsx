@@ -216,8 +216,5 @@ export default function LiveSensorDataPage() {
             </div>
         </div>
     );
-}
-
-    
 
     

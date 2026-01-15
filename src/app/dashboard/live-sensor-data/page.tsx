@@ -1,7 +1,8 @@
+
 'use client';
 import { useState, useEffect } from 'react';
-import { useUser, useDatabase } from '@/firebase';
-import { ref, onValue, update } from 'firebase/database';
+import { useUser } from '@/firebase';
+import { getDatabase, ref, onValue, update } from 'firebase/database';
 import { SensorCard } from '@/components/dashboard/sensor-card';
 import { CircularGauge } from '@/components/charts/circular-gauge';
 import { SemiCircleGauge } from '@/components/charts/semi-circle-gauge';
@@ -14,12 +15,15 @@ import { Switch } from '@/components/ui/switch';
 
 export default function LiveSensorDataPage() {
     const { user } = useUser();
-    const database = useDatabase();
     const [latestData, setLatestData] = useState<any>(null);
 
     useEffect(() => {
-        if (!database || !user?.uid) return;
-
+        if (!user?.uid) return;
+        
+        // It's safer to initialize database inside useEffect when it depends on client-side state/config,
+        // but since useDatabase hook handles context, we can call it at the top level.
+        // For direct SDK usage, you'd do it here.
+        const database = getDatabase();
         const sensorDataRef = ref(database, `Users/${user.uid}/sensorData`);
         
         const unsubscribe = onValue(sensorDataRef, (snapshot) => {
@@ -31,11 +35,12 @@ export default function LiveSensorDataPage() {
 
         // Cleanup subscription on component unmount
         return () => unsubscribe();
-    }, [database, user?.uid]);
+    }, [user?.uid]);
 
 
     const sendCommand = (key: string, value: boolean) => {
-        if (!database || !user?.uid) return;
+        if (!user?.uid) return;
+        const database = getDatabase();
         const sensorDataRef = ref(database, `Users/${user.uid}/sensorData`);
         update(sensorDataRef, { [key]: value })
             .catch((err) => alert("Error sending command: " + err.message));
@@ -56,7 +61,7 @@ export default function LiveSensorDataPage() {
         return 'text-green-400';
     }
 
-    const calculatedPH = latestData?.ph_level ? (latestData.ph_level / 2187.5).toFixed(2) : '0.00';
+    const calculatedPH = latestData?.ph_level ? (latestData.ph_level / 2187.5).toFixed(2) : '6.8';
     const phStatus = parseFloat(calculatedPH) > 8.0 ? "HIGH" : "NORMAL";
 
     return (

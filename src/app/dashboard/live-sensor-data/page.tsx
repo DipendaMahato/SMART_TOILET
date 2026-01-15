@@ -1,9 +1,7 @@
-
 'use client';
-import { useState } from 'react';
-import { useUser } from '@/firebase';
-import { useDatabase, useRtdbValue, useMemoFirebase } from '@/firebase';
-import { ref, update } from 'firebase/database';
+import { useState, useEffect } from 'react';
+import { useUser, useDatabase } from '@/firebase';
+import { ref, onValue, update } from 'firebase/database';
 import { SensorCard } from '@/components/dashboard/sensor-card';
 import { CircularGauge } from '@/components/charts/circular-gauge';
 import { SemiCircleGauge } from '@/components/charts/semi-circle-gauge';
@@ -17,16 +15,28 @@ import { Switch } from '@/components/ui/switch';
 export default function LiveSensorDataPage() {
     const { user } = useUser();
     const database = useDatabase();
+    const [latestData, setLatestData] = useState<any>(null);
 
-    const sensorDataRef = useMemoFirebase(() => {
-        if (!database || !user?.uid) return null;
-        return ref(database, `Users/${user.uid}/sensorData`);
+    useEffect(() => {
+        if (!database || !user?.uid) return;
+
+        const sensorDataRef = ref(database, `Users/${user.uid}/sensorData`);
+        
+        const unsubscribe = onValue(sensorDataRef, (snapshot) => {
+            const data = snapshot.val();
+            setLatestData(data);
+        }, (error) => {
+            console.error("Firebase onValue error:", error);
+        });
+
+        // Cleanup subscription on component unmount
+        return () => unsubscribe();
     }, [database, user?.uid]);
 
-    const { data: latestData } = useRtdbValue(sensorDataRef);
 
     const sendCommand = (key: string, value: boolean) => {
-        if (!sensorDataRef) return;
+        if (!database || !user?.uid) return;
+        const sensorDataRef = ref(database, `Users/${user.uid}/sensorData`);
         update(sensorDataRef, { [key]: value })
             .catch((err) => alert("Error sending command: " + err.message));
     };
@@ -212,5 +222,5 @@ export default function LiveSensorDataPage() {
             </div>
         </div>
     );
-
+}
     

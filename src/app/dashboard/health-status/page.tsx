@@ -9,6 +9,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { DownloadableReport } from '@/components/insights/downloadable-report';
 import { useUser, useFirestore } from '@/firebase';
 import { doc, getDoc, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { HealthAssistantWidget } from '@/components/dashboard/health-assistant-widget';
 
 const summaryCards = [
   {
@@ -181,6 +182,10 @@ export default function HealthStatusPage() {
         <p className="text-xs text-muted-foreground mt-2">
           {currentDate ? `Last Assessment: ${currentDate}` : 'Loading date...'} - Data Period: Last 7 Days
         </p>
+      </div>
+
+      <div className="animate-slide-up" style={{ animationDelay: '300ms' }}>
+        <HealthAssistantWidget />
       </div>
 
       <div className="animate-slide-up text-center" style={{ animationDelay: '200ms' }}>

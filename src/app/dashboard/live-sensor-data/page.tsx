@@ -18,14 +18,10 @@ export default function LiveSensorDataPage() {
     const { user } = useUser();
     const database = useDatabase();
 
-    // The user ID '1O2EApXi4cUEZVieIjWVKivS7Xr1' is hardcoded for demonstration.
-    // In a real app, you would use the logged-in user's ID: user?.uid
-    const targetUid = user?.uid || '1O2EApXi4cUEZVieIjWVKivS7Xr1';
-
     const sensorDataRef = useMemoFirebase(() => {
-        if (!database) return null;
-        return ref(database, `Users/${targetUid}/sensorData`);
-    }, [database, targetUid]);
+        if (!database || !user?.uid) return null;
+        return ref(database, `Users/${user.uid}/sensorData`);
+    }, [database, user?.uid]);
 
     const { data: latestData } = useRtdbValue(sensorDataRef);
 

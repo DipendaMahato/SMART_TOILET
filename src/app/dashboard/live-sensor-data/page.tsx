@@ -62,7 +62,7 @@ export default function LiveSensorDataPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 
-                <SensorCard className="flex flex-col justify-between animate-slide-up" style={{ animationDelay: '200ms' }}>
+                <SensorCard className="flex flex-col justify-between animate-slide-up border-glow-teal-green/50" style={{ animationDelay: '200ms' }}>
                     <div>
                         <div className="flex justify-between items-start">
                             <h3 className="font-semibold text-gray-300">Urine pH Level</h3>
@@ -76,7 +76,7 @@ export default function LiveSensorDataPage() {
                     <p className="text-xs text-gray-500">Normal Range: 4.5 - 8.0</p>
                 </SensorCard>
 
-                <SensorCard className="flex flex-col justify-between animate-slide-up" style={{ animationDelay: '300ms' }}>
+                <SensorCard className="flex flex-col justify-between animate-slide-up border-glow-cyan-blue/50" style={{ animationDelay: '300ms' }}>
                     <div>
                         <h3 className="font-semibold text-gray-300">Specific Gravity</h3>
                         <p className="text-5xl font-bold text-gray-200 my-4">{latestData?.specificGravity || '1.015'}</p>
@@ -93,7 +93,7 @@ export default function LiveSensorDataPage() {
                 <SensorCard 
                     className={cn(
                         "flex flex-col justify-between animate-slide-up",
-                        latestData?.bloodDetected ? "border-red-500/50" : "border-green-500/50"
+                        latestData?.bloodDetected ? "border-glow-red-rose/70" : "border-status-green/50"
                     )} 
                     style={{ animationDelay: '400ms' }}
                 >
@@ -116,7 +116,7 @@ export default function LiveSensorDataPage() {
                     </p>
                 </SensorCard>
 
-                <SensorCard className="flex flex-col justify-between animate-slide-up" style={{ animationDelay: '500ms' }}>
+                <SensorCard className="flex flex-col justify-between animate-slide-up border-glow-purple-violet/50" style={{ animationDelay: '500ms' }}>
                     <div>
                         <h3 className="font-semibold text-gray-300">Ammonia (NH3)</h3>
                         <p className="text-5xl font-bold text-gray-200 my-4">{latestData?.ammonia || 0}<span className="text-2xl text-gray-400"> ppm</span></p>
@@ -126,13 +126,13 @@ export default function LiveSensorDataPage() {
 
 
                 {/* Row 2 */}
-                <SensorCard className="lg:col-span-1 flex flex-col items-center justify-center animate-slide-up" style={{ animationDelay: '600ms' }}>
+                <SensorCard className="lg:col-span-1 flex flex-col items-center justify-center animate-slide-up border-primary/50" style={{ animationDelay: '600ms' }}>
                     <h3 className="font-semibold text-gray-300 mb-4">Toilet Usage Status</h3>
                     <CircularGauge value={latestData?.isOccupied ? 100 : 0} label={latestData?.isOccupied ? "IN USE" : "NOT IN USE"} />
                     <p className="text-xs text-gray-500 mt-4">{latestData?.isOccupied ? 'Status: Occupied' : 'Status: Available'}</p>
                 </SensorCard>
                 
-                <SensorCard className="flex flex-col justify-between animate-slide-up" style={{ animationDelay: '700ms' }}>
+                <SensorCard className="flex flex-col justify-between animate-slide-up border-glow-sky-royal-blue/50" style={{ animationDelay: '700ms' }}>
                     <h3 className="font-semibold text-gray-300">Water Flow Monitor</h3>
                     <div className="w-full h-24">
                         <TinyAreaChart />
@@ -141,12 +141,12 @@ export default function LiveSensorDataPage() {
                 </SensorCard>
                 
                 <div className="grid grid-rows-2 gap-6">
-                    <SensorCard className="flex flex-col items-center justify-center text-center animate-slide-up" style={{ animationDelay: '800ms' }}>
+                    <SensorCard className="flex flex-col items-center justify-center text-center animate-slide-up border-glow-cyan-blue/50" style={{ animationDelay: '800ms' }}>
                         <h3 className="font-semibold text-gray-300">Flush Usage Counter</h3>
                         <p className="text-5xl font-bold text-teal-400 my-1">{latestData?.usageCount || 0}</p>
                         <p className="text-xs text-gray-500">Flushes Today</p>
                     </SensorCard>
-                     <SensorCard className="flex flex-col items-center justify-center animate-slide-up" style={{ animationDelay: '900ms' }}>
+                     <SensorCard className="flex flex-col items-center justify-center animate-slide-up border-glow-lime-emerald/50" style={{ animationDelay: '900ms' }}>
                         <h3 className="font-semibold text-gray-300 mb-2">Turbidity</h3>
                         <SemiCircleGauge value={latestData?.turbidity || 0} size="sm" />
                         <p className="text-xs text-gray-500 mt-1">{latestData?.turbidity || 0} NTU</p>
@@ -154,14 +154,14 @@ export default function LiveSensorDataPage() {
                 </div>
 
                 <div className="grid grid-rows-2 gap-6">
-                    <SensorCard className="flex items-center justify-between px-4 animate-slide-up" style={{ animationDelay: '1000ms' }}>
+                    <SensorCard className="flex items-center justify-between px-4 animate-slide-up border-status-green/50" style={{ animationDelay: '1000ms' }}>
                         <h3 className="font-semibold text-gray-300 text-sm">Battery</h3>
                         <div className="flex items-center gap-2">
                            <p className="text-sm font-bold text-gray-200">{latestData?.battery_level || 0}%</p>
                            <BatteryFull className="h-6 w-6 text-green-400"/>
                         </div>
                     </SensorCard>
-                    <SensorCard className="flex items-center justify-between px-4 animate-slide-up" style={{ animationDelay: '1100ms' }}>
+                    <SensorCard className="flex items-center justify-between px-4 animate-slide-up border-primary/50" style={{ animationDelay: '1100ms' }}>
                         <h3 className="font-semibold text-gray-300 text-sm">Connectivity</h3>
                          <div className="flex items-center gap-2">
                            <p className="text-sm font-bold text-gray-200">{latestData?.isOnline ? 'ONLINE' : 'OFFLINE'}</p>
@@ -171,13 +171,13 @@ export default function LiveSensorDataPage() {
                 </div>
 
                  {/* Row 3 */}
-                <SensorCard className="flex flex-col items-center justify-center animate-slide-up" style={{ animationDelay: '1200ms' }}>
+                <SensorCard className="flex flex-col items-center justify-center animate-slide-up border-status-yellow/50" style={{ animationDelay: '1200ms' }}>
                      <h3 className="font-semibold text-gray-300 mb-2">Chemical Level Status</h3>
                      <FlaskConical className={cn("h-10 w-10", getChemicalColor(latestData?.chemical_rem || 0))} />
                      <p className={cn("text-lg font-bold mt-2", getChemicalColor(latestData?.chemical_rem || 0))}>{latestData?.chemical_rem || 0}%</p>
                 </SensorCard>
                 
-                <SensorCard className="border-green-500/50 shadow-green-500/20 lg:col-span-1 flex flex-col items-center justify-center animate-slide-up" style={{ animationDelay: '1300ms' }}>
+                <SensorCard className="lg:col-span-1 flex flex-col items-center justify-center animate-slide-up border-status-green/50 shadow-green-500/20" style={{ animationDelay: '1300ms' }}>
                      <h3 className="font-semibold text-green-400 mb-2">Leakage Alert Status</h3>
                      <ShieldCheck className="text-green-500 h-10 w-10" />
                      <p className="text-sm font-bold text-green-400 my-2">{latestData?.leakageDetected ? 'CRITICAL LEAK DETECTED!' : 'NO LEAKS DETECTED'}</p>
@@ -186,7 +186,7 @@ export default function LiveSensorDataPage() {
                      </div>
                 </SensorCard>
 
-                 <SensorCard className="animate-slide-up" style={{ animationDelay: '1400ms' }}>
+                 <SensorCard className="animate-slide-up border-secondary/50" style={{ animationDelay: '1400ms' }}>
                     <h3 className="font-semibold text-gray-300 text-sm mb-2 flex items-center gap-2"><Zap size={16}/>Automation</h3>
                     <div className="space-y-2 mt-2">
                         <div className='flex justify-between items-center'>
@@ -205,7 +205,7 @@ export default function LiveSensorDataPage() {
                         </div>
                     </div>
                 </SensorCard>
-                 <SensorCard className="flex flex-col items-center justify-center animate-slide-up" style={{ animationDelay: '1500ms' }}>
+                 <SensorCard className="flex flex-col items-center justify-center animate-slide-up border-glow-lime-emerald/50" style={{ animationDelay: '1500ms' }}>
                     <h3 className="font-semibold text-gray-300 mb-2">Stool Test Analysis</h3>
                     <div className="flex items-center gap-2">
                        <Calendar className="h-5 w-5 text-gray-500"/>
@@ -217,5 +217,7 @@ export default function LiveSensorDataPage() {
         </div>
     );
 }
+
+    
 
     

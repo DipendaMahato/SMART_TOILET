@@ -66,7 +66,7 @@ export async function chatWithAi(history: { role: 'user' | 'model'; content: str
         baseURL: "https://openrouter.ai/api/v1",
         apiKey: process.env.OPENROUTER_API_KEY,
         defaultHeaders: {
-            "HTTP-Referer": referer || "https://smart-toilet-health-app.web.app/",
+            "HTTP-Referer": referer || "https://smarttoilet.netlify.app/",
             "X-Title": "Smart Toilet Health Assistant",
         },
     });

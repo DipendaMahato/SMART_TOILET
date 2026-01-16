@@ -4,6 +4,7 @@
 import { config } from 'dotenv';
 config();
 
+import { headers } from 'next/headers';
 import { mockMedicalProfile, mockToiletSensorData } from '@/lib/data';
 import { generateHealthInsights } from '@/ai/flows/generate-health-insights';
 import { refineInsightsWithReasoning } from '@/ai/flows/refine-insights-with-reasoning';
@@ -57,16 +58,19 @@ export async function sendOtp(input: SendOtpInput) {
     }
 }
 
-const openai = new OpenAI({
-  baseURL: "https://openrouter.ai/api/v1",
-  apiKey: process.env.OPENROUTER_API_KEY,
-  defaultHeaders: {
-    "HTTP-Referer": "https://smart-toilet-health-app.web.app/", // Replace with your deployed site URL
-    "X-Title": "Smart Toilet Health Assistant",
-  },
-});
-
 export async function chatWithAi(history: { role: 'user' | 'model'; content: string }[], message: string) {
+    const headersList = headers();
+    const referer = headersList.get('referer');
+    
+    const openai = new OpenAI({
+        baseURL: "https://openrouter.ai/api/v1",
+        apiKey: process.env.OPENROUTER_API_KEY,
+        defaultHeaders: {
+            "HTTP-Referer": referer || "https://smart-toilet-health-app.web.app/",
+            "X-Title": "Smart Toilet Health Assistant",
+        },
+    });
+
     try {
         const systemPrompt = `You are 'Smart Toilet Assistance', a friendly and knowledgeable AI health assistant for a smart toilet application.
 - Your primary role is to provide information about the application and general health topics.

@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useUser, useFirestore } from "@/firebase";
-import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
+import { collection, getDocs, limit, orderBy, query, doc, getDoc, Timestamp } from "firebase/firestore";
 import { chatWithAi } from "@/lib/actions";
 
 interface Message {
@@ -13,12 +13,42 @@ interface Message {
     content: string;
 }
 
+// Helper to calculate age
+const getAge = (dob: any) => {
+    if (!dob) return null;
+    const birthDate = (dob instanceof Timestamp) ? dob.toDate() : new Date(dob);
+    if (isNaN(birthDate.getTime())) return null;
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+    return age;
+};
+
 export function HealthAssistantWidget() {
     const { user } = useUser();
     const firestore = useFirestore();
     const [question, setQuestion] = useState('');
-    const [response, setResponse] = useState("Hello Dipendra, how can I help you today?");
+    const [response, setResponse] = useState("Hello, how can I help you today?");
     const [loading, setLoading] = useState(false);
+    const [profile, setProfile] = useState<any>(null);
+
+    useEffect(() => {
+        if (user && firestore) {
+            const profileRef = doc(firestore, 'users', user.uid);
+            getDoc(profileRef).then(docSnap => {
+                if (docSnap.exists()) {
+                    setProfile(docSnap.data());
+                }
+            }).catch(error => {
+                console.error("Error fetching user profile for widget:", error);
+            });
+            // Update greeting
+            setResponse(`Hello ${user.displayName?.split(' ')[0] || 'there'}, how can I help you today?`);
+        }
+    }, [user, firestore]);
 
     const askHealthAI = async () => {
         if (!question || !user || !firestore) return;
@@ -51,15 +81,18 @@ export function HealthAssistantWidget() {
             setLoading(false);
         }
     };
+
+    const age = profile?.dateOfBirth ? getAge(profile.dateOfBirth) : null;
+    const gender = profile?.gender ? profile.gender.charAt(0).toUpperCase() + profile.gender.slice(1) : 'N/A';
     
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 bg-card border border-border p-8 rounded-2xl">
             <div className="border-r border-muted pr-6">
                 <h3 className="text-primary font-bold border-b border-primary/50 pb-2 mb-4">Health Profile</h3>
-                <p><strong>Name:</strong> {user?.displayName || 'Dipendra Mahato'}</p>
-                <p><strong>Age/Gender:</strong> 28 Yrs / Male</p>
-                <p><strong>Blood Group:</strong> B+</p>
-                <p><strong>Contact:</strong> 6201158797</p>
+                <p><strong>Name:</strong> {profile?.firstName && profile?.lastName ? `${profile.firstName} ${profile.lastName}` : user?.displayName || 'Loading...'}</p>
+                <p><strong>Age/Gender:</strong> {age ? `${age} Yrs / ${gender}` : `N/A / ${gender}`}</p>
+                <p><strong>Blood Group:</strong> {profile?.bloodGroup || 'N/A'}</p>
+                <p><strong>Contact:</strong> {profile?.phoneNumber || user?.phoneNumber || 'N/A'}</p>
                 <p><strong>Status:</strong> <span className="text-green-400 font-semibold">Everything is Normal</span></p>
             </div>
             <div>
@@ -84,4 +117,3 @@ export function HealthAssistantWidget() {
         </div>
     );
 }
-

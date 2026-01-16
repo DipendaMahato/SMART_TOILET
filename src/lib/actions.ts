@@ -1,3 +1,4 @@
+
 'use server';
 
 import { config } from 'dotenv';
@@ -59,6 +60,10 @@ export async function sendOtp(input: SendOtpInput) {
 const openai = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
   apiKey: process.env.OPENROUTER_API_KEY,
+  defaultHeaders: {
+    "HTTP-Referer": "https://smart-toilet-health-app.web.app/", // Replace with your deployed site URL
+    "X-Title": "Smart Toilet Health Assistant",
+  },
 });
 
 export async function chatWithAi(history: { role: 'user' | 'model'; content: string }[], message: string) {

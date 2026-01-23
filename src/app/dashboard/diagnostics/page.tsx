@@ -79,7 +79,7 @@ export default function DiagnosticsPage() {
             const userData = userDocSnap.exists() ? userDocSnap.data() : { displayName: user.displayName, email: user.email };
 
             // Fetch latest sensor data from Realtime Database
-            const rtdbRef = ref(database, `/Users/${user.uid}/sensorData`);
+            const rtdbRef = ref(database, `Users/${user.uid}/sensorData`);
             const rtdbSnap = await get(rtdbRef);
             const latestHealthData = rtdbSnap.exists() ? rtdbSnap.val() : {};
 
@@ -92,7 +92,7 @@ export default function DiagnosticsPage() {
                 if (element && window.html2pdf) {
                     const opt = {
                         margin: 0,
-                        filename: `Health_Report_${userData.firstName || 'User'}.pdf`,
+                        filename: `Urine_Stool_Diagnostics_Report_${userData.firstName || 'User'}.pdf`,
                         image: { type: 'jpeg', quality: 0.98 },
                         html2canvas: { scale: 3, useCORS: true },
                         jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
@@ -152,7 +152,7 @@ export default function DiagnosticsPage() {
                     <div className="text-center mt-6">
                         <Button onClick={handleDownload} size="lg" className="bg-primary/80 hover:bg-primary text-white rounded-xl shadow-lg shadow-primary/20 transition-all duration-300 hover:shadow-primary/40" loading={loading}>
                             <Download className="mr-2 h-5 w-5" />
-                            Download Health Report
+                            Urine & Stool Diagnostics Report
                         </Button>
                     </div>
                 </div>

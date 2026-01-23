@@ -1,10 +1,14 @@
-
 'use client';
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Download } from "lucide-react";
+import { useState, useRef } from 'react';
+import { useUser, useFirestore, useDatabase } from '@/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { ref, get } from 'firebase/database';
+import { DownloadableReport } from '@/components/insights/downloadable-report';
 
 type Status = "Normal" | "Needs Attention" | "Abnormal";
 
@@ -54,12 +58,64 @@ const DiagnosticCard = ({ title, subtitle, status }: { title: string, subtitle: 
 
 
 export default function DiagnosticsPage() {
-    const handleDownload = () => {
-        alert('PDF download functionality is not yet implemented.');
+    const reportRef = useRef<HTMLDivElement>(null);
+    const [reportData, setReportData] = useState<any>(null);
+    const [loading, setLoading] = useState(false);
+    const { user } = useUser();
+    const firestore = useFirestore();
+    const database = useDatabase();
+
+    const handleDownload = async () => {
+        if (!user || !firestore || !database) {
+            alert("User not logged in or database services not available.");
+            return;
+        }
+        setLoading(true);
+
+        try {
+            // Fetch user profile from Firestore
+            const userDocRef = doc(firestore, 'users', user.uid);
+            const userDocSnap = await getDoc(userDocRef);
+            const userData = userDocSnap.exists() ? userDocSnap.data() : { displayName: user.displayName, email: user.email };
+
+            // Fetch latest sensor data from Realtime Database
+            const rtdbRef = ref(database, `/Users/${user.uid}/sensorData`);
+            const rtdbSnap = await get(rtdbRef);
+            const latestHealthData = rtdbSnap.exists() ? rtdbSnap.val() : {};
+
+            const combinedData = { user: userData, health: latestHealthData };
+            setReportData(combinedData);
+
+            // Wait for state to update and component to re-render
+            setTimeout(() => {
+                const element = reportRef.current;
+                if (element && window.html2pdf) {
+                    const opt = {
+                        margin: 0,
+                        filename: `Health_Report_${userData.firstName || 'User'}.pdf`,
+                        image: { type: 'jpeg', quality: 0.98 },
+                        html2canvas: { scale: 3, useCORS: true },
+                        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+                    };
+                    window.html2pdf().from(element).set(opt).save();
+                }
+                setLoading(false);
+            }, 500);
+
+        } catch (error) {
+            console.error("Error generating report:", error);
+            alert("Failed to generate report.");
+            setLoading(false);
+        }
     };
+
 
     return (
         <div className="space-y-8 animate-fade-in">
+            <div className="fixed -left-[9999px] top-0 opacity-0">
+                <DownloadableReport ref={reportRef} data={reportData} />
+            </div>
+
             <div className="animate-slide-up">
                 <h1 className="text-3xl font-headline font-bold text-transparent bg-clip-text bg-gradient-to-r from-glow-teal-green to-glow-lime-emerald animate-text-gradient bg-400">Urine & Stool Diagnostics</h1>
                 <p className="text-muted-foreground">
@@ -94,7 +150,7 @@ export default function DiagnosticsPage() {
                         Based on the latest sensor readings, your health indicators are within normal ranges. Minor variations are common and not clinically significant at this time. Please continue maintaining healthy habits and regular hydration. This report is for routine monitoring only; consult a physician if symptoms persist.
                     </p>
                     <div className="text-center mt-6">
-                        <Button onClick={handleDownload} size="lg" className="bg-primary/80 hover:bg-primary text-white rounded-xl shadow-lg shadow-primary/20 transition-all duration-300 hover:shadow-primary/40">
+                        <Button onClick={handleDownload} size="lg" className="bg-primary/80 hover:bg-primary text-white rounded-xl shadow-lg shadow-primary/20 transition-all duration-300 hover:shadow-primary/40" loading={loading}>
                             <Download className="mr-2 h-5 w-5" />
                             Download Health Report
                         </Button>

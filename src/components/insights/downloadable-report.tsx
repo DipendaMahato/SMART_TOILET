@@ -38,19 +38,22 @@ export const DownloadableReport = forwardRef<HTMLDivElement, ReportProps>(({ dat
     if (!data) return <div ref={ref}></div>;
 
     const { user, health } = data;
-    const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(' ') || 'N/A';
+    const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.displayName || 'N/A';
     const age = getAge(user?.dateOfBirth);
     const gender = user?.gender ? user.gender.charAt(0).toUpperCase() + user.gender.slice(1) : 'N/A';
     
-    const calculatedPH = health?.ph_level ? (health.ph_level / 2187.5).toFixed(1) : '6.8';
+    // Data from RTDB
+    const calculatedPH = health?.ph_level ? parseFloat(health.ph_level).toFixed(2) : 'N/A';
     const isPhNormal = calculatedPH !== 'N/A' && parseFloat(calculatedPH) >= 5.0 && parseFloat(calculatedPH) <= 7.5;
     
-    const specificGravity = health?.specificGravity ?? '1.015';
-    const isSgNormal = specificGravity !== 'N/A' && specificGravity >= 1.005 && specificGravity <= 1.030;
+    const specificGravity = health?.specificGravity ?? 'N/A'; // Concentration
+    const isSgNormal = specificGravity !== 'N/A' && parseFloat(specificGravity) >= 1.005 && parseFloat(specificGravity) <= 1.030;
 
     const bloodDetected = health?.bloodDetected ?? false;
+    const turbidity = health?.turbidity ?? 'N/A'; // Clarity
+    const isTurbidityNormal = turbidity !== 'N/A' && turbidity < 20; // Assuming < 20 NTU is clear
 
-    const stoolStatus = health?.stoolStatus ?? 'Type 4';
+    const stoolStatus = health?.stoolStatus ?? 'N/A';
     const isBristolNormal = stoolStatus === 'Type 3' || stoolStatus === 'Type 4';
 
     return (
@@ -59,9 +62,9 @@ export const DownloadableReport = forwardRef<HTMLDivElement, ReportProps>(({ dat
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '2px solid #004a99', paddingBottom: '10px', marginBottom: '15px' }}>
                     <img src="/logo.png" alt="logo" style={{ height: '60px' }}/>
                     <div style={{ textAlign: 'center' }}>
-                        <h1 style={{ margin: 0, color: '#004a99', fontSize: '24px', textTransform: 'uppercase' }}>User Health Report</h1>
-                        <div style={{ marginTop: '5px', fontSize: '12px', color: '#333' }}>
-                            Contact: +91 6201158797 | Email: smarttoiletapp5@gmail.com
+                        <h1 style={{ margin: 0, color: '#004a99', fontSize: '24px', textTransform: 'uppercase' }}>Smart Toilet System</h1>
+                         <div style={{ marginTop: '5px', fontSize: '12px', color: '#333' }}>
+                            Health Report for {fullName}
                         </div>
                     </div>
                     <div style={{ width: '60px' }}></div>
@@ -91,11 +94,10 @@ export const DownloadableReport = forwardRef<HTMLDivElement, ReportProps>(({ dat
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>Quantity (Volume)</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>250 ml</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>150 - 450 ml</td><td style={{ ...getStatusStyle(true), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>NORMAL</td></tr>
                         <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>Color</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Pale Yellow</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Pale Yellow</td><td style={{ ...getStatusStyle(true), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>NORMAL</td></tr>
-                        <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>Transparency</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Clear</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Clear</td><td style={{ ...getStatusStyle(true), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>NORMAL</td></tr>
+                        <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>Clarity (Turbidity)</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{turbidity}{turbidity !== 'N/A' ? ' NTU' : ''}</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{'< 20 NTU'}</td><td style={{ ...getStatusStyle(isTurbidityNormal), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{isTurbidityNormal ? 'NORMAL' : 'CLOUDY'}</td></tr>
                         <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>pH Level</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{calculatedPH}</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>5.0 - 7.5</td><td style={{ ...getStatusStyle(isPhNormal), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{isPhNormal ? 'NORMAL' : 'ABNORMAL'}</td></tr>
-                        <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>Specific Gravity</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{specificGravity}</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>1.005 - 1.030</td><td style={{ ...getStatusStyle(isSgNormal), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{isSgNormal ? 'NORMAL' : 'ABNORMAL'}</td></tr>
+                        <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>Concentration (Sp. Gravity)</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{specificGravity}</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>1.005 - 1.030</td><td style={{ ...getStatusStyle(isSgNormal), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{isSgNormal ? 'NORMAL' : 'ABNORMAL'}</td></tr>
                         <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>Glucose (Sugar)</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Absent</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Absent</td><td style={{ ...getStatusStyle(true), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>NORMAL</td></tr>
                         <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>Protein (Albumin)</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Absent</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Absent</td><td style={{ ...getStatusStyle(true), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>NORMAL</td></tr>
                         <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>Blood</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{bloodDetected ? 'Detected' : 'Negative'}</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Negative</td><td style={{ ...getStatusStyle(!bloodDetected), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{!bloodDetected ? 'NORMAL' : 'ABNORMAL'}</td></tr>
@@ -103,7 +105,7 @@ export const DownloadableReport = forwardRef<HTMLDivElement, ReportProps>(({ dat
                     </tbody>
                 </table>
                 <div style={{ pageBreakBefore: 'always' }}>
-                    <h3 style={{ background: '#004a99', color: 'white', padding: '5px 10px', fontSize: '16px', borderRadius: '4px 4px 0 0', margin: '15px 0 0 0' }}>STOOL ANALYSIS (AI PROCESS TRACKER)</h3>
+                    <h3 style={{ background: '#004a99', color: 'white', padding: '5px 10px', fontSize: '16px', borderRadius: '4px 4px 0 0', margin: '15px 0 0 0' }}>STOOL ANALYSIS</h3>
                     <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '15px', fontSize: '13px' }}>
                         <thead style={{ background: '#f2f2f2' }}>
                             <tr>
@@ -116,7 +118,7 @@ export const DownloadableReport = forwardRef<HTMLDivElement, ReportProps>(({ dat
                         <tbody>
                             <tr>
                                 <td style={{ border: '1px solid #ddd', padding: '6px' }}>Bristol Stool Type</td>
-                                <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{stoolStatus === 'N/A' ? 'N/A' : stoolStatus}</td>
+                                <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{stoolStatus}</td>
                                 <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Type 3 - 4</td>
                                 <td style={{ ...getStatusStyle(isBristolNormal), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{isBristolNormal ? 'NORMAL' : 'ABNORMAL'}</td>
                             </tr>

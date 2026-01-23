@@ -39,7 +39,7 @@ function Calendar({
         nav: "space-x-1 flex items-center",
         nav_button: cn(
           buttonVariants({ variant: "outline" }),
-          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
+          "h-7 w-7 bg-transparent p-0 text-[#5EEAD4] border-0 hover:bg-transparent hover:text-white hover:drop-shadow-[0_0_4px_#5EEAD4] focus-visible:ring-0 focus-visible:ring-offset-0"
         ),
         nav_button_previous: "absolute left-1",
         nav_button_next: "absolute right-1",
@@ -65,8 +65,8 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        IconLeft: () => <ChevronLeft className="h-4 w-4" />,
-        IconRight: () => <ChevronRight className="h-4 w-4" />,
+        IconLeft: () => <ChevronLeft className="h-6 w-6" strokeWidth={2.5} />,
+        IconRight: () => <ChevronRight className="h-6 w-6" strokeWidth={2.5} />,
         Dropdown: (props) => {
           const { fromDate, fromMonth, fromYear, toDate, toMonth, toYear } = useDayPicker();
           const { goToMonth, month } = useNavigation();

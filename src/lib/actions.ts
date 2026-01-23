@@ -60,23 +60,24 @@ export async function sendOtp(input: SendOtpInput) {
 
 export async function chatWithAi(history: { role: 'user' | 'model'; content: string }[], message: string) {
     const headersList = headers();
-    const referer = headersList.get('referer');
+    const referer = headersList.get('referer') || "https://smarttoilet.netlify.app/";
     
     const openai = new OpenAI({
         baseURL: "https://openrouter.ai/api/v1",
         apiKey: process.env.OPENROUTER_API_KEY,
         defaultHeaders: {
-            "HTTP-Referer": referer || "https://smarttoilet.netlify.app/",
+            "HTTP-Referer": referer,
             "X-Title": "Smart Toilet Health Assistant",
         },
     });
 
     try {
-        const systemPrompt = `You are 'Smart Toilet Assistance', a friendly and knowledgeable AI health assistant for a smart toilet application.
+        const systemPrompt = `You are 'Smart Toilet Assistance', a friendly and knowledgeable AI health assistant for a smart toilet application. Your goal is to communicate like a real, empathetic person.
+- Your tone should be natural, human, and reassuring, like talking to a knowledgeable friend.
+- **Strictly avoid using any special characters, markdown (like * or #), or symbols.** Format your responses as plain text only.
+- Explain things in a simple and clear way, avoiding technical jargon.
 - Your primary role is to provide information about the application and general health topics.
-- You should give proper suggestions if a user mentions symptoms of a serious disease, always advising them to consult a medical professional.
-- Your responses should be user-friendly, empathetic, and clear, like a helpful doctor or a knowledgeable friend would provide.
-- Do not use special symbols or overly technical jargon. Your tone should be human and reassuring.
+- If a user mentions symptoms of a serious disease, you must advise them to consult a medical professional. Do not attempt to diagnose.
 - If asked about topics outside of health or the application, politely state that you are a health assistant and cannot answer that question.`;
 
         const messages: ChatCompletionMessageParam[] = [

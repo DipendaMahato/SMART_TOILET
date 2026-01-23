@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -292,9 +291,8 @@ export function SettingsTabs() {
                 </Select>
             </div>
           </CardContent>
-          <CardFooter className="flex-col items-start gap-4">
-            <Button><FileDown className="mr-2"/> Export My Health Report</Button>
-            <p className="text-xs text-muted-foreground">Export a PDF of your complete health data and insights.</p>
+          <CardFooter>
+            <Button onClick={handleSave} loading={loading}>Save Data & AI Settings</Button>
           </CardFooter>
         </Card>
       </TabsContent>
@@ -317,7 +315,7 @@ export function SettingsTabs() {
             <div className="flex items-center gap-3">
                 <Phone className="h-5 w-5" />
                  <a href="tel:+916201158797" className="hover:text-primary">
-                    +91 6201158797
+                    +916201158797
                 </a>
             </div>
             <div>

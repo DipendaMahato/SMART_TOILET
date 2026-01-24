@@ -133,6 +133,9 @@ export default function LiveSensorDataPage() {
     const isPhNormal = parseFloat(calculatedPH) >= 4.5 && parseFloat(calculatedPH) <= 8.0;
     const phStatus = isPhNormal ? "NORMAL" : "WARNING";
 
+    const isTurbidityNormal = latestData?.turbidity === undefined || (latestData.turbidity >= 0 && latestData.turbidity <= 20);
+    const turbidityStatus = isTurbidityNormal ? "NORMAL" : "HIGH";
+
 
     return (
         <div className="bg-navy p-4 md:p-8 rounded-2xl animate-fade-in min-h-full">
@@ -227,10 +230,25 @@ export default function LiveSensorDataPage() {
                         <p className="text-5xl font-bold text-teal-400 my-1">{latestData?.usageCount || 0}</p>
                         <p className="text-xs text-gray-500">Flushes Today</p>
                     </SensorCard>
-                     <SensorCard className="flex flex-col items-center justify-center animate-slide-up border-glow-lime-emerald/50" style={{ animationDelay: '900ms' }}>
-                        <h3 className="font-semibold text-gray-300 mb-2">Turbidity</h3>
+                     <SensorCard 
+                        className={cn(
+                            "flex flex-col items-center justify-center animate-slide-up",
+                            isTurbidityNormal ? 'border-glow-lime-emerald/50' : 'border-status-red/50 shadow-status-red/10'
+                        )} 
+                        style={{ animationDelay: '900ms' }}
+                    >
+                        <div className="flex justify-between items-start w-full">
+                            <h3 className="font-semibold text-gray-300 mb-2">Turbidity</h3>
+                            <StatusBadge 
+                                status={turbidityStatus} 
+                                className={!isTurbidityNormal ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-green-500/20 text-green-400 border-green-500/30'}
+                            />
+                        </div>
                         <SemiCircleGauge value={latestData?.turbidity || 0} size="sm" />
                         <p className="text-xs text-gray-500 mt-1">{latestData?.turbidity || 0} NTU</p>
+                        {!isTurbidityNormal && (
+                            <p className="text-xs text-red-400 mt-1 text-center">High values may indicate infection or contamination.</p>
+                        )}
                     </SensorCard>
                 </div>
 

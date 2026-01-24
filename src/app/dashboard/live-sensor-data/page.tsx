@@ -1,8 +1,9 @@
 
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
 import { getDatabase, ref, onValue, update } from 'firebase/database';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { SensorCard } from '@/components/dashboard/sensor-card';
 import { CircularGauge } from '@/components/charts/circular-gauge';
 import { SemiCircleGauge } from '@/components/charts/semi-circle-gauge';
@@ -23,6 +24,7 @@ const WarningMessage = ({ text = 'Warning: Value out of range.' }: { text?: stri
 
 export default function LiveSensorDataPage() {
     const { user } = useUser();
+    const firestore = useFirestore();
     const [latestData, setLatestData] = useState<any>(null);
     const { toast } = useToast();
     const previousDataRef = useRef<any>(null);
@@ -41,7 +43,7 @@ export default function LiveSensorDataPage() {
 
             const prevData = previousDataRef.current;
 
-            if (prevData) {
+            if (prevData && firestore && user) {
                 const thresholds = {
                     ph_level: { min: 4.5, max: 8.0, name: 'Urine pH' },
                     specificGravity: { min: 1.005, max: 1.030, name: 'Specific Gravity' },
@@ -61,30 +63,63 @@ export default function LiveSensorDataPage() {
                     const wasPreviouslyInRange = prevValue >= config.min && prevValue <= config.max;
                     
                     if (isCurrentlyOutOfRange && wasPreviouslyInRange) {
+                        const alertMessage = `${config.name} reading of ${currentValue} is outside the safe range of ${config.min} - ${config.max}.`;
                         toast({
                             variant: 'destructive',
                             title: `🔴 Alert: ${config.name} Out of Range`,
-                            description: `${config.name} reading of ${currentValue} is outside the safe range of ${config.min} - ${config.max}. Time: ${new Date().toLocaleTimeString()}`,
+                            description: `${alertMessage} Time: ${new Date().toLocaleTimeString()}`,
                             duration: 20000,
+                        });
+                        addDoc(collection(firestore, `users/${user.uid}/notifications`), {
+                            userId: user.uid,
+                            timestamp: serverTimestamp(),
+                            message: alertMessage,
+                            type: 'Warning',
+                            sensorName: config.name,
+                            currentValue: currentValue.toString(),
+                            normalRange: `${config.min} - ${config.max}`,
+                            isRead: false
                         });
                     }
                 });
 
                 if (currentData.bloodDetected === true && prevData.bloodDetected === false) {
+                    const alertMessage = `Traces of blood were detected in the latest analysis. Please consult a healthcare professional.`;
                     toast({
                         variant: 'destructive',
                         title: '🔴 Health Alert: Blood Detected',
-                        description: `Traces of blood were detected in the latest analysis. Please consult a healthcare professional. Time: ${new Date().toLocaleTimeString()}`,
+                        description: `${alertMessage} Time: ${new Date().toLocaleTimeString()}`,
                         duration: 20000,
+                    });
+                     addDoc(collection(firestore, `users/${user.uid}/notifications`), {
+                        userId: user.uid,
+                        timestamp: serverTimestamp(),
+                        message: alertMessage,
+                        type: 'Alert',
+                        sensorName: 'Blood Detection',
+                        currentValue: 'Detected',
+                        normalRange: 'Negative',
+                        isRead: false
                     });
                 }
                 
                 if (currentData.leakageDetected === true && prevData.leakageDetected === false) {
+                    const alertMessage = `A water leak has been detected. Please check the device immediately.`;
                     toast({
                         variant: 'destructive',
                         title: '⚠️ Maintenance Alert: Water Leak Detected',
-                        description: `A water leak has been detected. Please check the device immediately. Time: ${new Date().toLocaleTimeString()}`,
+                        description: `${alertMessage} Time: ${new Date().toLocaleTimeString()}`,
                         duration: 20000,
+                    });
+                     addDoc(collection(firestore, `users/${user.uid}/notifications`), {
+                        userId: user.uid,
+                        timestamp: serverTimestamp(),
+                        message: alertMessage,
+                        type: 'Alert',
+                        sensorName: 'Leakage Detection',
+                        currentValue: 'Detected',
+                        normalRange: 'Not Detected',
+                        isRead: false
                     });
                 }
             }
@@ -104,7 +139,7 @@ export default function LiveSensorDataPage() {
             unsubscribe();
             previousDataRef.current = null;
         };
-    }, [user?.uid, toast]);
+    }, [user, toast, firestore]);
 
 
     const sendCommand = (key: string, value: boolean) => {

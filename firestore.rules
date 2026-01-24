@@ -149,6 +149,23 @@ service cloud.firestore {
         allow update: if isExistingOwner(userId) && isImmutableOwnerLink();
         allow delete: if isExistingOwner(userId);
       }
+      
+      /**
+       * @description Manages a user's real-time notifications and alerts.
+       * Users can read their own notifications and mark them as read.
+       * Creation is handled by client-side logic listening to sensor data.
+       * @path /users/{userId}/notifications/{notificationId}
+       * @allow (list) The user listing their own notifications.
+       * @allow (get) The user reading a single notification.
+       * @allow (create) The client creating a new notification for the user.
+       * @allow (update) The user marking a notification as read.
+       * @principle Enforces strict ownership for notifications.
+       */
+      match /notifications/{notificationId} {
+        allow get, list, create: if isOwner(userId);
+        allow update: if isExistingOwner(userId) && isImmutableOwnerLink();
+        allow delete: if false; // For now, users cannot delete notifications.
+      }
     }
   }
 }

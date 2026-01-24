@@ -7,12 +7,9 @@ import Image from "next/image";
 import {
   Menu,
   Search,
-  Bell,
   Home,
-  Bot,
   User,
   Settings,
-  HeartPulse,
   RadioTower,
   BrainCircuit,
   FlaskConical,
@@ -34,6 +31,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { NotificationPanel } from "./notification-panel";
 
 
 const navItems = [
@@ -125,16 +123,7 @@ export default function AppHeader() {
                 <Search className="h-5 w-5" />
                 <span className="sr-only">Search</span>
             </Button>
-            <div className="relative">
-                <Button variant="ghost" size="icon" className="rounded-full">
-                    <Bell className="h-5 w-5" />
-                    <span className="sr-only">Notifications</span>
-                </Button>
-                <span className="absolute top-1 right-1 flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-destructive"></span>
-                </span>
-            </div>
+            <NotificationPanel />
             <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="rounded-full">

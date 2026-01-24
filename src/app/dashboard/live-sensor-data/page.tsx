@@ -14,6 +14,13 @@ import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 
+const WarningMessage = ({ text = 'Warning: Value out of range.' }: { text?: string }) => (
+    <div className="flex items-center gap-2 text-sm text-red-400 mt-2">
+        <CircleAlert size={16} />
+        <span>{text}</span>
+    </div>
+);
+
 export default function LiveSensorDataPage() {
     const { user } = useUser();
     const [latestData, setLatestData] = useState<any>(null);
@@ -34,9 +41,7 @@ export default function LiveSensorDataPage() {
 
             const prevData = previousDataRef.current;
 
-            // Trigger alerts only on data changes, not initial load
             if (prevData) {
-                // Define thresholds for numeric sensors
                 const thresholds = {
                     ph_level: { min: 4.5, max: 8.0, name: 'Urine pH' },
                     specificGravity: { min: 1.005, max: 1.030, name: 'Specific Gravity' },
@@ -45,7 +50,6 @@ export default function LiveSensorDataPage() {
                     chemical_rem: { min: 20, max: 100, name: 'Chemical Level' },
                 };
 
-                // Check numeric sensors
                 (Object.keys(thresholds) as Array<keyof typeof thresholds>).forEach(key => {
                     const config = thresholds[key];
                     const currentValue = parseFloat(currentData[key]);
@@ -66,7 +70,6 @@ export default function LiveSensorDataPage() {
                     }
                 });
 
-                // Check boolean sensors
                 if (currentData.bloodDetected === true && prevData.bloodDetected === false) {
                     toast({
                         variant: 'destructive',
@@ -86,7 +89,6 @@ export default function LiveSensorDataPage() {
                 }
             }
             
-            // Update previous data for the next comparison
             previousDataRef.current = currentData;
 
         }, (error) => {
@@ -98,7 +100,6 @@ export default function LiveSensorDataPage() {
             });
         });
 
-        // Cleanup subscription on component unmount
         return () => {
             unsubscribe();
             previousDataRef.current = null;
@@ -123,18 +124,36 @@ export default function LiveSensorDataPage() {
         );
     }
     
-    const getChemicalColor = (level: number) => {
+    // --- Status Calculations ---
+    const phValue = latestData?.ph_level ? parseFloat(latestData.ph_level) : null;
+    const isPhOutOfRange = phValue !== null && (phValue < 4.5 || phValue > 8.0);
+    const phStatus = isPhOutOfRange ? "WARNING" : "NORMAL";
+    const calculatedPH = phValue?.toFixed(2) ?? '...';
+
+    const sgValue = latestData?.specificGravity ? parseFloat(latestData.specificGravity) : null;
+    const isSgOutOfRange = sgValue !== null && (sgValue < 1.005 || sgValue > 1.030);
+    const sgStatus = isSgOutOfRange ? "WARNING" : "NORMAL";
+
+    const ammoniaValue = latestData?.ammonia ? parseFloat(latestData.ammonia) : null;
+    const isAmmoniaOutOfRange = ammoniaValue !== null && (ammoniaValue < 5 || ammoniaValue > 500);
+    const ammoniaStatus = isAmmoniaOutOfRange ? "WARNING" : "NORMAL";
+
+    const turbidityValue = latestData?.turbidity ? parseFloat(latestData.turbidity) : null;
+    const isTurbidityOutOfRange = turbidityValue !== null && (turbidityValue < 0 || turbidityValue > 20);
+    const turbidityStatus = isTurbidityOutOfRange ? "HIGH" : "NORMAL";
+
+    const chemicalValue = latestData?.chemical_rem ? parseFloat(latestData.chemical_rem) : null;
+    const isChemicalLow = chemicalValue !== null && chemicalValue < 20;
+
+    const isBloodDetected = latestData?.bloodDetected === true;
+    const isLeakageDetected = latestData?.leakageDetected === true;
+
+    const getChemicalColor = (level: number | null) => {
+        if (level === null) return 'text-gray-400';
         if (level < 20) return 'text-red-500';
         if (level < 50) return 'text-yellow-400';
         return 'text-green-400';
     }
-
-    const calculatedPH = latestData?.ph_level ? parseFloat(latestData.ph_level).toFixed(2) : '6.8';
-    const isPhNormal = parseFloat(calculatedPH) >= 4.5 && parseFloat(calculatedPH) <= 8.0;
-    const phStatus = isPhNormal ? "NORMAL" : "WARNING";
-
-    const isTurbidityNormal = latestData?.turbidity === undefined || (latestData.turbidity >= 0 && latestData.turbidity <= 20);
-    const turbidityStatus = isTurbidityNormal ? "NORMAL" : "HIGH";
 
 
     return (
@@ -146,44 +165,50 @@ export default function LiveSensorDataPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 
-                <SensorCard className="flex flex-col justify-between animate-slide-up border-glow-teal-green/50" style={{ animationDelay: '200ms' }}>
+                <SensorCard className={cn("flex flex-col justify-between animate-slide-up", isPhOutOfRange ? "border-status-red/70 shadow-status-red/20" : "border-glow-teal-green/50")} style={{ animationDelay: '200ms' }}>
                     <div>
                         <div className="flex justify-between items-start">
                             <h3 className="font-semibold text-gray-300">Urine pH Level</h3>
                              <StatusBadge 
                                 status={phStatus} 
-                                className={!isPhNormal ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-green-500/20 text-green-400 border-green-500/30'}
+                                className={isPhOutOfRange ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-green-500/20 text-green-400 border-green-500/30'}
                             />
                         </div>
                         <p className="text-5xl font-bold text-gray-200 my-4">{calculatedPH}</p>
                     </div>
-                    <p className="text-xs text-gray-500">Normal Range: 4.5 - 8.0</p>
+                    <div>
+                        {isPhOutOfRange && <WarningMessage />}
+                        <p className="text-xs text-gray-500 mt-1">Normal Range: 4.5 - 8.0</p>
+                    </div>
                 </SensorCard>
 
-                <SensorCard className="flex flex-col justify-between animate-slide-up border-glow-cyan-blue/50" style={{ animationDelay: '300ms' }}>
+                <SensorCard className={cn("flex flex-col justify-between animate-slide-up", isSgOutOfRange ? "border-status-red/70 shadow-status-red/20" : "border-glow-cyan-blue/50")} style={{ animationDelay: '300ms' }}>
                     <div>
-                        <h3 className="font-semibold text-gray-300">Specific Gravity</h3>
-                        <p className="text-5xl font-bold text-gray-200 my-4">{latestData?.specificGravity || '1.015'}</p>
+                        <div className="flex justify-between items-start">
+                            <h3 className="font-semibold text-gray-300">Specific Gravity</h3>
+                            <StatusBadge 
+                                status={sgStatus} 
+                                className={isSgOutOfRange ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-green-500/20 text-green-400 border-green-500/30'}
+                            />
+                        </div>
+                        <p className="text-5xl font-bold text-gray-200 my-4">{latestData?.specificGravity || '...'}</p>
                     </div>
-                    <div className="flex items-center justify-between">
-                        <p className="text-xs text-gray-500">Protein Status</p>
-                        <StatusBadge 
-                            status={latestData?.proteinValue > 20 ? 'HIGH' : 'OK'}
-                            className={latestData?.proteinValue > 20 ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' : 'bg-green-500/20 text-green-400 border-green-500/30'}
-                         />
+                    <div>
+                        {isSgOutOfRange && <WarningMessage />}
+                        <p className="text-xs text-gray-500 mt-1">Normal Range: 1.005 - 1.030</p>
                     </div>
                 </SensorCard>
 
                 <SensorCard 
                     className={cn(
                         "flex flex-col justify-between animate-slide-up",
-                        latestData?.bloodDetected ? "border-glow-red-rose/70" : "border-status-green/50"
+                        isBloodDetected ? "border-glow-red-rose/70" : "border-status-green/50"
                     )} 
                     style={{ animationDelay: '400ms' }}
                 >
                     <div>
                         <h3 className="font-semibold text-gray-300">Blood Detection</h3>
-                        {latestData?.bloodDetected ? (
+                        {isBloodDetected ? (
                              <div className="my-4">
                                 <CircleAlert className="h-10 w-10 text-red-400 mx-auto"/>
                                 <p className="text-xl font-bold text-red-400 text-center mt-2">DETECTED</p>
@@ -195,17 +220,29 @@ export default function LiveSensorDataPage() {
                              </div>
                         )}
                     </div>
-                    <p className="text-xs text-gray-500 text-center">
-                        {latestData?.bloodDetected ? "Health Alert: Consider contacting a doctor." : "No trace of blood found."}
-                    </p>
+                    <div className='text-center'>
+                        {isBloodDetected && <WarningMessage text="Health Alert: Consider contacting a doctor." />}
+                        <p className="text-xs text-gray-500 mt-1">
+                            {isBloodDetected ? "Traces of blood found." : "No trace of blood found."}
+                        </p>
+                    </div>
                 </SensorCard>
 
-                <SensorCard className="flex flex-col justify-between animate-slide-up border-glow-purple-violet/50" style={{ animationDelay: '500ms' }}>
+                <SensorCard className={cn("flex flex-col justify-between animate-slide-up", isAmmoniaOutOfRange ? "border-status-red/70 shadow-status-red/20" : "border-glow-purple-violet/50")} style={{ animationDelay: '500ms' }}>
                     <div>
-                        <h3 className="font-semibold text-gray-300">Ammonia (NH3)</h3>
-                        <p className="text-5xl font-bold text-gray-200 my-4">{latestData?.ammonia || 0}<span className="text-2xl text-gray-400"> ppm</span></p>
+                        <div className="flex justify-between items-start">
+                            <h3 className="font-semibold text-gray-300">Ammonia (NH3)</h3>
+                            <StatusBadge 
+                                status={ammoniaStatus} 
+                                className={isAmmoniaOutOfRange ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-green-500/20 text-green-400 border-green-500/30'}
+                            />
+                        </div>
+                        <p className="text-5xl font-bold text-gray-200 my-4">{latestData?.ammonia ?? '...'}<span className="text-2xl text-gray-400"> ppm</span></p>
                     </div>
-                    <p className="text-xs text-gray-500">Air quality analysis</p>
+                    <div>
+                        {isAmmoniaOutOfRange && <WarningMessage />}
+                        <p className="text-xs text-gray-500 mt-1">Normal Range: 5 - 500 ppm</p>
+                    </div>
                 </SensorCard>
 
 
@@ -233,7 +270,7 @@ export default function LiveSensorDataPage() {
                      <SensorCard 
                         className={cn(
                             "flex flex-col items-center justify-center animate-slide-up",
-                            isTurbidityNormal ? 'border-glow-lime-emerald/50' : 'border-status-red/50 shadow-status-red/10'
+                            isTurbidityOutOfRange ? 'border-status-red/50 shadow-status-red/10' : 'border-glow-lime-emerald/50'
                         )} 
                         style={{ animationDelay: '900ms' }}
                     >
@@ -241,13 +278,13 @@ export default function LiveSensorDataPage() {
                             <h3 className="font-semibold text-gray-300 mb-2">Turbidity</h3>
                             <StatusBadge 
                                 status={turbidityStatus} 
-                                className={!isTurbidityNormal ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-green-500/20 text-green-400 border-green-500/30'}
+                                className={isTurbidityOutOfRange ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-green-500/20 text-green-400 border-green-500/30'}
                             />
                         </div>
                         <SemiCircleGauge value={latestData?.turbidity || 0} size="sm" />
-                        <p className="text-xs text-gray-500 mt-1">{latestData?.turbidity || 0} NTU</p>
-                        {!isTurbidityNormal && (
-                            <p className="text-xs text-red-400 mt-1 text-center">High values may indicate infection or contamination.</p>
+                        <p className="text-xs text-gray-500 mt-1">{latestData?.turbidity || '...'} NTU</p>
+                        {isTurbidityOutOfRange && (
+                            <WarningMessage text="High values may indicate infection." />
                         )}
                     </SensorCard>
                 </div>
@@ -270,16 +307,17 @@ export default function LiveSensorDataPage() {
                 </div>
 
                  {/* Row 3 */}
-                <SensorCard className="flex flex-col items-center justify-center animate-slide-up border-status-yellow/50" style={{ animationDelay: '1200ms' }}>
-                     <h3 className="font-semibold text-gray-300 mb-2">Chemical Level Status</h3>
-                     <FlaskConical className={cn("h-10 w-10", getChemicalColor(latestData?.chemical_rem || 0))} />
-                     <p className={cn("text-lg font-bold mt-2", getChemicalColor(latestData?.chemical_rem || 0))}>{latestData?.chemical_rem || 0}%</p>
+                <SensorCard className={cn("flex flex-col items-center justify-center animate-slide-up", isChemicalLow ? "border-status-red/70 shadow-status-red/20" : "border-status-yellow/50")} style={{ animationDelay: '1200ms' }}>
+                     <h3 className="font-semibold text-gray-300 mb-2">Chemical Level</h3>
+                     <FlaskConical className={cn("h-10 w-10", getChemicalColor(chemicalValue))} />
+                     <p className={cn("text-lg font-bold mt-2", getChemicalColor(chemicalValue))}>{chemicalValue ?? '...'}%</p>
+                     {isChemicalLow && <WarningMessage text="Warning: Chemical level is low." />}
                 </SensorCard>
                 
-                <SensorCard className="lg:col-span-1 flex flex-col items-center justify-center animate-slide-up border-status-green/50 shadow-green-500/20" style={{ animationDelay: '1300ms' }}>
-                     <h3 className="font-semibold text-green-400 mb-2">Leakage Alert Status</h3>
-                     <ShieldCheck className="text-green-500 h-10 w-10" />
-                     <p className="text-sm font-bold text-green-400 my-2">{latestData?.leakageDetected ? 'CRITICAL LEAK DETECTED!' : 'NO LEAKS DETECTED'}</p>
+                <SensorCard className={cn("lg:col-span-1 flex flex-col items-center justify-center animate-slide-up", isLeakageDetected ? "border-status-red/70 shadow-status-red/20" : "border-status-green/50 shadow-green-500/20")} style={{ animationDelay: '1300ms' }}>
+                     <h3 className="font-semibold text-gray-300 mb-2">Leakage Alert</h3>
+                     {isLeakageDetected ? <CircleAlert className="h-10 w-10 text-red-400" /> : <ShieldCheck className="text-green-500 h-10 w-10" />}
+                     <p className={cn("text-sm font-bold my-2", isLeakageDetected ? "text-red-400" : "text-green-400")}>{isLeakageDetected ? 'CRITICAL LEAK DETECTED!' : 'No Leaks Detected'}</p>
                      <div className="w-full h-16">
                         <JaggedLineChart />
                      </div>
@@ -316,6 +354,8 @@ export default function LiveSensorDataPage() {
         </div>
     );
 }
+    
+
     
 
     

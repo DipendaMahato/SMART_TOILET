@@ -1,6 +1,6 @@
 
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useUser } from '@/firebase';
 import { getDatabase, ref, onValue, update } from 'firebase/database';
 import { SensorCard } from '@/components/dashboard/sensor-card';
@@ -12,10 +12,13 @@ import { ShieldCheck, BatteryFull, Droplet, Gauge, Signal, Wifi, Clock, Calendar
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/hooks/use-toast';
 
 export default function LiveSensorDataPage() {
     const { user } = useUser();
     const [latestData, setLatestData] = useState<any>(null);
+    const { toast } = useToast();
+    const previousDataRef = useRef<any>(null);
 
     useEffect(() => {
         if (!user?.uid) return;
@@ -24,15 +27,83 @@ export default function LiveSensorDataPage() {
         const sensorDataRef = ref(database, `Users/${user.uid}/sensorData`);
         
         const unsubscribe = onValue(sensorDataRef, (snapshot) => {
-            const data = snapshot.val();
-            setLatestData(data);
+            const currentData = snapshot.val();
+            if (!currentData) return;
+
+            setLatestData(currentData);
+
+            const prevData = previousDataRef.current;
+
+            // Trigger alerts only on data changes, not initial load
+            if (prevData) {
+                // Define thresholds for numeric sensors
+                const thresholds = {
+                    ph_level: { min: 4.5, max: 8.0, name: 'Urine pH' },
+                    specificGravity: { min: 1.005, max: 1.030, name: 'Specific Gravity' },
+                    ammonia: { min: 0, max: 25, name: 'Ammonia Level' },
+                    turbidity: { min: 0, max: 20, name: 'Water Turbidity' },
+                    chemical_rem: { min: 20, max: 100, name: 'Chemical Level' },
+                };
+
+                // Check numeric sensors
+                (Object.keys(thresholds) as Array<keyof typeof thresholds>).forEach(key => {
+                    const config = thresholds[key];
+                    const currentValue = parseFloat(currentData[key]);
+                    const prevValue = parseFloat(prevData[key]);
+
+                    if (isNaN(currentValue) || isNaN(prevValue)) return;
+
+                    const isCurrentlyOutOfRange = currentValue < config.min || currentValue > config.max;
+                    const wasPreviouslyInRange = prevValue >= config.min && prevValue <= config.max;
+                    
+                    if (isCurrentlyOutOfRange && wasPreviouslyInRange) {
+                        toast({
+                            variant: 'destructive',
+                            title: `🔴 Alert: ${config.name} Out of Range`,
+                            description: `${config.name} reading of ${currentValue} is outside the safe range of ${config.min} - ${config.max}. Time: ${new Date().toLocaleTimeString()}`,
+                            duration: 20000,
+                        });
+                    }
+                });
+
+                // Check boolean sensors
+                if (currentData.bloodDetected === true && prevData.bloodDetected === false) {
+                    toast({
+                        variant: 'destructive',
+                        title: '🔴 Health Alert: Blood Detected',
+                        description: `Traces of blood were detected in the latest analysis. Please consult a healthcare professional. Time: ${new Date().toLocaleTimeString()}`,
+                        duration: 20000,
+                    });
+                }
+                
+                if (currentData.leakageDetected === true && prevData.leakageDetected === false) {
+                    toast({
+                        variant: 'destructive',
+                        title: '⚠️ Maintenance Alert: Water Leak Detected',
+                        description: `A water leak has been detected. Please check the device immediately. Time: ${new Date().toLocaleTimeString()}`,
+                        duration: 20000,
+                    });
+                }
+            }
+            
+            // Update previous data for the next comparison
+            previousDataRef.current = currentData;
+
         }, (error) => {
             console.error("Firebase onValue error:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Connection Error',
+                description: 'Could not connect to live sensor data.',
+            });
         });
 
         // Cleanup subscription on component unmount
-        return () => unsubscribe();
-    }, [user?.uid]);
+        return () => {
+            unsubscribe();
+            previousDataRef.current = null;
+        };
+    }, [user?.uid, toast]);
 
 
     const sendCommand = (key: string, value: boolean) => {
@@ -67,7 +138,7 @@ export default function LiveSensorDataPage() {
         <div className="bg-navy p-4 md:p-8 rounded-2xl animate-fade-in min-h-full">
             <div className="mb-8 animate-slide-up" style={{ animationDelay: '100ms' }}>
                 <h1 className="text-3xl font-headline font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-glow-green via-glow-cyan to-glow-blue animate-text-gradient bg-400">LIVE SENSOR DATA</h1>
-                <p className="text-sm text-gray-400 flex items-center gap-2"><span className="text-status-green">●</span> Live Health Monitoring</p>
+                <p className="text-sm text-gray-400 flex items-center gap-2"><span className="text-status-green">●</span> Live Health & Device Monitoring with Real-Time Alerts</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -227,4 +298,6 @@ export default function LiveSensorDataPage() {
         </div>
     );
 }
+    
+
     

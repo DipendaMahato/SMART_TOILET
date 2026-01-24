@@ -40,7 +40,7 @@ export default function LiveSensorDataPage() {
                 const thresholds = {
                     ph_level: { min: 4.5, max: 8.0, name: 'Urine pH' },
                     specificGravity: { min: 1.005, max: 1.030, name: 'Specific Gravity' },
-                    ammonia: { min: 0, max: 25, name: 'Ammonia Level' },
+                    ammonia: { min: 5, max: 500, name: 'Ammonia Level' },
                     turbidity: { min: 0, max: 20, name: 'Water Turbidity' },
                     chemical_rem: { min: 20, max: 100, name: 'Chemical Level' },
                 };
@@ -316,6 +316,8 @@ export default function LiveSensorDataPage() {
         </div>
     );
 }
+    
+
     
 
     

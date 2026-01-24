@@ -1,7 +1,6 @@
-
 'use client';
 import React, { useState } from 'react';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useMemoFirebase, useCollection } from '@/firebase';
 import { collection, query, orderBy, updateDoc, doc, limit, deleteDoc } from 'firebase/firestore';
 import { Bell, AlertCircle, Clock, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';

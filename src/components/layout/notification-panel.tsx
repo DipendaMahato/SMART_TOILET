@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useState } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
@@ -8,7 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
 
 type Notification = {
     id: string;
@@ -17,6 +18,8 @@ type Notification = {
     isRead: boolean;
     type: 'Warning' | 'Alert';
     sensorName: string;
+    currentValue: string;
+    normalRange: string;
 };
 
 export const NotificationPanel = () => {
@@ -83,24 +86,43 @@ export const NotificationPanel = () => {
           {notifications?.map((msg) => (
             <DropdownMenuItem
               key={msg.id}
-              className={cn("items-start gap-3 p-3 focus:bg-accent cursor-pointer", !msg.isRead && 'bg-primary/5')}
+              className={cn("items-start gap-0 p-2 focus:bg-transparent cursor-pointer my-1 first:mt-0 last:mb-0")}
               onSelect={(e) => { e.preventDefault(); handleRead(msg.id); }}
             >
-              <div className={cn(msg.type === 'Warning' ? 'text-red-500' : 'text-yellow-400', 'mt-1')}>
-                <AlertCircle size={18} />
-              </div>
-              <div className="flex-1 space-y-1">
-                <p className={cn('text-sm font-medium leading-tight', !msg.isRead ? 'text-foreground' : 'text-muted-foreground')}>
-                  {msg.message}
-                </p>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Clock size={12} />
-                  <span>
-                    {msg.timestamp ? formatDistanceToNow(msg.timestamp.toDate(), { addSuffix: true }) : 'just now'}
-                  </span>
+              <div className={cn(
+                "p-3 rounded-lg w-full border",
+                msg.type === 'Warning' ? 'bg-status-red/10 border-status-red/20' : 'bg-status-orange/10 border-status-orange/20',
+                !msg.isRead && (msg.type === 'Warning' ? 'bg-status-red/20' : 'bg-status-orange/20')
+              )}>
+                <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-bold text-sm text-foreground flex items-center gap-2">
+                        <AlertCircle className={cn(msg.type === 'Warning' ? 'text-status-red' : 'text-status-orange', 'h-5 w-5 shrink-0')} />
+                        {msg.sensorName}
+                    </h4>
+                    {!msg.isRead && <div className="mt-1 h-2.5 w-2.5 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))] shrink-0"></div>}
+                </div>
+                
+                <div className="pl-7 space-y-2">
+                  <p className={cn(
+                      "text-sm font-semibold",
+                      msg.type === 'Warning' ? 'text-status-red' : 'text-status-orange'
+                  )}>
+                      {msg.message}
+                  </p>
+        
+                  <div className="grid grid-cols-2 gap-x-4 text-xs text-muted-foreground">
+                      <div><span className='font-medium text-foreground/80'>Value:</span> {msg.currentValue}</div>
+                      <div><span className='font-medium text-foreground/80'>Normal:</span> {msg.normalRange}</div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Clock size={12} />
+                      <span>
+                          {msg.timestamp ? format(msg.timestamp.toDate(), 'PPp') : 'just now'}
+                      </span>
+                  </div>
                 </div>
               </div>
-              {!msg.isRead && <div className="mt-1 h-2 w-2 self-start rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))]"></div>}
             </DropdownMenuItem>
           ))}
         </ScrollArea>

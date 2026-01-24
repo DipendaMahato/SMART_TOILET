@@ -63,11 +63,13 @@ export default function LiveSensorDataPage() {
                     const wasPreviouslyInRange = prevValue >= config.min && prevValue <= config.max;
                     
                     if (isCurrentlyOutOfRange && wasPreviouslyInRange) {
-                        const alertMessage = `${config.name} reading of ${currentValue} is outside the safe range of ${config.min} - ${config.max}.`;
+                        const toastDescription = `${config.name} reading of ${currentValue} is outside the safe range of ${config.min} - ${config.max}.`;
+                        const alertMessage = '⚠️ Alert: Value out of range. Please take necessary precautions and consult a doctor as soon as possible.';
+                        
                         toast({
                             variant: 'destructive',
                             title: `🔴 Alert: ${config.name} Out of Range`,
-                            description: `${alertMessage} Time: ${new Date().toLocaleTimeString()}`,
+                            description: `${toastDescription} Time: ${new Date().toLocaleTimeString()}`,
                             duration: 20000,
                         });
                         addDoc(collection(firestore, `users/${user.uid}/notifications`), {

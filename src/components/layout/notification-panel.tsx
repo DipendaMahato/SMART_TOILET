@@ -1,9 +1,9 @@
 
 'use client';
 import React, { useState } from 'react';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, updateDoc, doc, limit } from 'firebase/firestore';
-import { Bell, AlertCircle, Clock } from 'lucide-react';
+import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy, updateDoc, doc, limit, deleteDoc } from 'firebase/firestore';
+import { Bell, AlertCircle, Clock, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -50,6 +50,17 @@ export const NotificationPanel = () => {
     }
   };
 
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (!firestore || !user?.uid) return;
+    const ref = doc(firestore, `users/${user.uid}/notifications`, id);
+    try {
+      await deleteDoc(ref);
+    } catch (error) {
+      console.error("Error deleting notification:", error);
+    }
+  };
+
   const markAllAsRead = async () => {
     if (!firestore || !user?.uid || !notifications) return;
     const unreadNotifications = notifications.filter(n => !n.isRead);
@@ -90,7 +101,7 @@ export const NotificationPanel = () => {
               onSelect={(e) => { e.preventDefault(); handleRead(msg.id); }}
             >
               <div className={cn(
-                "p-3 rounded-lg w-full border",
+                "relative p-3 rounded-lg w-full border",
                 msg.type === 'Warning' ? 'bg-status-red/10 border-status-red/20' : 'bg-status-orange/10 border-status-orange/20',
                 !msg.isRead && (msg.type === 'Warning' ? 'bg-status-red/20' : 'bg-status-orange/20')
               )}>
@@ -99,12 +110,23 @@ export const NotificationPanel = () => {
                         <AlertCircle className={cn(msg.type === 'Warning' ? 'text-status-red' : 'text-status-orange', 'h-5 w-5 shrink-0')} />
                         {msg.sensorName}
                     </h4>
-                    {!msg.isRead && <div className="mt-1 h-2.5 w-2.5 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))] shrink-0"></div>}
+                    <div className="flex items-center gap-1">
+                      {!msg.isRead && <div className="mt-1 h-2.5 w-2.5 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))] shrink-0"></div>}
+                       <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-6 w-6 text-muted-foreground hover:text-foreground hover:bg-black/10 rounded-full z-10"
+                          onClick={(e) => handleDelete(e, msg.id)}
+                       >
+                          <Trash2 size={14} />
+                          <span className="sr-only">Delete notification</span>
+                      </Button>
+                    </div>
                 </div>
                 
                 <div className="pl-7 space-y-2">
                   <p className={cn(
-                      "text-sm font-semibold",
+                      "text-sm font-semibold pr-6",
                       msg.type === 'Warning' ? 'text-status-red' : 'text-status-orange'
                   )}>
                       {msg.message}

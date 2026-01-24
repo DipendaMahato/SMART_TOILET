@@ -164,7 +164,7 @@ service cloud.firestore {
       match /notifications/{notificationId} {
         allow get, list, create: if isOwner(userId);
         allow update: if isExistingOwner(userId) && isImmutableOwnerLink();
-        allow delete: if false; // For now, users cannot delete notifications.
+        allow delete: if isExistingOwner(userId);
       }
     }
   }

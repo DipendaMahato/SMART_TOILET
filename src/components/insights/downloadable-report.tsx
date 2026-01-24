@@ -62,9 +62,9 @@ export const DownloadableReport = forwardRef<HTMLDivElement, ReportProps>(({ dat
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '2px solid #004a99', paddingBottom: '10px', marginBottom: '15px' }}>
                     <img src="/logo.png" alt="logo" style={{ height: '60px' }}/>
                     <div style={{ textAlign: 'center' }}>
-                        <h1 style={{ margin: 0, color: '#004a99', fontSize: '24px', textTransform: 'uppercase' }}>Smart Toilet System</h1>
-                         <div style={{ marginTop: '5px', fontSize: '12px', color: '#333' }}>
-                            Health Report for {fullName}
+                        <h1 style={{ margin: 0, color: '#004a99', fontSize: '24px', textTransform: 'uppercase' }}>USER HEALTH REPORT</h1>
+                        <div style={{ marginTop: '8px', fontSize: '14px', color: '#333' }}>
+                            Contact: +91 6201158797 | Email: smarttoiletapp5@gmail.com
                         </div>
                     </div>
                     <div style={{ width: '60px' }}></div>

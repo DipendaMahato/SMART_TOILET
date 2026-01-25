@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { useUser, useFirestore } from '@/firebase';
@@ -26,6 +25,7 @@ export default function LiveSensorDataPage() {
     const { user } = useUser();
     const firestore = useFirestore();
     const [latestData, setLatestData] = useState<any>(null);
+    const [isToiletOccupied, setIsToiletOccupied] = useState<boolean>(false); // New state for global status
     const { toast } = useToast();
     const previousDataRef = useRef<any>(null);
 
@@ -142,6 +142,27 @@ export default function LiveSensorDataPage() {
             previousDataRef.current = null;
         };
     }, [user, toast, firestore]);
+    
+    // New useEffect for global toilet status
+    useEffect(() => {
+        const database = getDatabase();
+        // Specific path for global toilet status
+        const toiletStatusRef = ref(database, 'Users/tpcTZoE1bjU9Xf3234BfPfY7qMu2/sensorData/isOccupied');
+        
+        const unsubscribe = onValue(toiletStatusRef, (snapshot) => {
+            const value = snapshot.val();
+            setIsToiletOccupied(!!value); // Update global state
+        }, (error) => {
+            console.error("Error fetching global toilet status:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Connection Error',
+                description: 'Could not fetch live toilet usage status.',
+            });
+        });
+
+        return () => unsubscribe();
+    }, [toast]);
 
 
     const sendCommand = (key: string, value: boolean) => {
@@ -286,8 +307,8 @@ export default function LiveSensorDataPage() {
                 {/* Row 2 */}
                 <SensorCard className="lg:col-span-1 flex flex-col items-center justify-center animate-slide-up border-primary/50" style={{ animationDelay: '600ms' }}>
                     <h3 className="font-semibold text-gray-300 mb-4">Toilet Usage Status</h3>
-                    <CircularGauge value={latestData?.isOccupied ? 100 : 0} label={latestData?.isOccupied ? "IN USE" : "NOT IN USE"} />
-                    <p className="text-xs text-gray-500 mt-4">{latestData?.isOccupied ? 'Status: Occupied' : 'Status: Available'}</p>
+                    <CircularGauge value={isToiletOccupied ? 100 : 0} label={isToiletOccupied ? "IN USE" : "NOT IN USE"} />
+                    <p className="text-xs text-gray-500 mt-4">{isToiletOccupied ? 'Status: Occupied' : 'Status: Available'}</p>
                 </SensorCard>
                 
                 <SensorCard className="flex flex-col justify-between animate-slide-up border-glow-sky-royal-blue/50" style={{ animationDelay: '700ms' }}>
@@ -398,3 +419,4 @@ export default function LiveSensorDataPage() {
     
 
     
+

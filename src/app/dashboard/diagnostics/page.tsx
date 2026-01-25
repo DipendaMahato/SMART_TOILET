@@ -4,16 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Download } from "lucide-react";
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useUser, useFirestore, useDatabase } from '@/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { ref, get } from 'firebase/database';
+import { ref, get, onValue } from 'firebase/database';
 import { DownloadableReport } from '@/components/insights/downloadable-report';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 type Status = "Normal" | "Needs Attention" | "Abnormal";
 
-const urineDiagnostics = [
+const initialUrineDiagnostics = [
     { parameter: 'Bilirubin (BIL)', value: 'Negative', range: 'Negative', status: 'Normal' as Status },
     { parameter: 'Urobilinogen (UBG)', value: 'Normal', range: '0.2 – 1.0 mg/dL', status: 'Normal' as Status },
     { parameter: 'Ketone (KET)', value: 'Negative', range: 'Negative', status: 'Normal' as Status },
@@ -72,6 +72,58 @@ export default function DiagnosticsPage() {
     const { user } = useUser();
     const firestore = useFirestore();
     const database = useDatabase();
+    const [urineDiagnostics, setUrineDiagnostics] = useState(initialUrineDiagnostics);
+
+    useEffect(() => {
+        if (!user?.uid || !database) return;
+
+        const sensorDataRef = ref(database, `Users/${user.uid}/sensorData`);
+        const unsubscribe = onValue(sensorDataRef, (snapshot) => {
+            const health = snapshot.val();
+            if (health) {
+                setUrineDiagnostics(prevDiagnostics => {
+                    // Create a deep copy to avoid direct state mutation
+                    const newDiagnostics = JSON.parse(JSON.stringify(prevDiagnostics));
+
+                    // Update pH if available
+                    const phRow = newDiagnostics.find((r: any) => r.parameter === 'pH Level');
+                    if (phRow && health.ph_level !== undefined) {
+                        const phValue = parseFloat(health.ph_level);
+                        phRow.value = phValue.toFixed(2);
+                        phRow.status = phValue >= 4.5 && phValue <= 8.0 ? "Normal" : "Abnormal";
+                    }
+                    
+                    // Update Specific Gravity if available
+                    const sgRow = newDiagnostics.find((r: any) => r.parameter === 'Specific Gravity (SG)');
+                    if (sgRow && health.specificGravity !== undefined) {
+                        const sgValue = parseFloat(health.specificGravity);
+                        sgRow.value = sgValue.toFixed(4);
+                        sgRow.status = sgValue >= 1.005 && sgValue <= 1.030 ? "Normal" : "Abnormal";
+                    }
+
+                    // Update Blood if available
+                    const bloodRow = newDiagnostics.find((r: any) => r.parameter === 'Blood (BLD)');
+                    if (bloodRow && health.bloodDetected !== undefined) {
+                        bloodRow.value = health.bloodDetected ? "Detected" : "Negative";
+                        bloodRow.status = !health.bloodDetected ? "Normal" : "Abnormal";
+                    }
+
+                    // Update Turbidity if available
+                    const turbidityRow = newDiagnostics.find((r: any) => r.parameter === 'Turbidity');
+                    if (turbidityRow && health.turbidity !== undefined) {
+                        const turbidityValue = parseFloat(health.turbidity);
+                        turbidityRow.value = `${turbidityValue.toFixed(1)} NTU`;
+                        turbidityRow.status = turbidityValue < 20 ? "Normal" : "Abnormal";
+                    }
+
+                    return newDiagnostics;
+                });
+            }
+        });
+
+        // Cleanup subscription on unmount
+        return () => unsubscribe();
+    }, [user, database]);
 
     const handleDownload = async () => {
         if (!user || !firestore || !database) {

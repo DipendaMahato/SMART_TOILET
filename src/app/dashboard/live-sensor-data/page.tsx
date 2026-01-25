@@ -311,12 +311,10 @@ export default function LiveSensorDataPage() {
                     <p className="text-xs text-gray-500 mt-4">{isToiletOccupied ? 'Status: Occupied' : 'Status: Available'}</p>
                 </SensorCard>
                 
-                <SensorCard className="flex flex-col justify-between animate-slide-up border-glow-sky-royal-blue/50" style={{ animationDelay: '700ms' }}>
-                    <h3 className="font-semibold text-gray-300">Dipstick Dashboard</h3>
-                    <div className="w-full h-24">
-                        <TinyAreaChart />
-                    </div>
-                    <p className="text-sm text-gray-400 text-right">{latestData?.flowRate || 0} L/min</p>
+                <SensorCard className="flex flex-col items-center justify-center text-center animate-slide-up border-glow-sky-royal-blue/50" style={{ animationDelay: '700ms' }}>
+                    <h3 className="font-semibold text-gray-300">Dipstick Availability</h3>
+                    <p className="text-5xl font-bold text-glow-sky-royal-blue my-4">{latestData?.dipstickCount ?? '...'}</p>
+                    <p className="text-xs text-gray-500">Dipsticks Remaining</p>
                 </SensorCard>
                 
                 <div className="grid grid-rows-2 gap-6">
@@ -412,3 +410,5 @@ export default function LiveSensorDataPage() {
         </div>
     );
 }
+
+    

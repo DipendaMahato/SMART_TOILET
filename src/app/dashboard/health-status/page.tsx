@@ -7,8 +7,9 @@ import { cn } from '@/lib/utils';
 import { Droplets, ShieldCheck, Heart, FileText, Bone, Activity } from 'lucide-react';
 import React, { useRef, useState, useEffect } from 'react';
 import { DownloadableReport } from '@/components/insights/downloadable-report';
-import { useUser, useFirestore } from '@/firebase';
-import { doc, getDoc, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { useUser, useFirestore, useDatabase } from '@/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { ref, get } from 'firebase/database';
 import { HealthAssistantWidget } from '@/components/dashboard/health-assistant-widget';
 
 const summaryCards = [
@@ -80,6 +81,7 @@ export default function HealthStatusPage() {
   const [currentDate, setCurrentDate] = useState('');
   const { user } = useUser();
   const firestore = useFirestore();
+  const database = useDatabase();
 
   useEffect(() => {
     // Set the date only on the client-side to avoid hydration mismatch
@@ -91,7 +93,7 @@ export default function HealthStatusPage() {
   }, []);
 
   const handleDownload = async () => {
-      if (!user || !firestore) {
+      if (!user || !firestore || !database) {
           alert("User not logged in or database not available.");
           return;
       }
@@ -102,10 +104,9 @@ export default function HealthStatusPage() {
           const userDocSnap = await getDoc(userDocRef);
           const userData = userDocSnap.exists() ? userDocSnap.data() : null;
 
-          const healthDataColRef = collection(firestore, 'users', user.uid, 'healthData');
-          const q = query(healthDataColRef, orderBy('timestamp', 'desc'), limit(1));
-          const healthQuerySnap = await getDocs(q);
-          const latestHealthData = !healthQuerySnap.empty ? healthQuerySnap.docs[0].data() : null;
+          const rtdbRef = ref(database, `Users/${user.uid}/sensorData`);
+          const rtdbSnap = await get(rtdbRef);
+          const latestHealthData = rtdbSnap.exists() ? rtdbSnap.val() : {};
           
           setReportData({ user: userData, health: latestHealthData });
 

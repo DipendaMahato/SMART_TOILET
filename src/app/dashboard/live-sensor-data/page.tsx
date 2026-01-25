@@ -312,7 +312,7 @@ export default function LiveSensorDataPage() {
                 </SensorCard>
                 
                 <SensorCard className="flex flex-col justify-between animate-slide-up border-glow-sky-royal-blue/50" style={{ animationDelay: '700ms' }}>
-                    <h3 className="font-semibold text-gray-300">Water Flow Monitor</h3>
+                    <h3 className="font-semibold text-gray-300">Dipstick Dashboard</h3>
                     <div className="w-full h-24">
                         <TinyAreaChart />
                     </div>
@@ -412,11 +412,3 @@ export default function LiveSensorDataPage() {
         </div>
     );
 }
-    
-
-    
-
-    
-
-    
-

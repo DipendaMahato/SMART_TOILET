@@ -9,16 +9,24 @@ import { useUser, useFirestore, useDatabase } from '@/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { ref, get } from 'firebase/database';
 import { DownloadableReport } from '@/components/insights/downloadable-report';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 type Status = "Normal" | "Needs Attention" | "Abnormal";
 
 const urineDiagnostics = [
-    { title: "Overall Urine Health Status", subtitle: "Hydration Status", status: "Normal" as Status },
-    { title: "pH Balance Status", subtitle: "Mheds Attention", status: "Normal" as Status },
-    { title: "Possible UTI Risk Indicator", subtitle: "Harmal risk wator", status: "Normal" as Status },
-    { title: "Kidney Stress Indicator", subtitle: "Hsewred rick factor", status: "Normal" as Status },
-    { title: "Urine Clarity Status", subtitle: "Normal nak tisator", status: "Normal" as Status },
-    { title: "Urine Concentration", subtitle: "Normal nak tistor", status: "Normal" as Status },
+    { parameter: 'Bilirubin (BIL)', value: 'Negative', range: 'Negative', status: 'Normal' as Status },
+    { parameter: 'Urobilinogen (UBG)', value: 'Normal', range: '0.2 – 1.0 mg/dL', status: 'Normal' as Status },
+    { parameter: 'Ketone (KET)', value: 'Negative', range: 'Negative', status: 'Normal' as Status },
+    { parameter: 'Ascorbic Acid (ASC)', value: 'Negative', range: 'Negative', status: 'Normal' as Status },
+    { parameter: 'Glucose (GLU)', value: 'Normal', range: 'Negative', status: 'Normal' as Status },
+    { parameter: 'Protein (PRO)', value: 'Negative', range: 'Negative / Trace', status: 'Normal' as Status },
+    { parameter: 'Blood (BLD)', value: '5–10 Ery/µL', range: 'Negative (0–2 Ery/µL)', status: 'Abnormal' as Status },
+    { parameter: 'pH Level', value: '7.0', range: '4.5 – 8.0', status: 'Normal' as Status },
+    { parameter: 'Nitrite (NIT)', value: 'Negative', range: 'Negative', status: 'Normal' as Status },
+    { parameter: 'Leukocytes (LEU)', value: 'Negative', range: 'Negative (0–10 Leu/µL)', status: 'Normal' as Status },
+    { parameter: 'Specific Gravity (SG)', value: '1.002', range: '1.005 – 1.030', status: 'Abnormal' as Status },
+    { parameter: 'Turbidity', value: 'Clear', range: 'Clear', status: 'Normal' as Status },
+    { parameter: 'Color', value: 'Pale Yellow', range: 'Pale Yellow – Yellow', status: 'Normal' as Status }
 ];
 
 const stoolDiagnostics = [
@@ -126,10 +134,29 @@ export default function DiagnosticsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="space-y-6 animate-slide-up" style={{ animationDelay: '200ms' }}>
                     <h2 className="text-xl font-headline font-bold text-transparent bg-clip-text bg-gradient-to-r from-glow-teal-green to-glow-lime-emerald animate-text-gradient bg-400">Urine Diagnosis Results</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {urineDiagnostics.map((item, index) => (
-                            <DiagnosticCard key={index} {...item} />
-                        ))}
+                    <div className="bg-white/5 border border-teal-500/20 rounded-2xl overflow-hidden">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="hover:bg-transparent border-b-teal-500/20">
+                                    <TableHead className="text-gray-300 font-semibold">TEST PARAMETER</TableHead>
+                                    <TableHead className="text-gray-300 font-semibold">VALUE</TableHead>
+                                    <TableHead className="text-gray-300 font-semibold">REFERENCE RANGE</TableHead>
+                                    <TableHead className="text-right text-gray-300 font-semibold">STATUS</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {urineDiagnostics.map((item, index) => (
+                                    <TableRow key={index} className="border-teal-500/10">
+                                        <TableCell className="font-medium text-gray-300">{item.parameter}</TableCell>
+                                        <TableCell className="text-gray-400">{item.value}</TableCell>
+                                        <TableCell className="text-gray-400">{item.range}</TableCell>
+                                        <TableCell className="text-right">
+                                            <StatusBadge status={item.status} />
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
                     </div>
                 </div>
                 <div className="space-y-6 animate-slide-up" style={{ animationDelay: '300ms' }}>

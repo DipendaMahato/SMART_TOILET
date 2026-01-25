@@ -42,19 +42,74 @@ export const DownloadableReport = forwardRef<HTMLDivElement, ReportProps>(({ dat
     const age = getAge(user?.dateOfBirth);
     const gender = user?.gender ? user.gender.charAt(0).toUpperCase() + user.gender.slice(1) : 'N/A';
     
-    // Data from RTDB
-    const calculatedPH = health?.ph_level ? parseFloat(health.ph_level).toFixed(2) : 'N/A';
-    const isPhNormal = calculatedPH !== 'N/A' && parseFloat(calculatedPH) >= 5.0 && parseFloat(calculatedPH) <= 7.5;
-    
-    const specificGravity = health?.specificGravity ?? 'N/A'; // Concentration
-    const isSgNormal = specificGravity !== 'N/A' && parseFloat(specificGravity) >= 1.005 && parseFloat(specificGravity) <= 1.030;
-
-    const bloodDetected = health?.bloodDetected ?? false;
-    const turbidity = health?.turbidity ?? 'N/A'; // Clarity
-    const isTurbidityNormal = turbidity !== 'N/A' && turbidity < 20; // Assuming < 20 NTU is clear
-
     const stoolStatus = health?.stoolStatus ?? 'N/A';
     const isBristolNormal = stoolStatus === 'Type 3' || stoolStatus === 'Type 4';
+
+    // Default data for the urine examination table
+    const urineAnalysisData = [
+        { parameter: "Bilirubin (BIL)", value: "Negative", range: "Negative", isNormal: true },
+        { parameter: "Urobilinogen (UBG)", value: "Normal", range: "0.2 – 1.0 mg/dL", isNormal: true },
+        { parameter: "Ketone (KET)", value: "Negative", range: "Negative", isNormal: true },
+        { parameter: "Ascorbic Acid (ASC)", value: "Negative", range: "Negative", isNormal: true },
+        { parameter: "Glucose (GLU)", value: "Normal", range: "Negative", isNormal: true },
+        { parameter: "Protein (PRO)", value: "Negative", range: "Negative / Trace", isNormal: true },
+        { parameter: "Blood (BLD)", value: "5–10 Ery/µL", range: "Negative (0–2 Ery/µL)", isNormal: false },
+        { parameter: "pH Level", value: "7.0", range: "4.5 – 8.0", isNormal: true },
+        { parameter: "Nitrite (NIT)", value: "Negative", range: "Negative", isNormal: true },
+        { parameter: "Leukocytes (LEU)", value: "Negative", range: "Negative (0–10 Leu/µL)", isNormal: true },
+        { parameter: "Specific Gravity (SG)", value: "1.002", range: "1.005 – 1.030", isNormal: false },
+        { parameter: "Turbidity", value: "Clear", range: "Clear", isNormal: true },
+        { parameter: "Color", value: "Pale Yellow", range: "Pale Yellow – Yellow", isNormal: true },
+    ];
+
+    if (health) {
+        // Update pH if available from sensor data
+        if (health.hasOwnProperty('ph_level')) {
+            const phRow = urineAnalysisData.find(row => row.parameter === "pH Level");
+            if (phRow) {
+                const phValue = parseFloat(health.ph_level);
+                if (!isNaN(phValue)) {
+                    phRow.value = phValue.toFixed(2);
+                    phRow.isNormal = phValue >= 4.5 && phValue <= 8.0;
+                }
+            }
+        }
+
+        // Update Specific Gravity if available from sensor data
+        if (health.hasOwnProperty('specificGravity')) {
+            const sgRow = urineAnalysisData.find(row => row.parameter === "Specific Gravity (SG)");
+            if (sgRow) {
+                const sgValue = parseFloat(health.specificGravity);
+                if (!isNaN(sgValue)) {
+                    sgRow.value = sgValue.toFixed(4);
+                    sgRow.isNormal = sgValue >= 1.005 && sgValue <= 1.030;
+                }
+            }
+        }
+
+        // Update Blood if available from sensor data
+        if (health.hasOwnProperty('bloodDetected')) {
+            const bloodRow = urineAnalysisData.find(row => row.parameter === "Blood (BLD)");
+            if (bloodRow) {
+                bloodRow.value = health.bloodDetected ? "Detected" : "Negative";
+                bloodRow.isNormal = !health.bloodDetected;
+            }
+        }
+        
+        // Update Turbidity if available from sensor data
+        if (health.hasOwnProperty('turbidity')) {
+            const turbidityRow = urineAnalysisData.find(row => row.parameter === "Turbidity");
+            if (turbidityRow) {
+                const turbidityValue = parseFloat(health.turbidity);
+                if (!isNaN(turbidityValue)) {
+                    turbidityRow.value = `${turbidityValue.toFixed(1)} NTU`;
+                    turbidityRow.range = "< 20 NTU";
+                    turbidityRow.isNormal = turbidityValue < 20;
+                }
+            }
+        }
+    }
+
 
     return (
         <div ref={ref} style={{ width: '210mm', minHeight: '297mm', background: 'white', color: 'black', fontFamily: "'Arial', sans-serif" }}>
@@ -94,19 +149,16 @@ export const DownloadableReport = forwardRef<HTMLDivElement, ReportProps>(({ dat
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>Bilirubin (BIL)</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Negative</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Negative</td><td style={{ ...getStatusStyle(true), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>NORMAL</td></tr>
-                        <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>Urobilinogen (UBG)</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Normal</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>0.2 – 1.0 mg/dL</td><td style={{ ...getStatusStyle(true), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>NORMAL</td></tr>
-                        <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>Ketone (KET)</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Negative</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Negative</td><td style={{ ...getStatusStyle(true), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>NORMAL</td></tr>
-                        <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>Ascorbic Acid (ASC)</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Negative</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Negative</td><td style={{ ...getStatusStyle(true), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>NORMAL</td></tr>
-                        <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>Glucose (GLU)</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Normal</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Negative</td><td style={{ ...getStatusStyle(true), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>NORMAL</td></tr>
-                        <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>Protein (PRO)</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Negative</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Negative / Trace</td><td style={{ ...getStatusStyle(true), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>NORMAL</td></tr>
-                        <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>Blood (BLD)</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>5–10 Ery/µL</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Negative (0–2 Ery/µL)</td><td style={{ ...getStatusStyle(false), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>ABNORMAL</td></tr>
-                        <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>pH Level</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>7.0</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>4.5 – 8.0</td><td style={{ ...getStatusStyle(true), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>NORMAL</td></tr>
-                        <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>Nitrite (NIT)</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Negative</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Negative</td><td style={{ ...getStatusStyle(true), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>NORMAL</td></tr>
-                        <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>Leukocytes (LEU)</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Negative</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Negative (0–10 Leu/µL)</td><td style={{ ...getStatusStyle(true), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>NORMAL</td></tr>
-                        <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>Specific Gravity (SG)</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>1.002</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>1.005 – 1.030</td><td style={{ ...getStatusStyle(false), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>ABNORMAL</td></tr>
-                        <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>Turbidity</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Clear</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Clear</td><td style={{ ...getStatusStyle(true), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>NORMAL</td></tr>
-                        <tr><td style={{ border: '1px solid #ddd', padding: '6px' }}>Color</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Pale Yellow</td><td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Pale Yellow – Yellow</td><td style={{ ...getStatusStyle(true), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>NORMAL</td></tr>
+                        {urineAnalysisData.map((row) => (
+                            <tr key={row.parameter}>
+                                <td style={{ border: '1px solid #ddd', padding: '6px' }}>{row.parameter}</td>
+                                <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{row.value}</td>
+                                <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{row.range}</td>
+                                <td style={{ ...getStatusStyle(row.isNormal), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>
+                                    {row.isNormal ? 'NORMAL' : 'ABNORMAL'}
+                                </td>
+                            </tr>
+                        ))}
                     </tbody>
                 </table>
                 <div style={{ pageBreakBefore: 'always' }}>

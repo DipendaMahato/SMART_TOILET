@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { useUser, useFirestore } from '@/firebase';
@@ -308,7 +309,7 @@ export default function LiveSensorDataPage() {
                 <SensorCard className="lg:col-span-1 flex flex-col items-center justify-center animate-slide-up border-primary/50" style={{ animationDelay: '600ms' }}>
                     <h3 className="font-semibold text-gray-300 mb-4">Toilet Usage Status</h3>
                     <CircularGauge value={isToiletOccupied ? 100 : 0} label={isToiletOccupied ? "IN USE" : "NOT IN USE"} />
-                    <p className="text-xs text-gray-500 mt-4">{isToiletOccupied ? 'Status: Occupied' : 'Status: Available'}</p>
+                    <p className="text-xs text-gray-500 mt-4">{isToiletOccupied ? 'Status: Occupied for Stool' : 'Status: Available'}</p>
                 </SensorCard>
                 
                 <SensorCard className="flex flex-col items-center justify-center text-center animate-slide-up border-glow-sky-royal-blue/50" style={{ animationDelay: '700ms' }}>
@@ -410,5 +411,7 @@ export default function LiveSensorDataPage() {
         </div>
     );
 }
+
+    
 
     

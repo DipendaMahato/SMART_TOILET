@@ -8,7 +8,7 @@ import { SensorCard } from '@/components/dashboard/sensor-card';
 import { CircularGauge } from '@/components/charts/circular-gauge';
 import { SemiCircleGauge } from '@/components/charts/semi-circle-gauge';
 import { JaggedLineChart } from '@/components/charts/jagged-line-chart';
-import { ShieldCheck, BatteryFull, Droplet, Zap, CircleAlert, CheckCircle, Thermometer } from 'lucide-react';
+import { ShieldCheck, BatteryFull, Droplet, Zap, CircleAlert, CheckCircle, Thermometer, BatteryMedium, BatteryLow } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
@@ -201,6 +201,7 @@ export default function LiveSensorDataPage() {
 
     const isBloodDetected = latestData?.bloodDetected === true;
     const isLeakageDetected = latestData?.leakageDetected === true;
+    const batteryLevel = latestData?.battery_level || 0;
 
 
     return (
@@ -387,11 +388,27 @@ export default function LiveSensorDataPage() {
                         </div>
                     </div>
                 </SensorCard>
-                 <SensorCard className="flex items-center justify-between px-4 animate-slide-up border-status-green/50" style={{ animationDelay: '1500ms' }}>
-                    <h3 className="font-semibold text-gray-300 text-sm">Battery</h3>
-                    <div className="flex items-center gap-2">
-                        <p className="text-sm font-bold text-gray-200">{latestData?.battery_level || 0}%</p>
-                        <BatteryFull className="h-6 w-6 text-green-400"/>
+                 <SensorCard className={cn("animate-slide-up", 
+                    batteryLevel > 75 ? "border-status-green/50" : 
+                    batteryLevel > 25 ? "border-status-yellow/50" : 
+                    "border-status-red/50"
+                 )} style={{ animationDelay: '1500ms' }}>
+                    <h3 className="font-semibold text-gray-300 text-sm mb-2">Battery Status</h3>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            {batteryLevel > 75 ? <BatteryFull className="h-8 w-8 text-status-green"/> :
+                             batteryLevel > 25 ? <BatteryMedium className="h-8 w-8 text-status-yellow"/> :
+                             <BatteryLow className="h-8 w-8 text-status-red"/>
+                            }
+                            <div>
+                                <p className="text-3xl font-bold text-gray-200">{batteryLevel}%</p>
+                                <p className="text-xs text-muted-foreground">Remaining</p>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                           <p className="text-lg font-bold text-gray-200">~{((batteryLevel || 0) / 100 * 24).toFixed(1)}h</p>
+                           <p className="text-xs text-muted-foreground">Est. Runtime</p>
+                        </div>
                     </div>
                 </SensorCard>
 
@@ -405,3 +422,6 @@ export default function LiveSensorDataPage() {
     
 
 
+
+
+    

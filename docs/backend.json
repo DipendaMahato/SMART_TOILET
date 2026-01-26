@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "UserProfile": {
@@ -178,10 +179,6 @@
           "type": "number",
           "description": "Number of flushes in a given period."
         },
-        "chemicalLevel": {
-          "type": "number",
-          "description": "Remaining cleaning chemical level in percent."
-        },
         "ammoniaLevel": {
           "type": "number",
           "description": "Ammonia gas level in ppm."
@@ -209,6 +206,14 @@
         "bloodDetected": {
           "type": "boolean",
           "description": "Indicates if blood is detected in urine."
+        },
+        "temperature": {
+          "type": "number",
+          "description": "Ambient temperature in Celsius."
+        },
+        "humidity": {
+          "type": "number",
+          "description": "Ambient humidity in percent."
         }
       },
       "required": [

@@ -7,9 +7,8 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { SensorCard } from '@/components/dashboard/sensor-card';
 import { CircularGauge } from '@/components/charts/circular-gauge';
 import { SemiCircleGauge } from '@/components/charts/semi-circle-gauge';
-import { TinyAreaChart } from '@/components/charts/tiny-area-chart';
 import { JaggedLineChart } from '@/components/charts/jagged-line-chart';
-import { ShieldCheck, BatteryFull, Droplet, Gauge, Signal, Wifi, Clock, Calendar, Zap, FlaskConical, CircleAlert, CheckCircle } from 'lucide-react';
+import { ShieldCheck, BatteryFull, Droplet, Gauge, Signal, Wifi, Clock, Calendar, Zap, FlaskConical, CircleAlert, CheckCircle, Thermometer } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
@@ -50,7 +49,6 @@ export default function LiveSensorDataPage() {
                     specificGravity: { min: 1.005, max: 1.030, name: 'Specific Gravity' },
                     ammonia: { min: 5, max: 500, name: 'Ammonia Level' },
                     turbidity: { min: 0, max: 20, name: 'Water Turbidity' },
-                    chemical_rem: { min: 20, max: 100, name: 'Chemical Level' },
                 };
 
                 (Object.keys(thresholds) as Array<keyof typeof thresholds>).forEach(key => {
@@ -201,25 +199,15 @@ export default function LiveSensorDataPage() {
     const isTurbidityOutOfRange = turbidityValue !== null && (turbidityValue < 0 || turbidityValue > 20);
     const turbidityStatus = isTurbidityOutOfRange ? "HIGH" : "NORMAL";
 
-    const chemicalValue = latestData?.chemical_rem ? parseFloat(latestData.chemical_rem) : null;
-    const isChemicalLow = chemicalValue !== null && chemicalValue < 20;
-
     const isBloodDetected = latestData?.bloodDetected === true;
     const isLeakageDetected = latestData?.leakageDetected === true;
-
-    const getChemicalColor = (level: number | null) => {
-        if (level === null) return 'text-gray-400';
-        if (level < 20) return 'text-red-500';
-        if (level < 50) return 'text-yellow-400';
-        return 'text-green-400';
-    }
 
 
     return (
         <div className="bg-navy p-4 md:p-8 rounded-2xl animate-fade-in min-h-full">
             <div className="mb-8 animate-slide-up" style={{ animationDelay: '100ms' }}>
                 <h1 className="text-3xl font-headline font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-glow-green via-glow-cyan to-glow-blue animate-text-gradient bg-400">LIVE SENSOR DATA</h1>
-                <p className="text-sm text-gray-400 flex items-center gap-2"><span className="text-status-green">●</span> Live Health & Device Monitoring with Real-Time Alerts</p>
+                <p className="text-sm text-gray-400 flex items-center gap-2"><span className="text-status-green">●</span> Live Health &amp; Device Monitoring with Real-Time Alerts</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -364,11 +352,21 @@ export default function LiveSensorDataPage() {
                 </div>
 
                  {/* Row 3 */}
-                <SensorCard className={cn("flex flex-col items-center justify-center animate-slide-up", isChemicalLow ? "border-status-red/70 shadow-status-red/20" : "border-status-yellow/50")} style={{ animationDelay: '1200ms' }}>
-                     <h3 className="font-semibold text-gray-300 mb-2">Chemical Level</h3>
-                     <FlaskConical className={cn("h-10 w-10", getChemicalColor(chemicalValue))} />
-                     <p className={cn("text-lg font-bold mt-2", getChemicalColor(chemicalValue))}>{chemicalValue ?? '...'}%</p>
-                     {isChemicalLow && <WarningMessage text="Warning: Chemical level is low." />}
+                <SensorCard className="animate-slide-up border-primary/50" style={{ animationDelay: '1200ms' }}>
+                    <h3 className="font-semibold text-gray-300 mb-4 text-center">Temperature &amp; Humidity</h3>
+                    <div className="flex justify-around items-center h-full">
+                        <div className="text-center">
+                            <Thermometer className="h-8 w-8 mx-auto text-orange-400" />
+                            <p className="text-3xl font-bold mt-2">{latestData?.temperature ?? '...'}°C</p>
+                            <p className="text-xs text-gray-400">Temperature</p>
+                        </div>
+                        <div className="h-16 w-px bg-border"></div>
+                        <div className="text-center">
+                            <Droplet className="h-8 w-8 mx-auto text-sky-400" />
+                            <p className="text-3xl font-bold mt-2">{latestData?.humidity ?? '...'}%</p>
+                            <p className="text-xs text-gray-400">Humidity</p>
+                        </div>
+                    </div>
                 </SensorCard>
                 
                 <SensorCard className={cn("lg:col-span-1 flex flex-col items-center justify-center animate-slide-up", isLeakageDetected ? "border-status-red/70 shadow-status-red/20" : "border-status-green/50 shadow-green-500/20")} style={{ animationDelay: '1300ms' }}>
@@ -415,3 +413,4 @@ export default function LiveSensorDataPage() {
     
 
     
+

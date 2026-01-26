@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -13,7 +14,7 @@ const todayData = {
     { name: '6am', glucose: 30 }, { name: '9am', glucose: 45 }, { name: '12pm', glucose: 40 }, { name: '3pm', glucose: 55 }, { name: '6pm', glucose: 60 }, { name: '9pm', glucose: 50 },
   ],
   ph: [
-    { name: '6am', value: 15 }, { name: '9am', value: 18 }, { name: '12pm', value: 20 }, { name: '3pm', value: 25 }, { name: '6pm', value: 22 }, { name: '9pm', value: 24 },
+    { name: '6am', ph: 6.5, sg: 1.020 }, { name: '9am', ph: 6.8, sg: 1.015 }, { name: '12pm', ph: 7.0, sg: 1.010 }, { name: '3pm', ph: 6.7, sg: 1.025 }, { name: '6pm', ph: 7.2, sg: 1.018 }, { name: '9pm', ph: 6.9, sg: 1.022 },
   ],
   biomarker: [
     { name: '6am', protein: 10, glucose: 5 }, { name: '9am', protein: 12, glucose: 8 }, { name: '12pm', protein: 8, glucose: 6 }, { name: '3pm', protein: 15, glucose: 7 }, { name: '6pm', protein: 11, glucose: 9 }, { name: '9pm', protein: 13, glucose: 5 },
@@ -28,7 +29,7 @@ const weeklyData = {
     { name: 'Sun', glucose: 40 }, { name: 'Mon', glucose: 42 }, { name: 'Tue', glucose: 35 }, { name: 'Wed', glucose: 50 }, { name: 'Thu', glucose: 48 }, { name: 'Fri', glucose: 55 }, { name: 'Sat', glucose: 52 },
   ],
   ph: [
-    { name: 'Sun', value: 20 }, { name: 'Mon', value: 22 }, { name: 'Tue', value: 18 }, { name: 'Wed', value: 25 }, { name: 'Thu', value: 24 }, { name: 'Fri', value: 28 }, { name: 'Sat', value: 26 },
+    { name: 'Sun', ph: 6.8, sg: 1.021 }, { name: 'Mon', ph: 7.1, sg: 1.016 }, { name: 'Tue', ph: 6.6, sg: 1.025 }, { name: 'Wed', ph: 7.3, sg: 1.012 }, { name: 'Thu', ph: 6.9, sg: 1.020 }, { name: 'Fri', ph: 7.0, sg: 1.017 }, { name: 'Sat', ph: 6.7, sg: 1.023 },
   ],
   biomarker: [
     { name: 'Sun', protein: 14, glucose: 7 }, { name: 'Mon', protein: 16, glucose: 9 }, { name: 'Tue', protein: 12, glucose: 6 }, { name: 'Wed', protein: 18, glucose: 10 }, { name: 'Thu', protein: 15, glucose: 8 }, { name: 'Fri', protein: 20, glucose: 12 }, { name: 'Sat', protein: 17, glucose: 9 },
@@ -43,7 +44,7 @@ const monthlyData = {
     { name: 'Jan', glucose: 60 }, { name: 'Feb', glucose: 58 }, { name: 'Mar', glucose: 65 }, { name: 'Apr', glucose: 62 }, { name: 'May', glucose: 70 }, { name: 'Jun', glucose: 68 }, { name: 'Jul', glucose: 72 },
   ],
   ph: [
-    { name: 'Jan', value: 25 }, { name: 'Feb', value: 28 }, { name: 'Mar', value: 30 }, { name: 'Apr', value: 27 }, { name: 'May', value: 32 }, { name: 'Jun', value: 31 }, { name: 'Jul', value: 35 },
+    { name: 'Jan', ph: 6.9, sg: 1.019 }, { name: 'Feb', ph: 7.0, sg: 1.015 }, { name: 'Mar', ph: 6.8, sg: 1.022 }, { name: 'Apr', ph: 7.2, sg: 1.014 }, { name: 'May', ph: 6.7, sg: 1.026 }, { name: 'Jun', ph: 7.1, sg: 1.018 }, { name: 'Jul', ph: 6.9, sg: 1.020 },
   ],
   biomarker: [
     { name: 'Jan', protein: 18, glucose: 9 }, { name: 'Feb', protein: 22, glucose: 11 }, { name: 'Mar', protein: 20, glucose: 10 }, { name: 'Apr', protein: 25, glucose: 13 }, { name: 'May', protein: 23, glucose: 12 }, { name: 'Jun', protein: 28, glucose: 15 }, { name: 'Jul', protein: 26, glucose: 14 },
@@ -99,7 +100,7 @@ export default function VitalsTrendsPage() {
         <ChartCard title="Hydration Trend (%)">
           <HydrationTrendChart data={currentData.hydration} />
         </ChartCard>
-        <ChartCard title="Urine pH Trend">
+        <ChartCard title="Urine pH and Specific Gravity Trend">
           <UrinePhTrendChart data={currentData.ph} />
         </ChartCard>
         <ChartCard title="Dipstick Biomarker Trend (Protein/Glucose)">

@@ -1,14 +1,16 @@
 
 'use client';
 
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Rectangle, ReferenceLine } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const CustomTooltip = (props: any) => {
     if (props.active && props.payload && props.payload.length) {
         return (
             <div className="bg-card/80 backdrop-blur-sm border border-border rounded-lg p-2 text-sm shadow-lg">
                 <p className="font-semibold text-foreground">{`${props.label}`}</p>
-                <p style={{ color: '#c084fc' }}>{`Urine pH: ${props.payload[0].value}`}</p>
+                 {props.payload.map((p: any) => (
+                    <p key={p.dataKey} style={{ color: p.color }}>{`${p.name}: ${p.value}`}</p>
+                ))}
             </div>
         );
     }
@@ -19,41 +21,44 @@ export function UrinePhTrendChart({ data }: { data: any[] }) {
   return (
     <div className="h-64 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+        <LineChart data={data} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.5)" />
           <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-          <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+          <YAxis yAxisId="left" stroke="#c084fc" fontSize={12} tickLine={false} axisLine={false} domain={['dataMin - 0.5', 'dataMax + 0.5']}/>
+          <YAxis yAxisId="right" orientation="right" stroke="#2dd4bf" fontSize={12} tickLine={false} axisLine={false} domain={['dataMin - 0.005', 'dataMax + 0.005']} tickFormatter={(value) => value.toFixed(3)} />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsla(var(--primary) / 0.1)' }} />
-          <defs>
-            <linearGradient id="phGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#a855f7" stopOpacity={0.4}/>
-              <stop offset="95%" stopColor="#a855f7" stopOpacity={0}/>
-            </linearGradient>
-          </defs>
-          <Area type="monotone" dataKey="value" stroke="#c084fc" strokeWidth={3} fill="url(#phGradient)" />
-          <ReferenceLine y={6.0} stroke="hsl(var(--status-green))" strokeDasharray="4 4" />
-          <ReferenceLine y={7.5} stroke="hsl(var(--status-green))" strokeDasharray="4 4" />
-          <ReferenceArea y1={6.0} y2={7.5} fill="hsl(var(--status-green) / 0.1)" />
-        </AreaChart>
+          <Line
+            yAxisId="left"
+            type="monotone"
+            dataKey="ph"
+            stroke="#c084fc"
+            strokeWidth={2}
+            name="Urine pH"
+            dot={{ r: 4 }}
+            activeDot={{ r: 6 }}
+          />
+          <Line
+            yAxisId="right"
+            type="monotone"
+            dataKey="sg"
+            stroke="#2dd4bf"
+            strokeWidth={2}
+            name="Specific Gravity"
+            dot={{ r: 4 }}
+            activeDot={{ r: 6 }}
+          />
+        </LineChart>
       </ResponsiveContainer>
-       <div className="flex justify-center items-center gap-4 text-xs text-muted-foreground mt-2">
+      <div className="flex justify-center items-center gap-4 text-xs text-muted-foreground mt-2">
          <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full" style={{backgroundColor: '#c084fc'}} />
             <span>Urine pH</span>
          </div>
          <div className="flex items-center gap-2">
-            <div className="w-3 h-1 bg-status-green/30" />
-            <span>Ideal pH Range (6.0-7.5)</span>
+            <div className="w-3 h-3 rounded-full" style={{backgroundColor: '#2dd4bf'}} />
+            <span>Specific Gravity</span>
          </div>
       </div>
     </div>
   );
 }
-
-const ReferenceArea = (props: any) => {
-    const { y1, y2, ...rest } = props;
-    if (y1 === undefined || y2 === undefined) return null;
-    const yMax = Math.max(y1, y2);
-    const yMin = Math.min(y1, y2);
-    return <Rectangle {...rest} y={yMin} height={yMax - yMin} />;
-};

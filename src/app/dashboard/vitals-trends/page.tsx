@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -17,7 +16,7 @@ const todayData = {
     { name: '6am', value: 15 }, { name: '9am', value: 18 }, { name: '12pm', value: 20 }, { name: '3pm', value: 25 }, { name: '6pm', value: 22 }, { name: '9pm', value: 24 },
   ],
   biomarker: [
-    { name: '6am', value: 50 }, { name: '9am', value: 80 }, { name: '12pm', value: 60 }, { name: '3pm', value: 90 }, { name: '6pm', value: 70 }, { name: '9pm', value: 85 },
+    { name: '6am', protein: 10, glucose: 5 }, { name: '9am', protein: 12, glucose: 8 }, { name: '12pm', protein: 8, glucose: 6 }, { name: '3pm', protein: 15, glucose: 7 }, { name: '6pm', protein: 11, glucose: 9 }, { name: '9pm', protein: 13, glucose: 5 },
   ],
   stool: [
     { name: '6am', bristol: 20, highRisk: 30 }, { name: '9am', bristol: 25, highRisk: 30 }, { name: '12pm', bristol: 22, highRisk: 30 }, { name: '3pm', bristol: 28, highRisk: 30 }, { name: '6pm', bristol: 30, highRisk: 30 }, { name: '9pm', bristol: 26, highRisk: 30 },
@@ -32,7 +31,7 @@ const weeklyData = {
     { name: 'Sun', value: 20 }, { name: 'Mon', value: 22 }, { name: 'Tue', value: 18 }, { name: 'Wed', value: 25 }, { name: 'Thu', value: 24 }, { name: 'Fri', value: 28 }, { name: 'Sat', value: 26 },
   ],
   biomarker: [
-    { name: 'Sun', value: 120 }, { name: 'Mon', value: 150 }, { name: 'Tue', value: 130 }, { name: 'Wed', value: 180 }, { name: 'Thu', value: 160 }, { name: 'Fri', value: 200 }, { name: 'Sat', value: 170 },
+    { name: 'Sun', protein: 14, glucose: 7 }, { name: 'Mon', protein: 16, glucose: 9 }, { name: 'Tue', protein: 12, glucose: 6 }, { name: 'Wed', protein: 18, glucose: 10 }, { name: 'Thu', protein: 15, glucose: 8 }, { name: 'Fri', protein: 20, glucose: 12 }, { name: 'Sat', protein: 17, glucose: 9 },
   ],
   stool: [
     { name: 'Sun', bristol: 25, highRisk: 30 }, { name: 'Mon', bristol: 28, highRisk: 30 }, { name: 'Tue', bristol: 22, highRisk: 30 }, { name: 'Wed', bristol: 30, highRisk: 30 }, { name: 'Thu', bristol: 27, highRisk: 30 }, { name: 'Fri', value: 32, highRisk: 30 }, { name: 'Sat', bristol: 29, highRisk: 30 },
@@ -47,7 +46,7 @@ const monthlyData = {
     { name: 'Jan', value: 25 }, { name: 'Feb', value: 28 }, { name: 'Mar', value: 30 }, { name: 'Apr', value: 27 }, { name: 'May', value: 32 }, { name: 'Jun', value: 31 }, { name: 'Jul', value: 35 },
   ],
   biomarker: [
-    { name: 'Jan', value: 450 }, { name: 'Feb', value: 500 }, { name: 'Mar', value: 480 }, { name: 'Apr', value: 550 }, { name: 'May', value: 520 }, { name: 'Jun', value: 600 }, { name: 'Jul', value: 580 },
+    { name: 'Jan', protein: 18, glucose: 9 }, { name: 'Feb', protein: 22, glucose: 11 }, { name: 'Mar', protein: 20, glucose: 10 }, { name: 'Apr', protein: 25, glucose: 13 }, { name: 'May', protein: 23, glucose: 12 }, { name: 'Jun', protein: 28, glucose: 15 }, { name: 'Jul', protein: 26, glucose: 14 },
   ],
   stool: [
     { name: 'Jan', bristol: 30, highRisk: 30 }, { name: 'Feb', bristol: 32, highRisk: 30 }, { name: 'Mar', bristol: 28, highRisk: 30 }, { name: 'Apr', value: 35, highRisk: 30 }, { name: 'May', bristol: 33, highRisk: 30 }, { name: 'Jun', value: 38, highRisk: 30 }, { name: 'Jul', value: 36, highRisk: 30 },

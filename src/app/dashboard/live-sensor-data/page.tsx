@@ -129,10 +129,10 @@ export default function LiveSensorDataPage() {
 
                 if (!isNaN(currentTemp) && !isNaN(prevTemp)) {
                     if (currentTemp > tempThreshold && prevTemp <= tempThreshold) {
-                        const alertMessage = `High temperature of ${currentTemp}°C detected. This may indicate a fever.`;
+                        const alertMessage = `Dehydration detected. Drink plenty of water regularly.`;
                         toast({
                             variant: 'destructive',
-                            title: '🔴 Health Alert: High Temperature Detected',
+                            title: '💧 Dehydration Alert',
                             description: `${alertMessage} Time: ${new Date().toLocaleTimeString()}`,
                             duration: 20000,
                         });
@@ -141,9 +141,9 @@ export default function LiveSensorDataPage() {
                             timestamp: serverTimestamp(),
                             message: alertMessage,
                             type: 'Warning',
-                            sensorName: 'Temperature',
-                            currentValue: `${currentTemp}°C`,
-                            normalRange: `< ${tempThreshold}°C`,
+                            sensorName: 'Dehydration',
+                            currentValue: `High Temp (${currentTemp}°C)`,
+                            normalRange: 'Normal Temp (< 37°C)',
                             isRead: false
                         });
                     }
@@ -366,7 +366,7 @@ export default function LiveSensorDataPage() {
                     <h3 className="font-semibold text-gray-300 mb-4">Disease Symptoms Status</h3>
                     <ShieldCheck className="h-10 w-10 text-green-400 mx-auto my-2"/>
                     <p className="text-xl font-bold text-green-400 text-center mt-2">NORMAL</p>
-                    <p className="text-xs text-gray-500 mt-1">No major symptoms detected.</p>
+                    <p className="text-xs text-muted-foreground mt-1">No major symptoms detected.</p>
                 </SensorCard>
 
                  {/* Row 3 */}

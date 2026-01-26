@@ -97,16 +97,16 @@ export default function VitalsTrendsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-slide-up" style={{ animationDelay: '300ms' }}>
-        <ChartCard title="Hydration Trend">
+        <ChartCard title="Hydration Trend (%)">
           <HydrationTrendChart data={currentData.hydration} />
         </ChartCard>
         <ChartCard title="Urine pH Trend">
           <UrinePhTrendChart data={currentData.ph} />
         </ChartCard>
-        <ChartCard title="Urine Biomarker Trend">
+        <ChartCard title="Dipstick Biomarker Trend (Protein/Glucose)">
           <UrineBiomarkerTrendChart data={currentData.biomarker} />
         </ChartCard>
-        <ChartCard title="Stool Consistency Trend">
+        <ChartCard title="Stool Consistency Trend (Bristol Scale)">
           <StoolConsistencyTrendChart data={currentData.stool} />
         </ChartCard>
       </div>

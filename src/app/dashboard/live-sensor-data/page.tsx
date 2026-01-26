@@ -385,7 +385,6 @@ export default function LiveSensorDataPage() {
                             <p className="text-xs text-gray-400">Humidity</p>
                         </div>
                     </div>
-                     {isTempHigh && <WarningMessage text="High temperature detected. May indicate fever." />}
                 </SensorCard>
                 
                 <SensorCard className={cn("lg:col-span-1 flex flex-col items-center justify-center animate-slide-up", isLeakageDetected ? "border-status-red/70 shadow-status-red/20" : "border-status-green/50 shadow-green-500/20")} style={{ animationDelay: '1300ms' }}>
@@ -444,3 +443,5 @@ export default function LiveSensorDataPage() {
         </div>
     );
 }
+
+    

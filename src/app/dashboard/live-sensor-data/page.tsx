@@ -320,9 +320,9 @@ export default function LiveSensorDataPage() {
                 
                 <div className="grid grid-rows-2 gap-6">
                     <SensorCard className="flex flex-col items-center justify-center text-center animate-slide-up border-glow-cyan-blue/50" style={{ animationDelay: '800ms' }}>
-                        <h3 className="font-semibold text-gray-300">Flush Usage Counter</h3>
+                        <h3 className="font-semibold text-gray-300">Toilet Usage Count</h3>
                         <p className="text-5xl font-bold text-teal-400 my-1">{latestData?.usageCount || 0}</p>
-                        <p className="text-xs text-gray-500">Flushes Today</p>
+                        <p className="text-xs text-gray-500">used Today</p>
                     </SensorCard>
                      <SensorCard 
                         className={cn(

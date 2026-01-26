@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { useUser, useFirestore } from '@/firebase';
@@ -123,6 +122,32 @@ export default function LiveSensorDataPage() {
                         isRead: false
                     });
                 }
+
+                const tempThreshold = 37;
+                const currentTemp = parseFloat(currentData.temperature);
+                const prevTemp = parseFloat(prevData.temperature);
+
+                if (!isNaN(currentTemp) && !isNaN(prevTemp)) {
+                    if (currentTemp > tempThreshold && prevTemp <= tempThreshold) {
+                        const alertMessage = `High temperature of ${currentTemp}°C detected. This may indicate a fever.`;
+                        toast({
+                            variant: 'destructive',
+                            title: '🔴 Health Alert: High Temperature Detected',
+                            description: `${alertMessage} Time: ${new Date().toLocaleTimeString()}`,
+                            duration: 20000,
+                        });
+                        addDoc(collection(firestore, `users/${user.uid}/notifications`), {
+                            userId: user.uid,
+                            timestamp: serverTimestamp(),
+                            message: alertMessage,
+                            type: 'Warning',
+                            sensorName: 'Temperature',
+                            currentValue: `${currentTemp}°C`,
+                            normalRange: `< ${tempThreshold}°C`,
+                            isRead: false
+                        });
+                    }
+                }
             }
             
             previousDataRef.current = currentData;
@@ -202,6 +227,8 @@ export default function LiveSensorDataPage() {
     const isBloodDetected = latestData?.bloodDetected === true;
     const isLeakageDetected = latestData?.leakageDetected === true;
     const batteryLevel = latestData?.battery_level || 0;
+    const tempValue = latestData?.temperature ? parseFloat(latestData.temperature) : null;
+    const isTempHigh = tempValue !== null && tempValue > 37;
 
 
     return (
@@ -343,12 +370,12 @@ export default function LiveSensorDataPage() {
                 </SensorCard>
 
                  {/* Row 3 */}
-                <SensorCard className="animate-slide-up border-primary/50" style={{ animationDelay: '1200ms' }}>
+                <SensorCard className={cn("animate-slide-up", isTempHigh ? "border-status-red/70 shadow-status-red/20" : "border-primary/50")} style={{ animationDelay: '1200ms' }}>
                     <h3 className="font-semibold text-gray-300 mb-4 text-center">Temperature &amp; Humidity</h3>
                     <div className="flex justify-around items-center h-full">
                         <div className="text-center">
-                            <Thermometer className="h-8 w-8 mx-auto text-orange-400" />
-                            <p className="text-3xl font-bold mt-2">{latestData?.temperature ?? '...'}°C</p>
+                            <Thermometer className={cn("h-8 w-8 mx-auto", isTempHigh ? "text-status-red" : "text-orange-400")} />
+                            <p className={cn("text-3xl font-bold mt-2", isTempHigh && "text-status-red")}>{latestData?.temperature ?? '...'}°C</p>
                             <p className="text-xs text-gray-400">Temperature</p>
                         </div>
                         <div className="h-16 w-px bg-border"></div>
@@ -358,6 +385,7 @@ export default function LiveSensorDataPage() {
                             <p className="text-xs text-gray-400">Humidity</p>
                         </div>
                     </div>
+                     {isTempHigh && <WarningMessage text="High temperature detected. May indicate fever." />}
                 </SensorCard>
                 
                 <SensorCard className={cn("lg:col-span-1 flex flex-col items-center justify-center animate-slide-up", isLeakageDetected ? "border-status-red/70 shadow-status-red/20" : "border-status-green/50 shadow-green-500/20")} style={{ animationDelay: '1300ms' }}>
@@ -416,14 +444,3 @@ export default function LiveSensorDataPage() {
         </div>
     );
 }
-
-    
-
-    
-
-
-
-
-    
-
-    

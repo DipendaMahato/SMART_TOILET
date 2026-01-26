@@ -8,7 +8,7 @@ import { SensorCard } from '@/components/dashboard/sensor-card';
 import { CircularGauge } from '@/components/charts/circular-gauge';
 import { SemiCircleGauge } from '@/components/charts/semi-circle-gauge';
 import { JaggedLineChart } from '@/components/charts/jagged-line-chart';
-import { ShieldCheck, BatteryFull, Droplet, Gauge, Signal, Wifi, Clock, Calendar, Zap, FlaskConical, CircleAlert, CheckCircle, Thermometer } from 'lucide-react';
+import { ShieldCheck, BatteryFull, Droplet, Zap, CircleAlert, CheckCircle, Thermometer } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
@@ -295,7 +295,7 @@ export default function LiveSensorDataPage() {
 
                 {/* Row 2 */}
                 <SensorCard className="lg:col-span-1 flex flex-col items-center justify-center animate-slide-up border-primary/50" style={{ animationDelay: '600ms' }}>
-                    <h3 className="font-semibold text-gray-300 mb-4">Toilet Usage Status</h3>
+                    <h3 className="font-semibold text-gray-300 mb-4 text-center">Toilet Usage Status</h3>
                     <CircularGauge value={isToiletOccupied ? 100 : 0} label={isToiletOccupied ? "IN USE" : "NOT IN USE"} />
                     <p className="text-xs text-gray-500 mt-4">{isToiletOccupied ? 'Status: Occupied for Stool' : 'Status: Available'}</p>
                 </SensorCard>
@@ -334,22 +334,12 @@ export default function LiveSensorDataPage() {
                     </SensorCard>
                 </div>
 
-                <div className="grid grid-rows-2 gap-6">
-                    <SensorCard className="flex items-center justify-between px-4 animate-slide-up border-status-green/50" style={{ animationDelay: '1000ms' }}>
-                        <h3 className="font-semibold text-gray-300 text-sm">Battery</h3>
-                        <div className="flex items-center gap-2">
-                           <p className="text-sm font-bold text-gray-200">{latestData?.battery_level || 0}%</p>
-                           <BatteryFull className="h-6 w-6 text-green-400"/>
-                        </div>
-                    </SensorCard>
-                    <SensorCard className="flex items-center justify-between px-4 animate-slide-up border-primary/50" style={{ animationDelay: '1100ms' }}>
-                        <h3 className="font-semibold text-gray-300 text-sm">Connectivity</h3>
-                         <div className="flex items-center gap-2">
-                           <p className="text-sm font-bold text-gray-200">{latestData?.isOnline ? 'ONLINE' : 'OFFLINE'}</p>
-                           <Wifi className="h-6 w-6 text-teal-400"/>
-                        </div>
-                    </SensorCard>
-                </div>
+                <SensorCard className="flex flex-col items-center justify-center text-center animate-slide-up border-status-green/50" style={{ animationDelay: '1000ms' }}>
+                    <h3 className="font-semibold text-gray-300 mb-4">Disease Symptoms Status</h3>
+                    <ShieldCheck className="h-10 w-10 text-green-400 mx-auto my-2"/>
+                    <p className="text-xl font-bold text-green-400 text-center mt-2">NORMAL</p>
+                    <p className="text-xs text-gray-500 mt-1">No major symptoms detected.</p>
+                </SensorCard>
 
                  {/* Row 3 */}
                 <SensorCard className="animate-slide-up border-primary/50" style={{ animationDelay: '1200ms' }}>
@@ -397,11 +387,11 @@ export default function LiveSensorDataPage() {
                         </div>
                     </div>
                 </SensorCard>
-                 <SensorCard className="flex flex-col items-center justify-center animate-slide-up border-glow-lime-emerald/50" style={{ animationDelay: '1500ms' }}>
-                    <h3 className="font-semibold text-gray-300 mb-2">Stool Test Analysis</h3>
+                 <SensorCard className="flex items-center justify-between px-4 animate-slide-up border-status-green/50" style={{ animationDelay: '1500ms' }}>
+                    <h3 className="font-semibold text-gray-300 text-sm">Battery</h3>
                     <div className="flex items-center gap-2">
-                       <Calendar className="h-5 w-5 text-gray-500"/>
-                       <p className="text-sm font-bold text-green-400">LAST TEST: {latestData?.stoolStatus || 'N/A'}</p>
+                        <p className="text-sm font-bold text-gray-200">{latestData?.battery_level || 0}%</p>
+                        <BatteryFull className="h-6 w-6 text-green-400"/>
                     </div>
                 </SensorCard>
 
@@ -413,4 +403,5 @@ export default function LiveSensorDataPage() {
     
 
     
+
 

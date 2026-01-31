@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { useUser, useFirestore } from '@/firebase';
@@ -24,9 +25,10 @@ export default function LiveSensorDataPage() {
     const { user } = useUser();
     const firestore = useFirestore();
     const [latestData, setLatestData] = useState<any>(null);
-    const [isToiletOccupied, setIsToiletOccupied] = useState<boolean>(false); // New state for global status
     const { toast } = useToast();
     const previousDataRef = useRef<any>(null);
+
+    const isToiletOccupied = latestData?.isOccupied === true;
 
     useEffect(() => {
         if (!user?.uid) return;
@@ -167,27 +169,6 @@ export default function LiveSensorDataPage() {
         };
     }, [user, toast, firestore]);
     
-    // New useEffect for global toilet status
-    useEffect(() => {
-        const database = getDatabase();
-        // Specific path for global toilet status
-        const toiletStatusRef = ref(database, 'Users/tpcTZoE1bjU9Xf3234BfPfY7qMu2/sensorData/isOccupied');
-        
-        const unsubscribe = onValue(toiletStatusRef, (snapshot) => {
-            const value = snapshot.val();
-            setIsToiletOccupied(!!value); // Update global state
-        }, (error) => {
-            console.error("Error fetching global toilet status:", error);
-            toast({
-                variant: 'destructive',
-                title: 'Connection Error',
-                description: 'Could not fetch live toilet usage status.',
-            });
-        });
-
-        return () => unsubscribe();
-    }, [toast]);
-
 
     const sendCommand = (key: string, value: boolean) => {
         if (!user?.uid) return;
@@ -443,5 +424,7 @@ export default function LiveSensorDataPage() {
         </div>
     );
 }
+
+    
 
     

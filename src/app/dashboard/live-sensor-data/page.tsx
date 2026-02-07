@@ -344,10 +344,9 @@ export default function LiveSensorDataPage() {
                 </div>
 
                 <SensorCard className="flex flex-col items-center justify-center text-center animate-slide-up border-status-green/50" style={{ animationDelay: '1000ms' }}>
-                    <h3 className="font-semibold text-gray-300 mb-4">Disease Symptoms Status</h3>
+                    <h3 className="font-semibold text-gray-300 mb-4 text-center">Chemistry Results</h3>
                     <ShieldCheck className="h-10 w-10 text-green-400 mx-auto my-2"/>
                     <p className="text-xl font-bold text-green-400 text-center mt-2">NORMAL</p>
-                    <p className="text-xs text-muted-foreground mt-1">No major symptoms detected.</p>
                 </SensorCard>
 
                  {/* Row 3 */}

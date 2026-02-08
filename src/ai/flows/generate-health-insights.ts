@@ -37,6 +37,7 @@ export async function generateHealthInsights(
 
 const prompt = ai.definePrompt({
   name: 'generateHealthInsightsPrompt',
+  model: 'google/gemini-1.5-flash-latest',
   input: {schema: GenerateHealthInsightsInputSchema},
   output: {schema: GenerateHealthInsightsOutputSchema},
   prompt: `You are an AI health assistant specializing in generating personalized health insights.

@@ -46,6 +46,7 @@ const reasoningTool = ai.defineTool({
 
 const refineInsightsPrompt = ai.definePrompt({
   name: 'refineInsightsPrompt',
+  model: 'google/gemini-1.5-flash-latest',
   tools: [reasoningTool],
   input: {schema: RefineInsightsInputSchema},
   output: {schema: RefineInsightsOutputSchema},

@@ -53,7 +53,7 @@ const chatFlow = ai.defineFlow(
     }));
     
     const { text } = await ai.generate({
-      model: 'googleai/gemini-1.5-flash-latest',
+      model: 'gemini-1.5-flash-latest',
       system: systemPrompt,
       history: genkitHistory,
       prompt: message,

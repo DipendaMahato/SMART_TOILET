@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -53,7 +54,7 @@ const chatFlow = ai.defineFlow(
     }));
     
     const { text } = await ai.generate({
-      model: 'gemini-1.5-flash-latest',
+      model: 'google/gemini-1.5-flash-latest',
       system: systemPrompt,
       history: genkitHistory,
       prompt: message,

@@ -20,7 +20,10 @@ export const RegisterSchema = z.object({
 export const ProfileSchema = z.object({
   avatar: z.any().optional(),
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  dateOfBirth: z.date({ required_error: "Date of birth is required."}).optional().nullable(),
+  dateOfBirth: z.string().optional().nullable().refine((val) => {
+    if (!val) return true; // Allow empty, null, undefined
+    return /^\d{4}-\d{2}-\d{2}$/.test(val);
+  }, { message: "Please use YYYY-MM-DD format." }),
   gender: z.enum(["male", "female", "other"], { required_error: "Please select a gender."}),
   bloodGroup: z.enum(["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"], { required_error: "Please select a blood group."}),
   height: z.coerce.number().positive({ message: "Height must be a positive number." }),

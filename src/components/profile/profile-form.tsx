@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useState, useRef, useEffect } from "react";
-import { CalendarIcon, UserCircle } from "lucide-react";
+import { UserCircle } from "lucide-react";
 import { format } from "date-fns";
 import { useFirestore, useUser, useMemoFirebase, useStorage } from "@/firebase";
 import { doc, setDoc, getDoc, Timestamp } from "firebase/firestore";
@@ -23,8 +23,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { ProfileSchema } from "@/lib/schemas";
@@ -53,6 +51,7 @@ export function ProfileForm() {
     resolver: zodResolver(ProfileSchema),
     defaultValues: {
       name: "",
+      dateOfBirth: "",
       gender: undefined,
       bloodGroup: undefined,
       height: 0,
@@ -73,18 +72,23 @@ export function ProfileForm() {
                     const data = docSnap.data();
                     const fullName = [data.firstName, data.lastName].filter(Boolean).join(' ');
                     
-                    let dateOfBirth: Date | undefined = undefined;
+                    let dateOfBirthString: string | null = null;
                     if (data.dateOfBirth) {
+                        let dateObj: Date;
                         if (data.dateOfBirth instanceof Timestamp) {
-                            dateOfBirth = data.dateOfBirth.toDate();
-                        } else if (typeof data.dateOfBirth === 'string') {
-                            dateOfBirth = new Date(data.dateOfBirth);
+                            dateObj = data.dateOfBirth.toDate();
+                        } else { // Assuming it could be a string or other parsable format
+                            dateObj = new Date(data.dateOfBirth);
+                        }
+                        // Check if the date is valid before formatting
+                        if (!isNaN(dateObj.getTime())) {
+                            dateOfBirthString = format(dateObj, 'yyyy-MM-dd');
                         }
                     }
 
                     form.reset({
                         name: fullName || user.displayName || "",
-                        dateOfBirth: dateOfBirth,
+                        dateOfBirth: dateOfBirthString,
                         gender: data.gender,
                         bloodGroup: data.bloodGroup,
                         height: data.height || 0,
@@ -149,7 +153,7 @@ export function ProfileForm() {
         bloodGroup: data.bloodGroup,
         height: data.height,
         weight: data.weight,
-        dateOfBirth: data.dateOfBirth ? Timestamp.fromDate(data.dateOfBirth) : null,
+        dateOfBirth: data.dateOfBirth ? Timestamp.fromDate(new Date(data.dateOfBirth)) : null,
       };
 
       await setDoc(profileRef, profileData, { merge: true });
@@ -233,42 +237,15 @@ export function ProfileForm() {
               control={form.control}
               name="dateOfBirth"
               render={({ field }) => (
-                <FormItem className="flex flex-col">
+                <FormItem>
                   <FormLabel>Date of birth</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        captionLayout="dropdown-buttons"
-                        fromYear={1900}
-                        toYear={new Date().getFullYear()}
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) =>
-                          date > new Date() || date < new Date("1900-01-01")
-                        }
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                   <FormControl>
+                        <Input 
+                            placeholder="YYYY-MM-DD" 
+                            {...field}
+                            value={field.value ?? ""}
+                         />
+                    </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

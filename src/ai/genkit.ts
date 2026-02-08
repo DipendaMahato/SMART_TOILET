@@ -1,15 +1,14 @@
 
 import {genkit} from 'genkit';
-import {googleAI} from '@genkit-ai/google-genai';
 import { config } from 'dotenv';
 
 config();
 
+// Note: The googleAI plugin has been removed to resolve installation issues.
+// Other AI flows like 'generateHealthInsights' may need to be reconfigured
+// if you wish to use them.
 export const ai = genkit({
   plugins: [
-    googleAI({
-      apiKey: process.env.GEMINI_API_KEY,
-    }),
   ],
   logLevel: 'debug',
   enableTracingAndMetrics: true,

@@ -9,16 +9,15 @@
  * - ChatOutput - The return type for the chat function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z, Part} from 'genkit';
+import { z } from 'genkit';
 
 const MessageSchema = z.object({
-  role: z.enum(['user', 'model']),
+  role: z.enum(['user', 'model', 'system']),
   content: z.string(),
 });
 
 const ChatInputSchema = z.object({
-  history: z.array(MessageSchema).describe('The conversation history.'),
+  history: z.array(MessageSchema.omit({ role: true }).extend({ role: z.enum(['user', 'model']) })),
   message: z.string().describe('The latest user message.'),
 });
 export type ChatInput = z.infer<typeof ChatInputSchema>;
@@ -28,9 +27,6 @@ const ChatOutputSchema = z.object({
 });
 export type ChatOutput = z.infer<typeof ChatOutputSchema>;
 
-export async function chat(input: ChatInput): Promise<ChatOutput> {
-  return chatFlow(input);
-}
 
 const systemPrompt = `You are 'Smart Toilet Assistance', a friendly and knowledgeable AI health assistant for a smart toilet application. Your goal is to communicate like a real, empathetic person.
 - Your tone should be natural, human, and reassuring, like talking to a knowledgeable friend.
@@ -40,26 +36,49 @@ const systemPrompt = `You are 'Smart Toilet Assistance', a friendly and knowledg
 - If a user mentions symptoms of a serious disease, you must advise them to consult a medical professional. Do not attempt to diagnose.
 - If asked about topics outside of health or the application, politely state that you are a health assistant and cannot answer that question.`;
 
-const chatFlow = ai.defineFlow(
-  {
-    name: 'chatFlow',
-    inputSchema: ChatInputSchema,
-    outputSchema: ChatOutputSchema,
-  },
-  async ({history, message}) => {
-    
-    const genkitHistory = history.map(h => ({
-        role: h.role,
-        content: [{ text: h.content }] as Part[],
-    }));
-    
-    const { text } = await ai.generate({
-      model: 'google/gemini-1.5-flash-latest',
-      system: systemPrompt,
-      history: genkitHistory,
-      prompt: message,
+
+export async function chat(input: ChatInput): Promise<ChatOutput> {
+  const { history, message } = input;
+
+  const messages = [
+    { role: 'system', content: systemPrompt },
+    ...history,
+    { role: 'user', content: message },
+  ];
+
+  try {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://studio.firebase.google.com/",
+        "X-Title": "Smart Toilet App",
+      },
+      body: JSON.stringify({
+        "model": "deepseek/deepseek-r1-0528:free",
+        "messages": messages
+      })
     });
 
-    return { response: text };
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error("OpenRouter API Error:", errorBody);
+      throw new Error(`API request failed with status ${response.status}`);
+    }
+
+    const data = await response.json();
+    const aiResponse = data.choices[0]?.message?.content;
+
+    if (!aiResponse) {
+      throw new Error("No response content from AI model.");
+    }
+
+    return { response: aiResponse };
+
+  } catch (error) {
+    console.error("Error in chat flow:", error);
+    // Return a user-friendly error in the expected output format
+    return { response: "Sorry, I had trouble connecting. Please try again." };
   }
-);
+}

@@ -43,15 +43,20 @@ const getResult = (health: any, param: any) => {
         case 'NIT':
         case 'LEU':
             const resultValue = chemValue ?? 'neg';
-            return { category: resultValue === 'neg' || resultValue === 'Negative' ? 'Negative' : 'Positive', result: resultValue };
+            const isNegative = String(resultValue).toLowerCase() === 'neg' || String(resultValue).toLowerCase() === 'negative';
+            return { category: isNegative ? 'Negative' : 'Positive', result: resultValue };
         case 'UBG':
-             return { category: 'Normal', result: chemValue ?? 'norm' };
+            const ubgValue = chemValue ?? 'norm';
+            const isNormalUbg = String(ubgValue).toLowerCase() === 'norm' || String(ubgValue).toLowerCase() === 'normal';
+             return { category: isNormalUbg ? 'Normal' : 'Abnormal', result: ubgValue };
         case 'BLD':
-             return { category: health?.bloodDetected ? '+++' : 'Negative', result: health?.bloodDetected ? '300' : 'neg' };
+            const bloodValue = chemValue ?? 'neg';
+            const isBloodNegative = String(bloodValue).toLowerCase() === 'neg' || String(bloodValue).toLowerCase() === 'negative' || bloodValue === 0;
+             return { category: isBloodNegative ? 'Negative' : '+++', result: bloodValue };
         case 'pH':
-            return { category: '—', result: health?.ph_level ? parseFloat(health.ph_level).toFixed(1) : 'N/A' };
+            return { category: '—', result: chemValue ? parseFloat(chemValue).toFixed(1) : 'N/A' };
         case 'SG':
-            return { category: '—', result: health?.specificGravity ? parseFloat(health.specificGravity).toFixed(3) : 'N/A' };
+            return { category: '—', result: chemValue ? parseFloat(chemValue).toFixed(3) : 'N/A' };
         case 'Turbidity':
             return { category: '—', result: health?.turbidity && parseFloat(health.turbidity) < 20 ? 'Clear' : 'Cloudy' };
         case 'Color':
@@ -80,16 +85,16 @@ export const ChemistryReport = forwardRef<HTMLDivElement, ReportProps>(({ data }
     ];
     
     const reportParameters2 = [
-        { pad: 'BLD', name: 'Blood', firebaseKey: 'bloodDetected', unit: 'Ery/µL' },
-        { pad: 'pH', name: 'pH Level', firebaseKey: 'ph_level', unit: '—' },
+        { pad: 'BLD', name: 'Blood', chemFirebaseKey: 'chem_blood', unit: 'Ery/µL' },
+        { pad: 'pH', name: 'pH Level', chemFirebaseKey: 'chem_ph', unit: '—' },
         { pad: 'NIT', name: 'Nitrite', chemFirebaseKey: 'chem_nitrite', unit: '—' },
         { pad: 'LEU', name: 'Leukocytes', chemFirebaseKey: 'chem_leukocytes', unit: 'Leu/µL' },
-        { pad: 'SG', name: 'Specific Gravity', firebaseKey: 'specificGravity', unit: '—' },
+        { pad: 'SG', name: 'Specific Gravity', chemFirebaseKey: 'chem_specificGravity', unit: '—' },
         { pad: 'Turbidity', name: 'Turbidity', firebaseKey: 'turbidity', unit: '—' },
         { pad: 'Color', name: 'Color', firebaseKey: 'color', unit: '—' },
     ];
     
-    const renderTableRows = (parameters: typeof reportParameters1) => {
+    const renderTableRows = (parameters: any[]) => {
         return parameters.map((param) => {
             const { category, result } = getResult(health, param);
             return (
@@ -116,7 +121,7 @@ export const ChemistryReport = forwardRef<HTMLDivElement, ReportProps>(({ data }
 
     return (
         <div ref={ref} style={{ width: '210mm', minHeight: '297mm', background: 'white', color: 'black', fontFamily: "'Arial', sans-serif" }}>
-            <div style={{ padding: '25px' }}>
+            <div style={{ padding: '25px', display: 'flex', flexDirection: 'column', height: '100%' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '2px solid #004a99', paddingBottom: '10px', marginBottom: '15px' }}>
                     <img src="/logo.png" alt="logo" style={{ height: '60px' }}/>
                     <div style={{ textAlign: 'center' }}>
@@ -149,8 +154,10 @@ export const ChemistryReport = forwardRef<HTMLDivElement, ReportProps>(({ data }
                     </tbody>
                 </table>
                 
-                <div style={{ pageBreakBefore: 'always' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '25px', fontSize: '13px' }}>
+                <div style={{ flexGrow: 1 }}></div>
+                
+                <div style={{ pageBreakBefore: 'always', paddingTop: '25px' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                         <TableHeader />
                         <tbody>
                             {renderTableRows(reportParameters2)}
@@ -161,10 +168,11 @@ export const ChemistryReport = forwardRef<HTMLDivElement, ReportProps>(({ data }
                         <p style={{ margin: 0, fontSize: '14px' }}><strong>AI Clinical Summary:</strong> All physiological markers for the current period are within optimal reference ranges. No abnormal chemical or physical markers were detected in urine chemistry analysis.</p>
                     </div>
 
-                    <div style={{ borderTop: '1px solid #ddd', paddingTop: '10px', fontSize: '10px', color: '#666', display: 'flex', justifyContent: 'space-between', marginTop: 'auto' }}>
-                        <span>This is a digital health report generated by Smart Toilet AI.</span>
-                        <span style={{ fontWeight: 'bold', color: 'black', fontSize: '12px' }}>Authorized Digital Signature</span>
-                    </div>
+                </div>
+
+                <div style={{ borderTop: '1px solid #ddd', paddingTop: '10px', fontSize: '10px', color: '#666', display: 'flex', justifyContent: 'space-between', marginTop: 'auto' }}>
+                    <span>This is a digital health report generated by Smart Toilet AI.</span>
+                    <span style={{ fontWeight: 'bold', color: 'black', fontSize: '12px' }}>Authorized Digital Signature</span>
                 </div>
             </div>
         </div>

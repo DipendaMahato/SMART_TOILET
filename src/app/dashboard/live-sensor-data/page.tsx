@@ -274,6 +274,44 @@ export default function LiveSensorDataPage() {
     const tempValue = latestData?.temperature ? parseFloat(latestData.temperature) : null;
     const isTempHigh = tempValue !== null && tempValue > 37;
 
+    const getChemStatus = (key: string, value: any): { status: string; color: string } => {
+        if (value === undefined || value === null || value === '...') return { status: 'N/A', color: 'text-gray-400' };
+        
+        const lowerCaseValue = String(value).toLowerCase();
+
+        switch(key) {
+            case 'chem_ph':
+                const ph = parseFloat(value);
+                if (isNaN(ph)) return { status: 'Invalid', color: 'text-status-yellow' };
+                return (ph >= 4.5 && ph <= 8.0) ? { status: 'Normal', color: 'text-status-green' } : { status: 'Abnormal', color: 'text-status-red' };
+            case 'chem_specificGravity':
+                const sg = parseFloat(value);
+                if (isNaN(sg)) return { status: 'Invalid', color: 'text-status-yellow' };
+                return (sg >= 1.005 && sg <= 1.030) ? { status: 'Normal', color: 'text-status-green' } : { status: 'Abnormal', color: 'text-status-red' };
+            case 'chem_blood':
+                 return (lowerCaseValue === 'neg' || lowerCaseValue === 'negative' || value === 0) ? { status: 'Negative', color: 'text-status-green' } : { status: 'Detected', color: 'text-status-red' };
+            case 'chem_bilirubin':
+            case 'chem_ketones':
+            case 'chem_glucose':
+            case 'chem_protein':
+            case 'chem_nitrite':
+            case 'chem_leukocytes':
+            case 'chem_ascorbicAcid':
+                 return (lowerCaseValue === 'neg' || lowerCaseValue === 'negative') ? { status: 'Negative', color: 'text-status-green' } : { status: 'Positive', color: 'text-status-red' };
+            case 'chem_urobilinogen':
+                 return (lowerCaseValue === 'norm' || lowerCaseValue === 'normal') ? { status: 'Normal', color: 'text-status-green' } : { status: 'Abnormal', color: 'text-status-red' };
+            default:
+                return { status: 'Unknown', color: 'text-gray-400' };
+        }
+    }
+    
+    const ChemistryParameterCard = ({ label, value, status, color }: {label: string, value: any, status: string, color: string}) => (
+        <div className="bg-background/20 backdrop-blur-sm border border-white/10 rounded-xl p-3 text-center flex flex-col justify-between h-24">
+            <p className="text-xs text-gray-400 font-medium truncate" title={label}>{label}</p>
+            <p className="text-lg font-bold text-gray-200 my-1 truncate">{String(value)}</p>
+            <p className={`text-xs font-bold ${color}`}>{status}</p>
+        </div>
+    );
 
     return (
         <div className="bg-navy p-4 md:p-8 rounded-2xl animate-fade-in min-h-full">
@@ -416,18 +454,25 @@ export default function LiveSensorDataPage() {
                         <div className="flex items-center gap-2">
                            <Button onClick={handleDownload} variant="outline" size="sm" className="bg-transparent text-glow-lime-emerald border-glow-lime-emerald/50 hover:bg-glow-lime-emerald/10 hover:text-glow-lime-emerald" loading={loading}>
                                 <Download className="mr-2 h-4 w-4" />
-                                Download Report
+                                Report
                             </Button>
                            <FlaskConical className="h-6 w-6 text-glow-lime-emerald"/>
                         </div>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-3 text-sm">
-                        {chemistryParameters.map(param => (
-                            <div key={param.key} className="flex justify-between items-baseline border-b border-white/10 pb-1">
-                                <span className="text-gray-400">{param.label}</span>
-                                <span className="font-mono font-bold text-gray-200">{String(latestData?.[param.key] ?? '...')}</span>
-                            </div>
-                        ))}
+                     <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+                        {chemistryParameters.map(param => {
+                            const value = latestData?.[param.key] ?? '...';
+                            const { status, color } = getChemStatus(param.key, value);
+                            return (
+                                <ChemistryParameterCard
+                                    key={param.key}
+                                    label={param.label}
+                                    value={value}
+                                    status={status}
+                                    color={color}
+                                />
+                            )
+                        })}
                     </div>
                 </SensorCard>
 

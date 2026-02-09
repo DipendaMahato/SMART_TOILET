@@ -28,10 +28,39 @@ const getAge = (dob: Date | string | Timestamp) => {
     return isNaN(age) ? 'N/A' : age;
 };
 
-const getStatusStyle = (isNormal: boolean) => ({
-  color: isNormal ? 'green' : 'red',
-  fontWeight: 'bold' as 'bold',
-});
+const getResult = (health: any, param: any) => {
+    const value = health?.[param.firebaseKey];
+    const chemValue = health?.[param.chemFirebaseKey];
+
+    if (value === undefined && chemValue === undefined) return { category: '—', result: 'N/A' };
+    
+    switch (param.pad) {
+        case 'BIL':
+        case 'KET':
+        case 'ASC':
+        case 'GLU':
+        case 'PRO':
+        case 'NIT':
+        case 'LEU':
+            const resultValue = chemValue ?? 'neg';
+            return { category: resultValue === 'neg' || resultValue === 'Negative' ? 'Negative' : 'Positive', result: resultValue };
+        case 'UBG':
+             return { category: 'Normal', result: chemValue ?? 'norm' };
+        case 'BLD':
+             return { category: health?.bloodDetected ? '+++' : 'Negative', result: health?.bloodDetected ? '300' : 'neg' };
+        case 'pH':
+            return { category: '—', result: health?.ph_level ? parseFloat(health.ph_level).toFixed(1) : 'N/A' };
+        case 'SG':
+            return { category: '—', result: health?.specificGravity ? parseFloat(health.specificGravity).toFixed(3) : 'N/A' };
+        case 'Turbidity':
+            return { category: '—', result: health?.turbidity && parseFloat(health.turbidity) < 20 ? 'Clear' : 'Cloudy' };
+        case 'Color':
+            return { category: '—', result: 'Yellow' }; // Hardcoded
+        default:
+             return { category: '—', result: value ?? chemValue };
+    }
+}
+
 
 export const ChemistryReport = forwardRef<HTMLDivElement, ReportProps>(({ data }, ref) => {
     if (!data) return <div ref={ref}></div>;
@@ -41,18 +70,20 @@ export const ChemistryReport = forwardRef<HTMLDivElement, ReportProps>(({ data }
     const age = getAge(user?.dateOfBirth);
     const gender = user?.gender ? user.gender.charAt(0).toUpperCase() + user.gender.slice(1) : 'N/A';
 
-    const chemistryParameters = [
-        { key: 'chem_bilirubin', label: 'Bilirubin', range: 'Negative', isNormal: (health?.chem_bilirubin ?? 'Negative') === 'Negative' },
-        { key: 'chem_urobilinogen', label: 'Urobilinogen', range: '0.2 – 1.0 mg/dL', isNormal: (parseFloat(health?.chem_urobilinogen) >= 0.2 && parseFloat(health?.chem_urobilinogen) <= 1.0) },
-        { key: 'chem_ketones', label: 'Ketones', range: 'Negative', isNormal: (health?.chem_ketones ?? 'Negative') === 'Negative' },
-        { key: 'chem_ascorbicAcid', label: 'Ascorbic Acid', range: 'Negative', isNormal: (health?.chem_ascorbicAcid ?? 'Negative') === 'Negative' },
-        { key: 'chem_glucose', label: 'Glucose', range: 'Negative', isNormal: (health?.chem_glucose ?? 'Negative') === 'Negative' },
-        { key: 'chem_protein', label: 'Protein', range: 'Negative / Trace', isNormal: ['Negative', 'Trace'].includes(health?.chem_protein ?? 'Negative') },
-        { key: 'chem_blood', label: 'Blood', range: 'Negative', isNormal: (health?.chem_blood ?? 'Negative') === 'Negative' },
-        { key: 'chem_ph', label: 'pH', range: '4.5 – 8.0', isNormal: (parseFloat(health?.chem_ph) >= 4.5 && parseFloat(health?.chem_ph) <= 8.0) },
-        { key: 'chem_nitrite', label: 'Nitrite', range: 'Negative', isNormal: (health?.chem_nitrite ?? 'Negative') === 'Negative' },
-        { key: 'chem_leukocytes', label: 'Leukocytes', range: 'Negative', isNormal: (health?.chem_leukocytes ?? 'Negative') === 'Negative' },
-        { key: 'chem_specificGravity', label: 'Specific Gravity', range: '1.005 – 1.030', isNormal: (parseFloat(health?.chem_specificGravity) >= 1.005 && parseFloat(health?.chem_specificGravity) <= 1.030) },
+    const reportParameters = [
+        { pad: 'BIL', name: 'Bilirubin', chemFirebaseKey: 'chem_bilirubin', unit: 'mg/dL' },
+        { pad: 'UBG', name: 'Urobilinogen', chemFirebaseKey: 'chem_urobilinogen', unit: 'mg/dL' },
+        { pad: 'KET', name: 'Ketone', chemFirebaseKey: 'chem_ketones', unit: 'mg/dL' },
+        { pad: 'ASC', name: 'Ascorbic Acid', chemFirebaseKey: 'chem_ascorbicAcid', unit: 'mg/dL' },
+        { pad: 'GLU', name: 'Glucose', chemFirebaseKey: 'chem_glucose', unit: 'mg/dL' },
+        { pad: 'PRO', name: 'Protein', chemFirebaseKey: 'chem_protein', unit: 'mg/dL' },
+        { pad: 'BLD', name: 'Blood', firebaseKey: 'bloodDetected', unit: 'Ery/µL' },
+        { pad: 'pH', name: 'pH Level', firebaseKey: 'ph_level', unit: '—' },
+        { pad: 'NIT', name: 'Nitrite', chemFirebaseKey: 'chem_nitrite', unit: '—' },
+        { pad: 'LEU', name: 'Leukocytes', chemFirebaseKey: 'chem_leukocytes', unit: 'Leu/µL' },
+        { pad: 'SG', name: 'Specific Gravity', firebaseKey: 'specificGravity', unit: '—' },
+        { pad: 'Turbidity', name: 'Turbidity', firebaseKey: 'turbidity', unit: '—' },
+        { pad: 'Color', name: 'Color', firebaseKey: 'color', unit: '—' },
     ];
 
     return (
@@ -86,23 +117,23 @@ export const ChemistryReport = forwardRef<HTMLDivElement, ReportProps>(({ data }
                 <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '15px', fontSize: '13px' }}>
                     <thead style={{ background: '#f2f2f2' }}>
                         <tr>
-                            <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'left' }}>TEST PARAMETER</th>
-                            <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>VALUE</th>
-                            <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>REFERENCE RANGE</th>
-                            <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>STATUS</th>
+                            <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'left' }}>Pad</th>
+                            <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Category</th>
+                            <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Result</th>
+                            <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Unit</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {chemistryParameters.map((param) => (
-                            <tr key={param.key}>
-                                <td style={{ border: '1px solid #ddd', padding: '6px' }}>{param.label}</td>
-                                <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{String(health?.[param.key] ?? '...')}</td>
-                                <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{param.range}</td>
-                                <td style={{ ...getStatusStyle(param.isNormal), border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>
-                                    {param.isNormal ? 'NORMAL' : 'ABNORMAL'}
-                                </td>
+                        {reportParameters.map((param) => {
+                            const { category, result } = getResult(health, param);
+                            return (
+                            <tr key={param.pad}>
+                                <td style={{ border: '1px solid #ddd', padding: '6px', fontWeight: 'bold' }}>{param.pad}</td>
+                                <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{category}</td>
+                                <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{String(result ?? '...')}</td>
+                                <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{param.unit}</td>
                             </tr>
-                        ))}
+                        )})}
                     </tbody>
                 </table>
 

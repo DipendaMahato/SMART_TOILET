@@ -8,7 +8,7 @@ import { SensorCard } from '@/components/dashboard/sensor-card';
 import { CircularGauge } from '@/components/charts/circular-gauge';
 import { SemiCircleGauge } from '@/components/charts/semi-circle-gauge';
 import { JaggedLineChart } from '@/components/charts/jagged-line-chart';
-import { ShieldCheck, BatteryFull, Droplet, Zap, CircleAlert, CheckCircle, Thermometer, BatteryMedium, BatteryLow } from 'lucide-react';
+import { ShieldCheck, BatteryFull, Droplet, Zap, CircleAlert, CheckCircle, Thermometer, BatteryMedium, BatteryLow, FlaskConical } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
@@ -29,6 +29,20 @@ export default function LiveSensorDataPage() {
     const previousDataRef = useRef<any>(null);
 
     const isToiletOccupied = latestData?.isOccupied === true;
+    
+    const chemistryParameters = [
+        { key: 'chem_bilirubin', label: 'Bilirubin' },
+        { key: 'chem_urobilinogen', label: 'Urobilinogen' },
+        { key: 'chem_ketones', label: 'Ketones' },
+        { key: 'chem_ascorbicAcid', label: 'Ascorbic Acid' },
+        { key: 'chem_glucose', label: 'Glucose' },
+        { key: 'chem_protein', label: 'Protein' },
+        { key: 'chem_blood', label: 'Blood' },
+        { key: 'chem_ph', label: 'pH' },
+        { key: 'chem_nitrite', label: 'Nitrite' },
+        { key: 'chem_leukocytes', label: 'Leukocytes' },
+        { key: 'chem_specificGravity', label: 'Specific Gravity' },
+    ];
 
     useEffect(() => {
         if (!user?.uid) return;
@@ -343,10 +357,19 @@ export default function LiveSensorDataPage() {
                     </SensorCard>
                 </div>
 
-                <SensorCard className="flex flex-col items-center justify-center text-center animate-slide-up border-status-green/50" style={{ animationDelay: '1000ms' }}>
-                    <h3 className="font-semibold text-gray-300 mb-4 text-center">Chemistry Results</h3>
-                    <ShieldCheck className="h-10 w-10 text-green-400 mx-auto my-2"/>
-                    <p className="text-xl font-bold text-green-400 text-center mt-2">NORMAL</p>
+                <SensorCard className="lg:col-span-2 animate-slide-up border-glow-lime-emerald/50" style={{ animationDelay: '1000ms' }}>
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-semibold text-gray-300">Chemistry Results</h3>
+                        <FlaskConical className="h-6 w-6 text-glow-lime-emerald"/>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-3 text-sm">
+                        {chemistryParameters.map(param => (
+                            <div key={param.key} className="flex justify-between items-baseline border-b border-white/10 pb-1">
+                                <span className="text-gray-400">{param.label}</span>
+                                <span className="font-mono font-bold text-gray-200">{String(latestData?.[param.key] ?? '...')}</span>
+                            </div>
+                        ))}
+                    </div>
                 </SensorCard>
 
                  {/* Row 3 */}
@@ -427,3 +450,4 @@ export default function LiveSensorDataPage() {
     
 
     
+

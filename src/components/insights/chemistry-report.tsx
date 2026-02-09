@@ -29,10 +29,9 @@ const getAge = (dob: Date | string | Timestamp) => {
 };
 
 const getResult = (health: any, param: any) => {
-    const value = health?.[param.firebaseKey];
     const chemValue = health?.[param.chemFirebaseKey];
 
-    if (value === undefined && chemValue === undefined) return { category: '—', result: 'N/A' };
+    if (chemValue === undefined) return { category: '—', result: 'N/A' };
     
     switch (param.pad) {
         case 'BIL':
@@ -42,27 +41,23 @@ const getResult = (health: any, param: any) => {
         case 'PRO':
         case 'NIT':
         case 'LEU':
-            const resultValue = chemValue ?? 'neg';
-            const isNegative = String(resultValue).toLowerCase() === 'neg' || String(resultValue).toLowerCase() === 'negative';
+            const resultValue = chemValue;
+            const isNegative = String(resultValue).toLowerCase() === 'neg' || String(resultValue).toLowerCase() === 'negative' || resultValue === 0;
             return { category: isNegative ? 'Negative' : 'Positive', result: resultValue };
         case 'UBG':
-            const ubgValue = chemValue ?? 'norm';
+            const ubgValue = chemValue;
             const isNormalUbg = String(ubgValue).toLowerCase() === 'norm' || String(ubgValue).toLowerCase() === 'normal';
              return { category: isNormalUbg ? 'Normal' : 'Abnormal', result: ubgValue };
         case 'BLD':
-            const bloodValue = chemValue ?? 'neg';
+            const bloodValue = chemValue;
             const isBloodNegative = String(bloodValue).toLowerCase() === 'neg' || String(bloodValue).toLowerCase() === 'negative' || bloodValue === 0;
              return { category: isBloodNegative ? 'Negative' : '+++', result: bloodValue };
         case 'pH':
             return { category: '—', result: chemValue ? parseFloat(chemValue).toFixed(1) : 'N/A' };
         case 'SG':
             return { category: '—', result: chemValue ? parseFloat(chemValue).toFixed(3) : 'N/A' };
-        case 'Turbidity':
-            return { category: '—', result: health?.turbidity && parseFloat(health.turbidity) < 20 ? 'Clear' : 'Cloudy' };
-        case 'Color':
-            return { category: '—', result: 'Yellow' }; // Hardcoded
         default:
-             return { category: '—', result: value ?? chemValue };
+             return { category: '—', result: chemValue };
     }
 }
 
@@ -75,23 +70,18 @@ export const ChemistryReport = forwardRef<HTMLDivElement, ReportProps>(({ data }
     const age = getAge(user?.dateOfBirth);
     const gender = user?.gender ? user.gender.charAt(0).toUpperCase() + user.gender.slice(1) : 'N/A';
 
-    const reportParameters1 = [
+    const reportParameters = [
         { pad: 'BIL', name: 'Bilirubin', chemFirebaseKey: 'chem_bilirubin', unit: 'mg/dL' },
         { pad: 'UBG', name: 'Urobilinogen', chemFirebaseKey: 'chem_urobilinogen', unit: 'mg/dL' },
         { pad: 'KET', name: 'Ketone', chemFirebaseKey: 'chem_ketones', unit: 'mg/dL' },
         { pad: 'ASC', name: 'Ascorbic Acid', chemFirebaseKey: 'chem_ascorbicAcid', unit: 'mg/dL' },
         { pad: 'GLU', name: 'Glucose', chemFirebaseKey: 'chem_glucose', unit: 'mg/dL' },
         { pad: 'PRO', name: 'Protein', chemFirebaseKey: 'chem_protein', unit: 'mg/dL' },
-    ];
-    
-    const reportParameters2 = [
         { pad: 'BLD', name: 'Blood', chemFirebaseKey: 'chem_blood', unit: 'Ery/µL' },
         { pad: 'pH', name: 'pH Level', chemFirebaseKey: 'chem_ph', unit: '—' },
         { pad: 'NIT', name: 'Nitrite', chemFirebaseKey: 'chem_nitrite', unit: '—' },
         { pad: 'LEU', name: 'Leukocytes', chemFirebaseKey: 'chem_leukocytes', unit: 'Leu/µL' },
         { pad: 'SG', name: 'Specific Gravity', chemFirebaseKey: 'chem_specificGravity', unit: '—' },
-        { pad: 'Turbidity', name: 'Turbidity', firebaseKey: 'turbidity', unit: '—' },
-        { pad: 'Color', name: 'Color', firebaseKey: 'color', unit: '—' },
     ];
     
     const renderTableRows = (parameters: any[]) => {
@@ -150,24 +140,14 @@ export const ChemistryReport = forwardRef<HTMLDivElement, ReportProps>(({ data }
                 <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '15px', fontSize: '13px' }}>
                     <TableHeader />
                     <tbody>
-                        {renderTableRows(reportParameters1)}
+                        {renderTableRows(reportParameters)}
                     </tbody>
                 </table>
                 
                 <div style={{ flexGrow: 1 }}></div>
-                
-                <div style={{ pageBreakBefore: 'always', paddingTop: '25px' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                        <TableHeader />
-                        <tbody>
-                            {renderTableRows(reportParameters2)}
-                        </tbody>
-                    </table>
 
-                    <div style={{ marginTop: '20px', padding: '10px', border: '1px solid #22d3ee', background: '#f0fbff', borderRadius: '5px' }}>
-                        <p style={{ margin: 0, fontSize: '14px' }}><strong>AI Clinical Summary:</strong> All physiological markers for the current period are within optimal reference ranges. No abnormal chemical or physical markers were detected in urine chemistry analysis.</p>
-                    </div>
-
+                <div style={{ marginTop: '20px', padding: '10px', border: '1px solid #22d3ee', background: '#f0fbff', borderRadius: '5px' }}>
+                    <p style={{ margin: 0, fontSize: '14px' }}><strong>AI Clinical Summary:</strong> All physiological markers for the current period are within optimal reference ranges. No abnormal chemical or physical markers were detected in urine chemistry analysis.</p>
                 </div>
 
                 <div style={{ borderTop: '1px solid #ddd', paddingTop: '10px', fontSize: '10px', color: '#666', display: 'flex', justifyContent: 'space-between', marginTop: 'auto' }}>

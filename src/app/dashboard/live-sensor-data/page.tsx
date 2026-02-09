@@ -1,18 +1,19 @@
-
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { useUser, useFirestore } from '@/firebase';
-import { getDatabase, ref, onValue, update } from 'firebase/database';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useUser, useFirestore, useDatabase } from '@/firebase';
+import { getDatabase, ref, onValue, update, get } from 'firebase/database';
+import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { SensorCard } from '@/components/dashboard/sensor-card';
 import { CircularGauge } from '@/components/charts/circular-gauge';
 import { SemiCircleGauge } from '@/components/charts/semi-circle-gauge';
 import { JaggedLineChart } from '@/components/charts/jagged-line-chart';
-import { ShieldCheck, BatteryFull, Droplet, Zap, CircleAlert, CheckCircle, Thermometer, BatteryMedium, BatteryLow, FlaskConical } from 'lucide-react';
+import { ShieldCheck, BatteryFull, Droplet, Zap, CircleAlert, CheckCircle, Thermometer, BatteryMedium, BatteryLow, FlaskConical, Download } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
+import { ChemistryReport } from '@/components/insights/chemistry-report';
+import { Button } from '@/components/ui/button';
 
 const WarningMessage = ({ text = 'Warning: Value out of range.' }: { text?: string }) => (
     <div className="flex items-center gap-2 text-sm text-red-400 mt-2">
@@ -24,9 +25,13 @@ const WarningMessage = ({ text = 'Warning: Value out of range.' }: { text?: stri
 export default function LiveSensorDataPage() {
     const { user } = useUser();
     const firestore = useFirestore();
+    const database = useDatabase();
     const [latestData, setLatestData] = useState<any>(null);
     const { toast } = useToast();
     const previousDataRef = useRef<any>(null);
+    const reportRef = useRef<HTMLDivElement>(null);
+    const [reportData, setReportData] = useState<any>(null);
+    const [loading, setLoading] = useState(false);
 
     const isToiletOccupied = latestData?.isOccupied === true;
     
@@ -192,6 +197,50 @@ export default function LiveSensorDataPage() {
             .catch((err) => alert("Error sending command: " + err.message));
     };
 
+    const handleDownload = async () => {
+        if (!user || !firestore || !database) {
+            alert("User not logged in or database services not available.");
+            return;
+        }
+        setLoading(true);
+
+        try {
+            // Fetch user profile from Firestore
+            const userDocRef = doc(firestore, 'users', user.uid);
+            const userDocSnap = await getDoc(userDocRef);
+            const userData = userDocSnap.exists() ? userDocSnap.data() : { displayName: user.displayName, email: user.email };
+
+            // Fetch latest sensor data from Realtime Database
+            const rtdbRef = ref(database, `Users/${user.uid}/sensorData`);
+            const rtdbSnap = await get(rtdbRef);
+            const latestHealthData = rtdbSnap.exists() ? rtdbSnap.val() : {};
+
+            const combinedData = { user: userData, health: latestHealthData };
+            setReportData(combinedData);
+
+            // Wait for state to update and component to re-render
+            setTimeout(() => {
+                const element = reportRef.current;
+                if (element && window.html2pdf) {
+                    const opt = {
+                        margin: 0,
+                        filename: `Chemistry_Report_${(userData as any).firstName || 'User'}.pdf`,
+                        image: { type: 'jpeg', quality: 0.98 },
+                        html2canvas: { scale: 3, useCORS: true },
+                        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+                    };
+                    window.html2pdf().from(element).set(opt).save();
+                }
+                setLoading(false);
+            }, 500);
+
+        } catch (error) {
+            console.error("Error generating report:", error);
+            alert("Failed to generate report.");
+            setLoading(false);
+        }
+    };
+
     const StatusBadge = ({ label, status, className }: { label?: string, status: string, className?: string }) => {
         return (
             <div className="flex items-center gap-1.5">
@@ -228,6 +277,10 @@ export default function LiveSensorDataPage() {
 
     return (
         <div className="bg-navy p-4 md:p-8 rounded-2xl animate-fade-in min-h-full">
+            <div className="fixed -left-[9999px] top-0 opacity-0">
+                <ChemistryReport ref={reportRef} data={reportData} />
+            </div>
+
             <div className="mb-8 animate-slide-up" style={{ animationDelay: '100ms' }}>
                 <h1 className="text-3xl font-headline font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-glow-green via-glow-cyan to-glow-blue animate-text-gradient bg-400">LIVE SENSOR DATA</h1>
                 <p className="text-sm text-gray-400 flex items-center gap-2"><span className="text-status-green">●</span> Live Health &amp; Device Monitoring with Real-Time Alerts</p>
@@ -360,7 +413,13 @@ export default function LiveSensorDataPage() {
                 <SensorCard className="lg:col-span-2 animate-slide-up border-glow-lime-emerald/50" style={{ animationDelay: '1000ms' }}>
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="font-semibold text-gray-300">Chemistry Results</h3>
-                        <FlaskConical className="h-6 w-6 text-glow-lime-emerald"/>
+                        <div className="flex items-center gap-2">
+                           <Button onClick={handleDownload} variant="outline" size="sm" className="bg-transparent text-glow-lime-emerald border-glow-lime-emerald/50 hover:bg-glow-lime-emerald/10 hover:text-glow-lime-emerald" loading={loading}>
+                                <Download className="mr-2 h-4 w-4" />
+                                Download Report
+                            </Button>
+                           <FlaskConical className="h-6 w-6 text-glow-lime-emerald"/>
+                        </div>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-3 text-sm">
                         {chemistryParameters.map(param => (
@@ -446,8 +505,3 @@ export default function LiveSensorDataPage() {
         </div>
     );
 }
-
-    
-
-    
-

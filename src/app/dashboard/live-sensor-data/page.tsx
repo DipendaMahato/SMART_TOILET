@@ -6,8 +6,7 @@ import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/fires
 import { SensorCard } from '@/components/dashboard/sensor-card';
 import { CircularGauge } from '@/components/charts/circular-gauge';
 import { SemiCircleGauge } from '@/components/charts/semi-circle-gauge';
-import { JaggedLineChart } from '@/components/charts/jagged-line-chart';
-import { ShieldCheck, BatteryFull, Droplet, Zap, CircleAlert, CheckCircle, Thermometer, BatteryMedium, BatteryLow, FlaskConical, Download } from 'lucide-react';
+import { ShieldCheck, Droplet, Zap, CircleAlert, CheckCircle, Thermometer, FlaskConical, Download } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
@@ -33,7 +32,10 @@ export default function LiveSensorDataPage() {
     const [reportData, setReportData] = useState<any>(null);
     const [loading, setLoading] = useState(false);
 
-    const isToiletOccupied = latestData?.isOccupied === true;
+    const sensorData = latestData?.sensorData;
+    const chemistryData = latestData?.Chemistry_Result;
+
+    const isToiletOccupied = sensorData?.isOccupied === 1;
     
     const chemistryParameters = [
         { key: 'chem_bilirubin', label: 'Bilirubin' },
@@ -50,31 +52,34 @@ export default function LiveSensorDataPage() {
     ];
 
     useEffect(() => {
-        if (!user?.uid) return;
+        if (!user?.uid || !database) return;
         
-        const database = getDatabase();
-        const sensorDataRef = ref(database, `Users/${user.uid}/sensorData`);
+        const userRef = ref(database, `Users/${user.uid}`);
         
-        const unsubscribe = onValue(sensorDataRef, (snapshot) => {
+        const unsubscribe = onValue(userRef, (snapshot) => {
             const currentData = snapshot.val();
             if (!currentData) return;
 
             setLatestData(currentData);
 
             const prevData = previousDataRef.current;
+            const currentSensorData = currentData.sensorData;
+            const prevSensorData = prevData?.sensorData;
 
-            if (prevData && firestore && user) {
+            if (prevSensorData && firestore && user) {
                 const thresholds = {
-                    ph_level: { min: 4.5, max: 8.0, name: 'Urine pH' },
-                    specificGravity: { min: 1.005, max: 1.030, name: 'Specific Gravity' },
-                    ammonia: { min: 5, max: 500, name: 'Ammonia Level' },
+                    ph_value_sensor: { min: 4.5, max: 8.0, name: 'Urine pH' },
+                    specific_gravity_sensor: { min: 1.005, max: 1.030, name: 'Specific Gravity' },
+                    ammonia_gas_ppm: { min: 5, max: 500, name: 'Ammonia Level' },
                     turbidity: { min: 0, max: 20, name: 'Water Turbidity' },
                 };
 
                 (Object.keys(thresholds) as Array<keyof typeof thresholds>).forEach(key => {
+                    if (currentSensorData[key] === undefined || prevSensorData[key] === undefined) return;
+
                     const config = thresholds[key];
-                    const currentValue = parseFloat(currentData[key]);
-                    const prevValue = parseFloat(prevData[key]);
+                    const currentValue = parseFloat(currentSensorData[key]);
+                    const prevValue = parseFloat(prevSensorData[key]);
 
                     if (isNaN(currentValue) || isNaN(prevValue)) return;
 
@@ -104,7 +109,7 @@ export default function LiveSensorDataPage() {
                     }
                 });
 
-                if (currentData.bloodDetected === true && prevData.bloodDetected === false) {
+                if (currentSensorData.blood_detected_sensor === true && prevSensorData.blood_detected_sensor === false) {
                     const alertMessage = `Traces of blood were detected in the latest analysis. Please consult a healthcare professional.`;
                     toast({
                         variant: 'destructive',
@@ -112,7 +117,7 @@ export default function LiveSensorDataPage() {
                         description: `${alertMessage} Time: ${new Date().toLocaleTimeString()}`,
                         duration: 20000,
                     });
-                     addDoc(collection(firestore, `users/${user.uid}/notifications`), {
+                    addDoc(collection(firestore, `users/${user.uid}/notifications`), {
                         userId: user.uid,
                         timestamp: serverTimestamp(),
                         message: alertMessage,
@@ -124,29 +129,9 @@ export default function LiveSensorDataPage() {
                     });
                 }
                 
-                if (currentData.leakageDetected === true && prevData.leakageDetected === false) {
-                    const alertMessage = `A water leak has been detected. Please check the device immediately.`;
-                    toast({
-                        variant: 'destructive',
-                        title: '⚠️ Maintenance Alert: Water Leak Detected',
-                        description: `${alertMessage} Time: ${new Date().toLocaleTimeString()}`,
-                        duration: 20000,
-                    });
-                     addDoc(collection(firestore, `users/${user.uid}/notifications`), {
-                        userId: user.uid,
-                        timestamp: serverTimestamp(),
-                        message: alertMessage,
-                        type: 'Alert',
-                        sensorName: 'Leakage Detection',
-                        currentValue: 'Detected',
-                        normalRange: 'Not Detected',
-                        isRead: false
-                    });
-                }
-
                 const tempThreshold = 37;
-                const currentTemp = parseFloat(currentData.temperature);
-                const prevTemp = parseFloat(prevData.temperature);
+                const currentTemp = parseFloat(currentSensorData.temperature);
+                const prevTemp = parseFloat(prevSensorData.temperature);
 
                 if (!isNaN(currentTemp) && !isNaN(prevTemp)) {
                     if (currentTemp > tempThreshold && prevTemp <= tempThreshold) {
@@ -186,12 +171,10 @@ export default function LiveSensorDataPage() {
             unsubscribe();
             previousDataRef.current = null;
         };
-    }, [user, toast, firestore]);
+    }, [user, database, firestore, toast]);
     
-
     const sendCommand = (key: string, value: boolean) => {
-        if (!user?.uid) return;
-        const database = getDatabase();
+        if (!user?.uid || !database) return;
         const sensorDataRef = ref(database, `Users/${user.uid}/sensorData`);
         update(sensorDataRef, { [key]: value })
             .catch((err) => alert("Error sending command: " + err.message));
@@ -210,12 +193,17 @@ export default function LiveSensorDataPage() {
             const userDocSnap = await getDoc(userDocRef);
             const userData = userDocSnap.exists() ? userDocSnap.data() : { displayName: user.displayName, email: user.email };
 
-            // Fetch latest sensor data from Realtime Database
-            const rtdbRef = ref(database, `Users/${user.uid}/sensorData`);
+            // Fetch latest data from Realtime Database
+            const rtdbRef = ref(database, `Users/${user.uid}`);
             const rtdbSnap = await get(rtdbRef);
-            const latestHealthData = rtdbSnap.exists() ? rtdbSnap.val() : {};
+            const rtdbData = rtdbSnap.exists() ? rtdbSnap.val() : {};
 
-            const combinedData = { user: userData, health: latestHealthData };
+            const combinedHealthData = {
+                ...(rtdbData.sensorData || {}),
+                ...(rtdbData.Chemistry_Result || {}),
+            };
+
+            const combinedData = { user: userData, health: combinedHealthData };
             setReportData(combinedData);
 
             // Wait for state to update and component to re-render
@@ -251,27 +239,25 @@ export default function LiveSensorDataPage() {
     }
     
     // --- Status Calculations ---
-    const phValue = latestData?.ph_level ? parseFloat(latestData.ph_level) : null;
+    const phValue = sensorData?.ph_value_sensor ? parseFloat(sensorData.ph_value_sensor) : null;
     const isPhOutOfRange = phValue !== null && (phValue < 4.5 || phValue > 8.0);
     const phStatus = isPhOutOfRange ? "WARNING" : "NORMAL";
     const calculatedPH = phValue?.toFixed(2) ?? '...';
 
-    const sgValue = latestData?.specificGravity ? parseFloat(latestData.specificGravity) : null;
+    const sgValue = sensorData?.specific_gravity_sensor ? parseFloat(sensorData.specific_gravity_sensor) : null;
     const isSgOutOfRange = sgValue !== null && (sgValue < 1.005 || sgValue > 1.030);
     const sgStatus = isSgOutOfRange ? "WARNING" : "NORMAL";
 
-    const ammoniaValue = latestData?.ammonia ? parseFloat(latestData.ammonia) : null;
+    const ammoniaValue = sensorData?.ammonia_gas_ppm ? parseFloat(sensorData.ammonia_gas_ppm) : null;
     const isAmmoniaOutOfRange = ammoniaValue !== null && (ammoniaValue < 5 || ammoniaValue > 500);
     const ammoniaStatus = isAmmoniaOutOfRange ? "WARNING" : "NORMAL";
 
-    const turbidityValue = latestData?.turbidity ? parseFloat(latestData.turbidity) : null;
+    const turbidityValue = sensorData?.turbidity ? parseFloat(sensorData.turbidity) : null;
     const isTurbidityOutOfRange = turbidityValue !== null && (turbidityValue < 0 || turbidityValue > 20);
     const turbidityStatus = isTurbidityOutOfRange ? "HIGH" : "NORMAL";
 
-    const isBloodDetected = latestData?.bloodDetected === true;
-    const isLeakageDetected = latestData?.leakageDetected === true;
-    const batteryLevel = latestData?.battery_level || 0;
-    const tempValue = latestData?.temperature ? parseFloat(latestData.temperature) : null;
+    const isBloodDetected = sensorData?.blood_detected_sensor === true;
+    const tempValue = sensorData?.temperature ? parseFloat(sensorData.temperature) : null;
     const isTempHigh = tempValue !== null && tempValue > 37;
 
     const getChemStatus = (key: string, value: any): { status: string; color: string } => {
@@ -289,17 +275,17 @@ export default function LiveSensorDataPage() {
                 if (isNaN(sg)) return { status: 'Invalid', color: 'text-status-yellow' };
                 return (sg >= 1.005 && sg <= 1.030) ? { status: 'Normal', color: 'text-status-green' } : { status: 'Abnormal', color: 'text-status-red' };
             case 'chem_blood':
-                 return (lowerCaseValue === 'neg' || lowerCaseValue === 'negative' || value === 0) ? { status: 'Negative', color: 'text-status-green' } : { status: 'Detected', color: 'text-status-red' };
+                return (lowerCaseValue === 'neg' || lowerCaseValue === 'negative' || value === 0) ? { status: 'Negative', color: 'text-status-green' } : { status: 'Detected', color: 'text-status-red' };
             case 'chem_bilirubin':
             case 'chem_ketones':
+            case 'chem_ascorbicAcid':
             case 'chem_glucose':
             case 'chem_protein':
             case 'chem_nitrite':
             case 'chem_leukocytes':
-            case 'chem_ascorbicAcid':
-                 return (lowerCaseValue === 'neg' || lowerCaseValue === 'negative') ? { status: 'Negative', color: 'text-status-green' } : { status: 'Positive', color: 'text-status-red' };
+                return (lowerCaseValue === 'neg' || lowerCaseValue === 'negative') ? { status: 'Negative', color: 'text-status-green' } : { status: 'Positive', color: 'text-status-red' };
             case 'chem_urobilinogen':
-                 return (lowerCaseValue === 'norm' || lowerCaseValue === 'normal') ? { status: 'Normal', color: 'text-status-green' } : { status: 'Abnormal', color: 'text-status-red' };
+                return (lowerCaseValue === 'norm' || lowerCaseValue === 'normal') ? { status: 'Normal', color: 'text-status-green' } : { status: 'Abnormal', color: 'text-status-red' };
             default:
                 return { status: 'Unknown', color: 'text-gray-400' };
         }
@@ -352,7 +338,7 @@ export default function LiveSensorDataPage() {
                                 className={isSgOutOfRange ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-green-500/20 text-green-400 border-green-500/30'}
                             />
                         </div>
-                        <p className="text-5xl font-bold text-gray-200 my-4">{latestData?.specificGravity || '...'}</p>
+                        <p className="text-5xl font-bold text-gray-200 my-4">{sensorData?.specific_gravity_sensor || '...'}</p>
                     </div>
                     <div>
                         {isSgOutOfRange && <WarningMessage />}
@@ -398,7 +384,7 @@ export default function LiveSensorDataPage() {
                                 className={isAmmoniaOutOfRange ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-green-500/20 text-green-400 border-green-500/30'}
                             />
                         </div>
-                        <p className="text-5xl font-bold text-gray-200 my-4">{latestData?.ammonia ?? '...'}<span className="text-2xl text-gray-400"> ppm</span></p>
+                        <p className="text-5xl font-bold text-gray-200 my-4">{sensorData?.ammonia_gas_ppm ?? '...'}<span className="text-2xl text-gray-400"> ppm</span></p>
                     </div>
                     <div>
                         {isAmmoniaOutOfRange && <WarningMessage />}
@@ -416,14 +402,14 @@ export default function LiveSensorDataPage() {
                 
                 <SensorCard className="flex flex-col items-center justify-center text-center animate-slide-up border-glow-sky-royal-blue/50" style={{ animationDelay: '700ms' }}>
                     <h3 className="font-semibold text-gray-300">Dipstick Availability</h3>
-                    <p className="text-5xl font-bold text-glow-sky-royal-blue my-4">{latestData?.dipstickCount ?? '...'}</p>
+                    <p className="text-5xl font-bold text-glow-sky-royal-blue my-4">{sensorData?.dipstickCount ?? '...'}</p>
                     <p className="text-xs text-gray-500">Dipsticks Remaining</p>
                 </SensorCard>
                 
                 <div className="grid grid-rows-2 gap-6">
                     <SensorCard className="flex flex-col items-center justify-center text-center animate-slide-up border-glow-cyan-blue/50" style={{ animationDelay: '800ms' }}>
                         <h3 className="font-semibold text-gray-300">Toilet Usage Count</h3>
-                        <p className="text-5xl font-bold text-teal-400 my-1">{latestData?.usageCount || 0}</p>
+                        <p className="text-5xl font-bold text-teal-400 my-1">{sensorData?.usageCount || 0}</p>
                         <p className="text-xs text-gray-500">used Today</p>
                     </SensorCard>
                      <SensorCard 
@@ -440,8 +426,8 @@ export default function LiveSensorDataPage() {
                                 className={isTurbidityOutOfRange ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-green-500/20 text-green-400 border-green-500/30'}
                             />
                         </div>
-                        <SemiCircleGauge value={latestData?.turbidity || 0} size="sm" />
-                        <p className="text-xs text-gray-500 mt-1">{latestData?.turbidity || '...'} NTU</p>
+                        <SemiCircleGauge value={sensorData?.turbidity || 0} size="sm" />
+                        <p className="text-xs text-gray-500 mt-1">{sensorData?.turbidity || '...'} NTU</p>
                         {isTurbidityOutOfRange && (
                             <WarningMessage text="High values may indicate infection." />
                         )}
@@ -461,7 +447,7 @@ export default function LiveSensorDataPage() {
                     </div>
                      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
                         {chemistryParameters.map(param => {
-                            const value = latestData?.[param.key] ?? '...';
+                            const value = chemistryData?.[param.key] ?? '...';
                             const { status, color } = getChemStatus(param.key, value);
                             return (
                                 <ChemistryParameterCard
@@ -477,71 +463,32 @@ export default function LiveSensorDataPage() {
                 </SensorCard>
 
                  {/* Row 3 */}
-                <SensorCard className={cn("animate-slide-up", isTempHigh ? "border-status-red/70 shadow-status-red/20" : "border-primary/50")} style={{ animationDelay: '1200ms' }}>
+                <SensorCard className={cn("animate-slide-up col-span-1 md:col-span-2 lg:col-span-2", isTempHigh ? "border-status-red/70 shadow-status-red/20" : "border-primary/50")} style={{ animationDelay: '1200ms' }}>
                     <h3 className="font-semibold text-gray-300 mb-4 text-center">Temperature &amp; Humidity</h3>
                     <div className="flex justify-around items-center h-full">
                         <div className="text-center">
                             <Thermometer className={cn("h-8 w-8 mx-auto", isTempHigh ? "text-status-red" : "text-orange-400")} />
-                            <p className={cn("text-3xl font-bold mt-2", isTempHigh && "text-status-red")}>{latestData?.temperature ?? '...'}°C</p>
+                            <p className={cn("text-3xl font-bold mt-2", isTempHigh && "text-status-red")}>{sensorData?.temperature ?? '...'}°C</p>
                             <p className="text-xs text-gray-400">Temperature</p>
                         </div>
                         <div className="h-16 w-px bg-border"></div>
                         <div className="text-center">
                             <Droplet className="h-8 w-8 mx-auto text-sky-400" />
-                            <p className="text-3xl font-bold mt-2">{latestData?.humidity ?? '...'}%</p>
+                            <p className="text-3xl font-bold mt-2">{sensorData?.humidity ?? '...'}%</p>
                             <p className="text-xs text-gray-400">Humidity</p>
                         </div>
                     </div>
                 </SensorCard>
                 
-                <SensorCard className={cn("lg:col-span-1 flex flex-col items-center justify-center animate-slide-up", isLeakageDetected ? "border-status-red/70 shadow-status-red/20" : "border-status-green/50 shadow-green-500/20")} style={{ animationDelay: '1300ms' }}>
-                     <h3 className="font-semibold text-gray-300 mb-2">Leakage Alert</h3>
-                     {isLeakageDetected ? <CircleAlert className="h-10 w-10 text-red-400" /> : <ShieldCheck className="text-green-500 h-10 w-10" />}
-                     <p className={cn("text-sm font-bold my-2", isLeakageDetected ? "text-red-400" : "text-green-400")}>{isLeakageDetected ? 'CRITICAL LEAK DETECTED!' : 'No Leaks Detected'}</p>
-                     <div className="w-full h-16">
-                        <JaggedLineChart />
-                     </div>
-                </SensorCard>
-
-                 <SensorCard className="animate-slide-up border-secondary/50" style={{ animationDelay: '1400ms' }}>
+                 <SensorCard className="animate-slide-up border-secondary/50 col-span-1 md:col-span-2 lg:col-span-2" style={{ animationDelay: '1400ms' }}>
                     <h3 className="font-semibold text-gray-300 text-sm mb-2 flex items-center gap-2"><Zap size={16}/>Automation</h3>
                     <div className="space-y-2 mt-2">
                         <div className='flex justify-between items-center'>
                             <p className='text-sm text-gray-400'>Auto Flush</p>
                             <Switch 
-                                checked={latestData?.autoFlushEnable || false} 
+                                checked={sensorData?.autoFlushEnable || false} 
                                 onCheckedChange={(checked) => sendCommand('autoFlushEnable', checked)} 
                             />
-                        </div>
-                        <div className='flex justify-between items-center'>
-                            <p className='text-sm text-gray-400'>Light Control</p>
-                            <Switch
-                                checked={latestData?.lightStatus || false} 
-                                onCheckedChange={(checked) => sendCommand('lightStatus', checked)} 
-                            />
-                        </div>
-                    </div>
-                </SensorCard>
-                 <SensorCard className={cn("animate-slide-up", 
-                    batteryLevel > 75 ? "border-status-green/50" : 
-                    batteryLevel > 25 ? "border-status-yellow/50" : 
-                    "border-status-red/50"
-                 )} style={{ animationDelay: '1500ms' }}>
-                    <h3 className="font-semibold text-gray-300 text-sm mb-2">Battery Status</h3>
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            {batteryLevel > 75 ? <BatteryFull className="h-8 w-8 text-status-green"/> :
-                             batteryLevel > 25 ? <BatteryMedium className="h-8 w-8 text-status-yellow"/> :
-                             <BatteryLow className="h-8 w-8 text-status-red"/>
-                            }
-                            <div>
-                                <p className="text-3xl font-bold text-gray-200">{batteryLevel}%</p>
-                                <p className="text-xs text-muted-foreground">Remaining</p>
-                            </div>
-                        </div>
-                        <div className="text-right">
-                           <p className="text-lg font-bold text-gray-200">~{((batteryLevel || 0) / 100 * 24).toFixed(1)}h</p>
-                           <p className="text-xs text-muted-foreground">Est. Runtime</p>
                         </div>
                     </div>
                 </SensorCard>

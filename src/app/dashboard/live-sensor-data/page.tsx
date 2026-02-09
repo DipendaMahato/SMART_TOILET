@@ -312,6 +312,7 @@ export default function LiveSensorDataPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 
+                {/* Row 1: Vitals */}
                 <SensorCard className={cn("flex flex-col justify-between animate-slide-up", isPhOutOfRange ? "border-status-red/70 shadow-status-red/20" : "border-glow-teal-green/50")} style={{ animationDelay: '200ms' }}>
                     <div>
                         <div className="flex justify-between items-start">
@@ -392,49 +393,79 @@ export default function LiveSensorDataPage() {
                     </div>
                 </SensorCard>
 
-
-                {/* Row 2 */}
-                <SensorCard className="lg:col-span-1 flex flex-col items-center justify-center animate-slide-up border-primary/50" style={{ animationDelay: '600ms' }}>
+                {/* Row 2: Status & Environment */}
+                <SensorCard className="flex flex-col items-center justify-center animate-slide-up border-primary/50" style={{ animationDelay: '600ms' }}>
                     <h3 className="font-semibold text-gray-300 mb-4 text-center">Toilet Usage Status</h3>
                     <CircularGauge value={isToiletOccupied ? 100 : 0} label={isToiletOccupied ? "IN USE" : "NOT IN USE"} />
                     <p className="text-xs text-gray-500 mt-4">{isToiletOccupied ? 'Status: Occupied for Stool' : 'Status: Available'}</p>
                 </SensorCard>
                 
-                <SensorCard className="flex flex-col items-center justify-center text-center animate-slide-up border-glow-sky-royal-blue/50" style={{ animationDelay: '700ms' }}>
+                <SensorCard 
+                    className={cn(
+                        "flex flex-col items-center justify-center animate-slide-up",
+                        isTurbidityOutOfRange ? 'border-status-red/50 shadow-status-red/10' : 'border-glow-lime-emerald/50'
+                    )} 
+                    style={{ animationDelay: '700ms' }}
+                >
+                    <div className="flex justify-between items-start w-full">
+                        <h3 className="font-semibold text-gray-300 mb-2">Turbidity</h3>
+                        <StatusBadge 
+                            status={turbidityStatus} 
+                            className={isTurbidityOutOfRange ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-green-500/20 text-green-400 border-green-500/30'}
+                        />
+                    </div>
+                    <SemiCircleGauge value={sensorData?.turbidity || 0} size="sm" />
+                    <p className="text-xs text-gray-500 mt-1">{sensorData?.turbidity || '...'} NTU</p>
+                    {isTurbidityOutOfRange && (
+                        <WarningMessage text="High values may indicate infection." />
+                    )}
+                </SensorCard>
+
+                <SensorCard className={cn("animate-slide-up lg:col-span-2", isTempHigh ? "border-status-red/70 shadow-status-red/20" : "border-primary/50")} style={{ animationDelay: '800ms' }}>
+                    <h3 className="font-semibold text-gray-300 mb-4 text-center">Temperature &amp; Humidity</h3>
+                    <div className="flex justify-around items-center h-full">
+                        <div className="text-center">
+                            <Thermometer className={cn("h-8 w-8 mx-auto", isTempHigh ? "text-status-red" : "text-orange-400")} />
+                            <p className={cn("text-3xl font-bold mt-2", isTempHigh && "text-status-red")}>{sensorData?.temperature ?? '...'}°C</p>
+                            <p className="text-xs text-gray-400">Temperature</p>
+                        </div>
+                        <div className="h-16 w-px bg-border"></div>
+                        <div className="text-center">
+                            <Droplet className="h-8 w-8 mx-auto text-sky-400" />
+                            <p className="text-3xl font-bold mt-2">{sensorData?.humidity ?? '...'}%</p>
+                            <p className="text-xs text-gray-400">Humidity</p>
+                        </div>
+                    </div>
+                </SensorCard>
+
+                {/* Row 3: Device Stats & Controls */}
+                <SensorCard className="flex flex-col items-center justify-center text-center animate-slide-up border-glow-sky-royal-blue/50" style={{ animationDelay: '900ms' }}>
                     <h3 className="font-semibold text-gray-300">Dipstick Availability</h3>
                     <p className="text-5xl font-bold text-glow-sky-royal-blue my-4">{sensorData?.dipstickCount ?? '...'}</p>
                     <p className="text-xs text-gray-500">Dipsticks Remaining</p>
                 </SensorCard>
                 
-                <div className="grid grid-rows-2 gap-6">
-                    <SensorCard className="flex flex-col items-center justify-center text-center animate-slide-up border-glow-cyan-blue/50" style={{ animationDelay: '800ms' }}>
-                        <h3 className="font-semibold text-gray-300">Toilet Usage Count</h3>
-                        <p className="text-5xl font-bold text-teal-400 my-1">{sensorData?.usageCount || 0}</p>
-                        <p className="text-xs text-gray-500">used Today</p>
-                    </SensorCard>
-                     <SensorCard 
-                        className={cn(
-                            "flex flex-col items-center justify-center animate-slide-up",
-                            isTurbidityOutOfRange ? 'border-status-red/50 shadow-status-red/10' : 'border-glow-lime-emerald/50'
-                        )} 
-                        style={{ animationDelay: '900ms' }}
-                    >
-                        <div className="flex justify-between items-start w-full">
-                            <h3 className="font-semibold text-gray-300 mb-2">Turbidity</h3>
-                            <StatusBadge 
-                                status={turbidityStatus} 
-                                className={isTurbidityOutOfRange ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-green-500/20 text-green-400 border-green-500/30'}
+                <SensorCard className="flex flex-col items-center justify-center text-center animate-slide-up border-glow-cyan-blue/50" style={{ animationDelay: '1000ms' }}>
+                    <h3 className="font-semibold text-gray-300">Toilet Usage Count</h3>
+                    <p className="text-5xl font-bold text-teal-400 my-1">{sensorData?.usageCount || 0}</p>
+                    <p className="text-xs text-gray-500">used Today</p>
+                </SensorCard>
+
+                 <SensorCard className="animate-slide-up border-secondary/50 lg:col-span-2" style={{ animationDelay: '1100ms' }}>
+                    <h3 className="font-semibold text-gray-300 text-sm mb-2 flex items-center gap-2"><Zap size={16}/>Automation</h3>
+                    <div className="space-y-2 mt-2">
+                        <div className='flex justify-between items-center'>
+                            <p className='text-sm text-gray-400'>Auto Flush</p>
+                            <Switch 
+                                checked={sensorData?.autoFlushEnable || false} 
+                                onCheckedChange={(checked) => sendCommand('autoFlushEnable', checked)} 
                             />
                         </div>
-                        <SemiCircleGauge value={sensorData?.turbidity || 0} size="sm" />
-                        <p className="text-xs text-gray-500 mt-1">{sensorData?.turbidity || '...'} NTU</p>
-                        {isTurbidityOutOfRange && (
-                            <WarningMessage text="High values may indicate infection." />
-                        )}
-                    </SensorCard>
-                </div>
-
-                <SensorCard className="lg:col-span-2 animate-slide-up border-glow-lime-emerald/50" style={{ animationDelay: '1000ms' }}>
+                    </div>
+                </SensorCard>
+                
+                {/* Row 4: Chemistry */}
+                <SensorCard className="lg:col-span-4 animate-slide-up border-glow-lime-emerald/50" style={{ animationDelay: '1200ms' }}>
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="font-semibold text-gray-300">Chemistry Results</h3>
                         <div className="flex items-center gap-2">
@@ -459,37 +490,6 @@ export default function LiveSensorDataPage() {
                                 />
                             )
                         })}
-                    </div>
-                </SensorCard>
-
-                 {/* Row 3 */}
-                <SensorCard className={cn("animate-slide-up col-span-1 md:col-span-2 lg:col-span-2", isTempHigh ? "border-status-red/70 shadow-status-red/20" : "border-primary/50")} style={{ animationDelay: '1200ms' }}>
-                    <h3 className="font-semibold text-gray-300 mb-4 text-center">Temperature &amp; Humidity</h3>
-                    <div className="flex justify-around items-center h-full">
-                        <div className="text-center">
-                            <Thermometer className={cn("h-8 w-8 mx-auto", isTempHigh ? "text-status-red" : "text-orange-400")} />
-                            <p className={cn("text-3xl font-bold mt-2", isTempHigh && "text-status-red")}>{sensorData?.temperature ?? '...'}°C</p>
-                            <p className="text-xs text-gray-400">Temperature</p>
-                        </div>
-                        <div className="h-16 w-px bg-border"></div>
-                        <div className="text-center">
-                            <Droplet className="h-8 w-8 mx-auto text-sky-400" />
-                            <p className="text-3xl font-bold mt-2">{sensorData?.humidity ?? '...'}%</p>
-                            <p className="text-xs text-gray-400">Humidity</p>
-                        </div>
-                    </div>
-                </SensorCard>
-                
-                 <SensorCard className="animate-slide-up border-secondary/50 col-span-1 md:col-span-2 lg:col-span-2" style={{ animationDelay: '1400ms' }}>
-                    <h3 className="font-semibold text-gray-300 text-sm mb-2 flex items-center gap-2"><Zap size={16}/>Automation</h3>
-                    <div className="space-y-2 mt-2">
-                        <div className='flex justify-between items-center'>
-                            <p className='text-sm text-gray-400'>Auto Flush</p>
-                            <Switch 
-                                checked={sensorData?.autoFlushEnable || false} 
-                                onCheckedChange={(checked) => sendCommand('autoFlushEnable', checked)} 
-                            />
-                        </div>
                     </div>
                 </SensorCard>
 

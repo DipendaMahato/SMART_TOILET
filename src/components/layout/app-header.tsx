@@ -36,7 +36,7 @@ import { NotificationPanel } from "./notification-panel";
 
 const navItems = [
   { href: "/dashboard", icon: Home, label: "Dashboard" },
-  { href: "/dashboard/live-sensor-data", icon: RadioTower, label: "Live Sensor Data" },
+  { href: "/dashboard/live-sensor-data", icon: RadioTower, label: "Live Data" },
   { href: "/dashboard/ai-process-tracker", icon: BrainCircuit, label: "AI Process Tracker" },
   { href: "/dashboard/diagnostics", icon: FlaskConical, label: "Diagnostics" },
   { href: "/dashboard/vitals-trends", icon: Activity, label: "Vitals & Trends" },
@@ -49,7 +49,7 @@ const navItems = [
 function getPageTitle(pathname: string) {
     const navItemsForTitle = [
       { href: "/dashboard", icon: Home, label: "Dashboard" },
-      { href: "/dashboard/live-sensor-data", icon: RadioTower, label: "Live Sensor Data" },
+      { href: "/dashboard/live-sensor-data", icon: RadioTower, label: "Live Data" },
       { href: "/dashboard/ai-process-tracker", icon: BrainCircuit, label: "AI Process Tracker" },
       { href: "/dashboard/diagnostics", icon: FlaskConical, label: "Diagnostics" },
       { href: "/dashboard/vitals-trends", icon: Activity, label: "Vitals & Trends" },

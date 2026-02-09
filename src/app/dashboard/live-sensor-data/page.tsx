@@ -306,7 +306,7 @@ export default function LiveSensorDataPage() {
             </div>
 
             <div className="mb-8 animate-slide-up" style={{ animationDelay: '100ms' }}>
-                <h1 className="text-3xl font-headline font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-glow-green via-glow-cyan to-glow-blue animate-text-gradient bg-400">LIVE SENSOR DATA</h1>
+                <h1 className="text-3xl font-headline font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-glow-green via-glow-cyan to-glow-blue animate-text-gradient bg-400">LIVE DATA</h1>
                 <p className="text-sm text-gray-400 flex items-center gap-2"><span className="text-status-green">●</span> Live Health &amp; Device Monitoring with Real-Time Alerts</p>
             </div>
 

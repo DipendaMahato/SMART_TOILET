@@ -28,7 +28,7 @@ import { useEffect, useState } from "react";
 
 const navItems = [
   { href: "/dashboard", icon: Home, label: "Dashboard", color: "text-glow-cyan-blue" },
-  { href: "/dashboard/live-sensor-data", icon: RadioTower, label: "Live Sensor Data", color: "text-glow-cyan-blue" },
+  { href: "/dashboard/live-sensor-data", icon: RadioTower, label: "Live Data", color: "text-glow-cyan-blue" },
   { href: "/dashboard/ai-process-tracker", icon: BrainCircuit, label: "AI Process Tracker", color: "text-glow-purple-violet" },
   { href: "/dashboard/diagnostics", icon: FlaskConical, label: "Diagnostics", color: "text-glow-teal-green" },
   { href: "/dashboard/vitals-trends", icon: Activity, label: "Vitals & Trends", color: "text-glow-lime-emerald" },

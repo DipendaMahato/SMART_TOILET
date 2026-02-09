@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 
 const subDashboards = [
   {
-    title: 'Live Sensor Data',
+    title: 'Live Data',
     description: 'Real-time IoT sensor readings and device status.',
     icon: RadioTower,
     href: '/dashboard/live-sensor-data',

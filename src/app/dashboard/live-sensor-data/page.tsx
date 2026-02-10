@@ -161,6 +161,58 @@ export default function LiveSensorDataPage() {
                         });
                     }
                 }
+
+                // TDS Check for abnormal values
+                const tdsAbnormalThreshold = 500;
+                const currentTds = parseFloat(currentSensorData.tds_value);
+                const prevTds = parseFloat(prevSensorData.tds_value);
+                if (!isNaN(currentTds) && !isNaN(prevTds)) {
+                    if (currentTds > tdsAbnormalThreshold && prevTds <= tdsAbnormalThreshold) {
+                        const alertMessage = `High TDS level detected, which may indicate health issues. Further evaluation is recommended.`;
+                        toast({
+                            variant: 'destructive',
+                            title: '🔴 Health Alert: Abnormal TDS',
+                            description: `TDS value of ${currentTds} ppm is abnormal. Time: ${new Date().toLocaleTimeString()}`,
+                            duration: 20000,
+                        });
+                        addDoc(collection(firestore, `users/${user.uid}/notifications`), {
+                            userId: user.uid,
+                            timestamp: serverTimestamp(),
+                            message: alertMessage,
+                            type: 'Alert',
+                            sensorName: 'TDS Level',
+                            currentValue: `${currentTds.toFixed(0)} ppm`,
+                            normalRange: '< 300 ppm',
+                            isRead: false
+                        });
+                    }
+                }
+
+                // Turbidity Check for abnormal values
+                const turbidityAbnormalThreshold = 50;
+                const currentTurbidity = parseFloat(currentSensorData.turbidity);
+                const prevTurbidity = parseFloat(prevSensorData.turbidity);
+                if (!isNaN(currentTurbidity) && !isNaN(prevTurbidity)) {
+                    if (currentTurbidity > turbidityAbnormalThreshold && prevTurbidity <= turbidityAbnormalThreshold) {
+                        const alertMessage = `Urine is cloudy (High Turbidity). This can be a sign of a UTI or kidney issues. Please consult a doctor.`;
+                        toast({
+                            variant: 'destructive',
+                            title: '🔴 Health Alert: High Turbidity',
+                            description: `Turbidity value of ${currentTurbidity} NTU is abnormal. Time: ${new Date().toLocaleTimeString()}`,
+                            duration: 20000,
+                        });
+                        addDoc(collection(firestore, `users/${user.uid}/notifications`), {
+                            userId: user.uid,
+                            timestamp: serverTimestamp(),
+                            message: alertMessage,
+                            type: 'Alert',
+                            sensorName: 'Urine Turbidity',
+                            currentValue: `${currentTurbidity.toFixed(1)} NTU`,
+                            normalRange: '< 20 NTU',
+                            isRead: false
+                        });
+                    }
+                }
             }
 
             if (prevChemData && currentChemData && firestore && user) {

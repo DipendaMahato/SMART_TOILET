@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -81,32 +80,27 @@ export function UrineQualityResult({ tdsValue, turbidityValue }: UrineQualityRes
                 </CardTitle>
             </div>
         </CardHeader>
-        <CardContent className="p-6 pt-0 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-background/30 p-4 rounded-lg border border-border/50 space-y-2">
-                    <h4 className="font-semibold text-primary/90 text-center">TDS</h4>
-                    <div className="flex justify-between items-baseline text-sm">
-                        <p className="font-medium text-muted-foreground">Value:</p>
-                        <p className="font-semibold">{tds} <span className="font-normal text-muted-foreground">ppm</span></p>
-                    </div>
-                     <div className="flex justify-between items-center text-sm">
-                        <p className="font-medium text-muted-foreground">Status:</p>
-                        <Badge className={cn('font-bold', getStatusClasses(tdsStatus))} variant="outline">{tdsStatus}</Badge>
-                    </div>
+        <CardContent className="p-6 pt-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center text-center">
+                <div className="space-y-2">
+                    <h4 className="font-semibold text-primary/90 text-lg">TDS</h4>
+                    <p className="text-4xl font-bold text-gray-200">
+                        {tds}
+                        <span className="text-2xl text-muted-foreground ml-1">ppm</span>
+                    </p>
+                    <Badge className={cn('font-bold text-sm', getStatusClasses(tdsStatus))} variant="outline">
+                        {tdsStatus}
+                    </Badge>
                 </div>
-                 <div className="bg-background/30 p-4 rounded-lg border border-border/50 space-y-2">
-                    <h4 className="font-semibold text-primary/90 text-center">Turbidity</h4>
-                    <div className="flex justify-between items-baseline text-sm">
-                        <p className="font-medium text-muted-foreground">Value:</p>
-                        <p className="font-semibold">{turbidityText}</p>
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                        <p className="font-medium text-muted-foreground">Status:</p>
-                        <Badge className={cn('font-bold', getStatusClasses(turbidityStatus))} variant="outline">{turbidityStatus}</Badge>
-                    </div>
+                <div className="space-y-2">
+                    <h4 className="font-semibold text-primary/90 text-lg">Turbidity</h4>
+                    <p className="text-4xl font-bold text-gray-200">{turbidityText}</p>
+                    <Badge className={cn('font-bold text-sm', getStatusClasses(turbidityStatus))} variant="outline">
+                        {turbidityStatus}
+                    </Badge>
                 </div>
             </div>
-            <div className="bg-background/30 p-4 rounded-lg border border-border/50">
+            <div className="mt-6 pt-4 border-t border-border/50">
                 <h3 className="font-semibold text-primary/90">Conclusion:</h3>
                 <p className="text-sm text-muted-foreground mt-1">
                     {conclusion}

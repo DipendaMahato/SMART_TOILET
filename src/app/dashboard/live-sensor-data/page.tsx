@@ -479,8 +479,8 @@ export default function LiveSensorDataPage() {
                     <p className="text-xs text-gray-500 mt-4">{isToiletOccupied ? 'Status: Occupied for Stool' : 'Status: Available'}</p>
                 </SensorCard>
 
-                <SensorCard className="lg:col-span-1 animate-slide-up" style={{ animationDelay: '700ms' }}>
-                    <UrineQualityResult turbidityValue={sensorData?.turbidity} />
+                <SensorCard className="lg:col-span-2 animate-slide-up" style={{ animationDelay: '700ms' }}>
+                    <UrineQualityResult tdsValue={sensorData?.tds_value} turbidityValue={sensorData?.turbidity} />
                 </SensorCard>
                 
                 <SensorCard className={cn("animate-slide-up", isTempHigh ? "border-status-red/70 shadow-status-red/20" : "border-primary/50")} style={{ animationDelay: '800ms' }}>
@@ -551,3 +551,4 @@ export default function LiveSensorDataPage() {
         </div>
     );
 }
+

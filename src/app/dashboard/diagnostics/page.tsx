@@ -21,11 +21,11 @@ const initialUrineDiagnostics = [
     { parameter: 'Ascorbic Acid (ASC)', value: 'Negative', range: 'Negative', status: 'Normal' as Status },
     { parameter: 'Glucose (GLU)', value: 'Normal', range: 'Negative', status: 'Normal' as Status },
     { parameter: 'Protein (PRO)', value: 'Negative', range: 'Negative / Trace', status: 'Normal' as Status },
-    { parameter: 'Blood (BLD)', value: '5–10 Ery/µL', range: 'Negative (0–2 Ery/µL)', status: 'Abnormal' as Status },
+    { parameter: 'Blood (BLD)', value: 'Negative', range: 'Negative (0–2 Ery/µL)', status: 'Normal' as Status },
     { parameter: 'pH Level', value: '7.0', range: '4.5 – 8.0', status: 'Normal' as Status },
     { parameter: 'Nitrite (NIT)', value: 'Negative', range: 'Negative', status: 'Normal' as Status },
     { parameter: 'Leukocytes (LEU)', value: 'Negative', range: 'Negative (0–10 Leu/µL)', status: 'Normal' as Status },
-    { parameter: 'Specific Gravity (SG)', value: '1.002', range: '1.005 – 1.030', status: 'Abnormal' as Status },
+    { parameter: 'Specific Gravity (SG)', value: '1.015', range: '1.005 – 1.030', status: 'Normal' as Status },
     { parameter: 'Turbidity', value: 'Clear', range: 'Clear', status: 'Normal' as Status },
     { parameter: 'Color', value: 'Pale Yellow', range: 'Pale Yellow – Yellow', status: 'Normal' as Status }
 ];
@@ -78,43 +78,53 @@ export default function DiagnosticsPage() {
     useEffect(() => {
         if (!user?.uid || !database) return;
 
-        const sensorDataRef = ref(database, `Users/${user.uid}/sensorData`);
-        const unsubscribe = onValue(sensorDataRef, (snapshot) => {
-            const health = snapshot.val();
-            if (health) {
+        const userRef = ref(database, `Users/${user.uid}`);
+        const unsubscribe = onValue(userRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                const sensorData = data.sensorData;
+                const chemistry = data.Chemistry_Result;
+
                 setUrineDiagnostics(prevDiagnostics => {
-                    // Create a deep copy to avoid direct state mutation
                     const newDiagnostics = JSON.parse(JSON.stringify(prevDiagnostics));
 
-                    // Update pH if available
-                    const phRow = newDiagnostics.find((r: any) => r.parameter === 'pH Level');
-                    if (phRow && health.ph_level !== undefined) {
-                        const phValue = parseFloat(health.ph_level);
-                        phRow.value = phValue.toFixed(2);
-                        phRow.status = phValue >= 4.5 && phValue <= 8.0 ? "Normal" : "Abnormal";
+                    const updateRow = (parameter:string, value:any, normalCheck: (v:any) => boolean, valueFormatter = (v:any) => String(v)) => {
+                        const row = newDiagnostics.find((r: any) => r.parameter === parameter);
+                        if (row && value !== undefined) {
+                            row.value = valueFormatter(value);
+                            row.status = normalCheck(value) ? "Normal" : "Abnormal";
+                        }
+                    };
+
+                    if(chemistry) {
+                        const isNegative = (v: any) => v == 0 || String(v).toLowerCase() === 'negative' || String(v).toLowerCase() === 'neg';
+                        const formatNegative = (v: any) => isNegative(v) ? "Negative" : v;
+                        
+                        updateRow('Bilirubin (BIL)', chemistry.chem_bilirubin, isNegative, formatNegative);
+                        updateRow('Urobilinogen (UBG)', chemistry.chem_urobilinogen, v => { const f = parseFloat(v); return !isNaN(f) && f >= 0.2 && f <= 1.0; });
+                        updateRow('Ketone (KET)', chemistry.chem_ketones, isNegative, formatNegative);
+                        updateRow('Ascorbic Acid (ASC)', chemistry.chem_ascorbicAcid, isNegative, formatNegative);
+                        updateRow('Glucose (GLU)', chemistry.chem_glucose, v => isNegative(v) || String(v).toLowerCase() === 'normal', v => (isNegative(v) || String(v).toLowerCase() === 'normal') ? "Normal" : v);
+                        updateRow('Protein (PRO)', chemistry.chem_protein, v => parseFloat(v) <= 30, v => {
+                            const val = parseFloat(v);
+                            if (val <= 0) return "Negative";
+                            if (val <= 30) return "Trace";
+                            return String(val);
+                        });
+                        updateRow('Blood (BLD)', chemistry.chem_blood, isNegative, v => isNegative(v) ? "Negative" : `${v} Ery/µL`);
+                        updateRow('pH Level', chemistry.chem_ph, v => parseFloat(v) >= 4.5 && parseFloat(v) <= 8.0, v => parseFloat(v).toFixed(2));
+                        updateRow('Nitrite (NIT)', chemistry.chem_nitrite, isNegative, v => isNegative(v) ? 'Negative' : 'Positive');
+                        updateRow('Leukocytes (LEU)', chemistry.chem_leukocytes, isNegative, v => isNegative(v) ? "Negative" : `${v} Leu/µL`);
+                        updateRow('Specific Gravity (SG)', chemistry.chem_specificGravity, v => { const f = parseFloat(v); return !isNaN(f) && f >= 1.005 && f <= 1.030; }, v => parseFloat(v).toFixed(3));
                     }
                     
-                    // Update Specific Gravity if available
-                    const sgRow = newDiagnostics.find((r: any) => r.parameter === 'Specific Gravity (SG)');
-                    if (sgRow && health.specificGravity !== undefined) {
-                        const sgValue = parseFloat(health.specificGravity);
-                        sgRow.value = sgValue.toFixed(4);
-                        sgRow.status = sgValue >= 1.005 && sgValue <= 1.030 ? "Normal" : "Abnormal";
-                    }
-
-                    // Update Blood if available
-                    const bloodRow = newDiagnostics.find((r: any) => r.parameter === 'Blood (BLD)');
-                    if (bloodRow && health.bloodDetected !== undefined) {
-                        bloodRow.value = health.bloodDetected ? "Detected" : "Negative";
-                        bloodRow.status = !health.bloodDetected ? "Normal" : "Abnormal";
-                    }
-
-                    // Update Turbidity if available
-                    const turbidityRow = newDiagnostics.find((r: any) => r.parameter === 'Turbidity');
-                    if (turbidityRow && health.turbidity !== undefined) {
-                        const turbidityValue = parseFloat(health.turbidity);
-                        turbidityRow.value = `${turbidityValue.toFixed(1)} NTU`;
-                        turbidityRow.status = turbidityValue < 20 ? "Normal" : "Abnormal";
+                    if (sensorData) {
+                         const turbidityRow = newDiagnostics.find((r: any) => r.parameter === 'Turbidity');
+                        if (turbidityRow && sensorData.turbidity !== undefined) {
+                            const turbidityValue = parseFloat(sensorData.turbidity);
+                            turbidityRow.value = `${turbidityValue.toFixed(1)} NTU`;
+                            turbidityRow.status = turbidityValue < 20 ? "Normal" : "Abnormal";
+                        }
                     }
 
                     return newDiagnostics;
@@ -240,3 +250,5 @@ export default function DiagnosticsPage() {
         </div>
     );
 }
+
+    

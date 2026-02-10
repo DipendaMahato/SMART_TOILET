@@ -5,7 +5,6 @@ import { getDatabase, ref, onValue, update, get } from 'firebase/database';
 import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { SensorCard } from '@/components/dashboard/sensor-card';
 import { CircularGauge } from '@/components/charts/circular-gauge';
-import { SemiCircleGauge } from '@/components/charts/semi-circle-gauge';
 import { ShieldCheck, Droplet, Zap, CircleAlert, CheckCircle, Thermometer, FlaskConical, Download } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -13,6 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { ChemistryReport } from '@/components/insights/chemistry-report';
 import { Button } from '@/components/ui/button';
+import { UrineQualityResult } from '@/components/dashboard/urine-quality-result';
 
 const WarningMessage = ({ text = 'Warning: Value out of range.' }: { text?: string }) => (
     <div className="flex items-center gap-2 text-sm text-red-400 mt-2">
@@ -78,7 +78,6 @@ export default function LiveSensorDataPage() {
                     ph_value_sensor: { min: 4.5, max: 8.0, name: 'Urine pH' },
                     specific_gravity_sensor: { min: 1.005, max: 1.030, name: 'Specific Gravity' },
                     ammonia_gas_ppm: { min: 5, max: 500, name: 'Ammonia Level' },
-                    turbidity: { min: 0, max: 20, name: 'Water Turbidity' },
                 };
 
                 (Object.keys(thresholds) as Array<keyof typeof thresholds>).forEach(key => {
@@ -314,10 +313,6 @@ export default function LiveSensorDataPage() {
     const isAmmoniaOutOfRange = ammoniaValue !== null && (ammoniaValue < 5 || ammoniaValue > 500);
     const ammoniaStatus = isAmmoniaOutOfRange ? "WARNING" : "NORMAL";
 
-    const turbidityValue = sensorData?.turbidity ? parseFloat(sensorData.turbidity) : null;
-    const isTurbidityOutOfRange = turbidityValue !== null && (turbidityValue < 0 || turbidityValue > 20);
-    const turbidityStatus = isTurbidityOutOfRange ? "HIGH" : "NORMAL";
-
     const isBloodDetected = sensorData?.blood_detected_sensor === true;
     const tempValue = sensorData?.temperature ? parseFloat(sensorData.temperature) : null;
     const isTempHigh = tempValue !== null && tempValue > 37;
@@ -485,28 +480,7 @@ export default function LiveSensorDataPage() {
                     <p className="text-xs text-gray-500 mt-4">{isToiletOccupied ? 'Status: Occupied for Stool' : 'Status: Available'}</p>
                 </SensorCard>
                 
-                <SensorCard 
-                    className={cn(
-                        "flex flex-col items-center justify-center animate-slide-up",
-                        isTurbidityOutOfRange ? 'border-status-red/50 shadow-status-red/10' : 'border-glow-lime-emerald/50'
-                    )} 
-                    style={{ animationDelay: '700ms' }}
-                >
-                    <div className="flex justify-between items-start w-full">
-                        <h3 className="font-semibold text-gray-300 mb-2">Turbidity</h3>
-                        <StatusBadge 
-                            status={turbidityStatus} 
-                            className={isTurbidityOutOfRange ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-green-500/20 text-green-400 border-green-500/30'}
-                        />
-                    </div>
-                    <SemiCircleGauge value={sensorData?.turbidity || 0} size="sm" />
-                    <p className="text-xs text-gray-500 mt-1">{sensorData?.turbidity || '...'} NTU</p>
-                    {isTurbidityOutOfRange && (
-                        <WarningMessage text="High values may indicate infection." />
-                    )}
-                </SensorCard>
-
-                <SensorCard className={cn("animate-slide-up lg:col-span-2", isTempHigh ? "border-status-red/70 shadow-status-red/20" : "border-primary/50")} style={{ animationDelay: '800ms' }}>
+                <SensorCard className={cn("animate-slide-up lg:col-span-3", isTempHigh ? "border-status-red/70 shadow-status-red/20" : "border-primary/50")} style={{ animationDelay: '800ms' }}>
                     <h3 className="font-semibold text-gray-300 mb-4 text-center">Temperature &amp; Humidity</h3>
                     <div className="flex justify-around items-center h-full">
                         <div className="text-center">
@@ -548,9 +522,13 @@ export default function LiveSensorDataPage() {
                         </div>
                     </div>
                 </SensorCard>
+
+                <div className="lg:col-span-4 animate-slide-up" style={{ animationDelay: '1200ms' }}>
+                    <UrineQualityResult tdsValue={sensorData?.tds_value} />
+                </div>
                 
                 {/* Row 4: Chemistry */}
-                <SensorCard className="lg:col-span-4 animate-slide-up border-glow-lime-emerald/50" style={{ animationDelay: '1200ms' }}>
+                <SensorCard className="lg:col-span-4 animate-slide-up border-glow-lime-emerald/50" style={{ animationDelay: '1300ms' }}>
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="font-semibold text-gray-300">Chemistry Results</h3>
                         <div className="flex items-center gap-2">
@@ -582,5 +560,3 @@ export default function LiveSensorDataPage() {
         </div>
     );
 }
-
-    

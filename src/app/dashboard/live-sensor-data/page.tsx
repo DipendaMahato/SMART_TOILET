@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { useUser, useFirestore, useDatabase } from '@/firebase';
@@ -5,7 +6,7 @@ import { getDatabase, ref, onValue, update, get } from 'firebase/database';
 import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { SensorCard } from '@/components/dashboard/sensor-card';
 import { CircularGauge } from '@/components/charts/circular-gauge';
-import { ShieldCheck, Droplet, Zap, CircleAlert, CheckCircle, Thermometer, FlaskConical, Download } from 'lucide-react';
+import { ShieldCheck, Droplet, Zap, CircleAlert, CheckCircle, Thermometer, FlaskConical, Download, Waves } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
@@ -474,13 +475,13 @@ export default function LiveSensorDataPage() {
                 </SensorCard>
 
                 {/* Row 2: Status & Environment */}
-                <SensorCard className="flex flex-col items-center justify-center animate-slide-up border-primary/50" style={{ animationDelay: '600ms' }}>
+                 <SensorCard className="flex flex-col items-center justify-center animate-slide-up border-primary/50" style={{ animationDelay: '600ms' }}>
                     <h3 className="font-semibold text-gray-300 mb-4 text-center">Toilet Usage Status</h3>
                     <CircularGauge value={isToiletOccupied ? 100 : 0} label={isToiletOccupied ? "IN USE" : "NOT IN USE"} />
                     <p className="text-xs text-gray-500 mt-4">{isToiletOccupied ? 'Status: Occupied for Stool' : 'Status: Available'}</p>
                 </SensorCard>
                 
-                <SensorCard className={cn("animate-slide-up lg:col-span-3", isTempHigh ? "border-status-red/70 shadow-status-red/20" : "border-primary/50")} style={{ animationDelay: '800ms' }}>
+                <SensorCard className={cn("animate-slide-up", isTempHigh ? "border-status-red/70 shadow-status-red/20" : "border-primary/50")} style={{ animationDelay: '800ms' }}>
                     <h3 className="font-semibold text-gray-300 mb-4 text-center">Temperature &amp; Humidity</h3>
                     <div className="flex justify-around items-center h-full">
                         <div className="text-center">
@@ -497,6 +498,7 @@ export default function LiveSensorDataPage() {
                     </div>
                 </SensorCard>
 
+
                 {/* Row 3: Device Stats & Controls */}
                 <SensorCard className="flex flex-col items-center justify-center text-center animate-slide-up border-glow-sky-royal-blue/50" style={{ animationDelay: '900ms' }}>
                     <h3 className="font-semibold text-gray-300">Dipstick Availability</h3>
@@ -510,25 +512,12 @@ export default function LiveSensorDataPage() {
                     <p className="text-xs text-gray-500">used Today</p>
                 </SensorCard>
 
-                 <SensorCard className="animate-slide-up border-secondary/50 lg:col-span-2" style={{ animationDelay: '1100ms' }}>
-                    <h3 className="font-semibold text-gray-300 text-sm mb-2 flex items-center gap-2"><Zap size={16}/>Automation</h3>
-                    <div className="space-y-2 mt-2">
-                        <div className='flex justify-between items-center'>
-                            <p className='text-sm text-gray-400'>Auto Flush</p>
-                            <Switch 
-                                checked={sensorData?.autoFlushEnable || false} 
-                                onCheckedChange={(checked) => sendCommand('autoFlushEnable', checked)} 
-                            />
-                        </div>
-                    </div>
-                </SensorCard>
-
-                <div className="lg:col-span-4 animate-slide-up" style={{ animationDelay: '1200ms' }}>
-                    <UrineQualityResult tdsValue={sensorData?.tds_value} />
+                 <div className="lg:col-span-4 animate-slide-up" style={{ animationDelay: '1100ms' }}>
+                    <UrineQualityResult turbidityValue={sensorData?.turbidity} />
                 </div>
                 
                 {/* Row 4: Chemistry */}
-                <SensorCard className="lg:col-span-4 animate-slide-up border-glow-lime-emerald/50" style={{ animationDelay: '1300ms' }}>
+                <SensorCard className="lg:col-span-4 animate-slide-up border-glow-lime-emerald/50" style={{ animationDelay: '1200ms' }}>
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="font-semibold text-gray-300">Chemistry Results</h3>
                         <div className="flex items-center gap-2">
@@ -539,7 +528,7 @@ export default function LiveSensorDataPage() {
                            <FlaskConical className="h-6 w-6 text-glow-lime-emerald"/>
                         </div>
                     </div>
-                     <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+                     <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
                         {chemistryParameters.map(param => {
                             const value = chemistryData?.[param.key] ?? '...';
                             const { status, color } = getChemStatus(param.key, value);
@@ -553,6 +542,19 @@ export default function LiveSensorDataPage() {
                                 />
                             )
                         })}
+                    </div>
+                </SensorCard>
+
+                 <SensorCard className="lg:col-span-4 animate-slide-up border-secondary/50" style={{ animationDelay: '1300ms' }}>
+                    <h3 className="font-semibold text-gray-300 text-sm mb-2 flex items-center gap-2"><Zap size={16}/>Automation Controls</h3>
+                    <div className="space-y-2 mt-2">
+                        <div className='flex justify-between items-center'>
+                            <p className='text-sm text-gray-400'>Auto Flush</p>
+                            <Switch 
+                                checked={sensorData?.autoFlushEnable || false} 
+                                onCheckedChange={(checked) => sendCommand('autoFlushEnable', checked)} 
+                            />
+                        </div>
                     </div>
                 </SensorCard>
 

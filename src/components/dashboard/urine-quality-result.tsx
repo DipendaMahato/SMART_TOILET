@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -5,27 +6,27 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 interface UrineQualityResultProps {
-  tdsValue: number | undefined;
+  turbidityValue: number | undefined;
 }
 
-export function UrineQualityResult({ tdsValue }: UrineQualityResultProps) {
+export function UrineQualityResult({ turbidityValue }: UrineQualityResultProps) {
   let status: 'Normal' | 'Slightly Abnormal' | 'Abnormal' = 'Normal';
   let conclusion = '';
   let statusColor = 'bg-status-green/20 text-status-green border-status-green/30';
 
-  const value = tdsValue ?? 0;
+  const value = turbidityValue ?? 0;
 
-  if (value > 500) {
+  if (value > 50) {
     status = 'Abnormal';
-    conclusion = 'Abnormal findings are indicated, and further evaluation is recommended.';
+    conclusion = 'The sample is cloudy or murky, which may indicate an issue. Further evaluation is recommended.';
     statusColor = 'bg-status-red/20 text-status-red border-status-red/30';
-  } else if (value > 300) {
+  } else if (value >= 20) {
     status = 'Slightly Abnormal';
-    conclusion = 'Minor variation is observed in the sample; however, no immediate concern is indicated.';
+    conclusion = 'The sample is slightly cloudy. This is generally not a concern but should be monitored.';
     statusColor = 'bg-status-yellow/20 text-status-yellow border-status-yellow/30';
   } else {
     status = 'Normal';
-    conclusion = 'The sample appears clean, and no abnormal findings are indicated based on the measured TDS value.';
+    conclusion = 'The sample appears clear, and no abnormal turbidity is indicated.';
     statusColor = 'bg-status-green/20 text-status-green border-status-green/30';
   }
 
@@ -40,11 +41,11 @@ export function UrineQualityResult({ tdsValue }: UrineQualityResultProps) {
             <div className="grid grid-cols-3 gap-4 text-center border-y border-border/50 py-4">
                 <div>
                     <p className="text-sm font-medium text-muted-foreground">Parameter</p>
-                    <p className="text-lg font-semibold mt-1">TDS</p>
+                    <p className="text-lg font-semibold mt-1">Turbidity</p>
                 </div>
                  <div>
                     <p className="text-sm font-medium text-muted-foreground">Value</p>
-                    <p className="text-lg font-semibold mt-1">{value} ppm</p>
+                    <p className="text-lg font-semibold mt-1">{value} NTU</p>
                 </div>
                  <div>
                     <p className="text-sm font-medium text-muted-foreground">Status</p>

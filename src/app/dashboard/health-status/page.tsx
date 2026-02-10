@@ -143,11 +143,11 @@ export default function HealthStatusPage() {
 
       <div className="text-center animate-slide-up">
         <div className="relative inline-block">
-          <Heart className="text-red-500 h-48 w-48 animate-heartbeat-pulse" style={{ fill: 'rgba(239, 68, 68, 0.3)' }} />
+          <ShieldCheck className="text-status-green h-48 w-48" style={{ fill: 'hsla(var(--status-green) / 0.1)' }} />
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <p className="text-sm text-muted-foreground">Overall Health Score</p>
             <p className="text-5xl font-bold">
-              98 <span className="text-3xl text-green-400">- Excellent</span>
+              98 <span className="text-3xl text-status-green">- Excellent</span>
             </p>
           </div>
         </div>

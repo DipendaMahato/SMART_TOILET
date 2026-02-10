@@ -143,36 +143,7 @@ export default function HealthStatusPage() {
 
       <div className="text-center animate-slide-up">
         <div className="relative inline-block">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <ShieldCheck className="text-green-500 h-16 w-16 opacity-30" />
-          </div>
-          <svg className="h-48 w-48" viewBox="0 0 100 100">
-            <circle
-              className="text-gray-800"
-              strokeWidth="4"
-              stroke="currentColor"
-              fill="transparent"
-              r="46"
-              cx="50"
-              cy="50"
-            />
-            <circle
-              className="text-green-500 drop-shadow-[0_0_5px_#4ade80]"
-              strokeWidth="4"
-              strokeDasharray="289.027"
-              strokeDashoffset="28.9"
-              strokeLinecap="round"
-              stroke="currentColor"
-              fill="transparent"
-              r="46"
-              cx="50"
-              cy="50"
-              style={{
-                transform: 'rotate(-90deg)',
-                transformOrigin: '50% 50%',
-              }}
-            />
-          </svg>
+          <Heart className="text-red-500 h-48 w-48 animate-heartbeat-pulse" style={{ fill: 'rgba(239, 68, 68, 0.3)' }} />
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <p className="text-sm text-muted-foreground">Overall Health Score</p>
             <p className="text-5xl font-bold">

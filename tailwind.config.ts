@@ -160,7 +160,7 @@ export default {
         'fade-in': 'fade-in 0.8s ease-out forwards',
         'float': 'float 6s ease-in-out infinite',
         'slide-up': 'slide-up 0.5s ease-out forwards',
-        'slide-up-fast': 'slide-up-fast 0.3s ease-out forwards',
+        'slide-up-fast': 'slide-up 0.3s ease-out forwards',
         'text-gradient': 'text-gradient 3s linear infinite',
         'marquee': 'marquee 20s linear infinite',
         'marquee-lr': 'marquee-lr 30s linear infinite',

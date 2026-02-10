@@ -94,9 +94,12 @@ export function UrineQualityResult({ tdsValue, turbidityValue }: UrineQualityRes
                 </div>
                 <div className="space-y-2">
                     <h4 className="font-semibold text-primary/90 text-lg">Turbidity</h4>
-                    <p className="text-4xl font-bold text-gray-200">{turbidityText}</p>
+                     <p className="text-4xl font-bold text-gray-200">
+                        {turbidityValue !== undefined ? turbidityValue.toFixed(1) : '...'}
+                        <span className="text-2xl text-muted-foreground ml-1">NTU</span>
+                    </p>
                     <Badge className={cn('font-bold text-sm', getStatusClasses(turbidityStatus))} variant="outline">
-                        {turbidityStatus}
+                        {turbidityText}
                     </Badge>
                 </div>
             </div>

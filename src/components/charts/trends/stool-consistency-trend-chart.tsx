@@ -3,7 +3,7 @@
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const CustomTooltip = (props: any) => {
-    if (props.active && props.payload && props.payload.length) {
+    if (props.active && props.payload && props.payload.length && props.payload[0].value) {
         return (
             <div className="bg-card/80 backdrop-blur-sm border border-border rounded-lg p-2 text-sm shadow-lg">
                 <p className="font-semibold text-foreground">{`${props.label}`}</p>
@@ -21,7 +21,7 @@ export function StoolConsistencyTrendChart({ data }: { data: any[] }) {
         <ComposedChart data={data} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.5)" vertical={false}/>
           <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-          <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+          <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} domain={[0, 7]} />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsla(var(--primary) / 0.1)' }} />
            <defs>
              <linearGradient id="stoolBarGradient" x1="0" y1="0" x2="0" y2="1">
@@ -30,18 +30,17 @@ export function StoolConsistencyTrendChart({ data }: { data: any[] }) {
             </linearGradient>
           </defs>
           <Bar dataKey="bristol" fill="url(#stoolBarGradient)" barSize={20} radius={[4, 4, 0, 0]} />
-          <Line type="monotone" dataKey="highRisk" stroke="#67e8f9" strokeWidth={2} dot={false} activeDot={false} name="High Risk"/>
-          <Line type="monotone" dataKey="bristol" stroke="#67e8f9" strokeWidth={2} name="Bristol Type" />
+          <Line type="monotone" dataKey="normalStool" stroke="#67e8f9" strokeWidth={2} dot={false} activeDot={false} name="Normal Stool"/>
         </ComposedChart>
       </ResponsiveContainer>
        <div className="flex justify-center items-center gap-4 text-xs text-muted-foreground mt-2">
          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full" style={{backgroundColor: '#67e8f9'}} />
+            <div className="w-3 h-3 rounded-md" style={{backgroundColor: 'rgba(34, 211, 238, 0.4)'}} />
             <span>Bristol Type</span>
          </div>
          <div className="flex items-center gap-2">
             <div className="w-3 h-0.5" style={{backgroundColor: '#67e8f9'}} />
-            <span>High Risk (Type 3-4)</span>
+            <span>Normal (Type 4)</span>
          </div>
       </div>
     </div>

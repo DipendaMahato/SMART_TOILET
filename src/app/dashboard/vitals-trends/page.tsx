@@ -1,82 +1,175 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, where, orderBy, Timestamp } from 'firebase/firestore';
+import { subMonths, subDays, startOfDay, endOfDay, startOfHour, format, eachDayOfInterval, lastDayOfMonth, eachMonthOfInterval, startOfMonth, getMonth } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { HydrationTrendChart } from '@/components/charts/trends/hydration-trend-chart';
 import { UrinePhTrendChart } from '@/components/charts/trends/urine-ph-trend-chart';
 import { UrineBiomarkerTrendChart } from '@/components/charts/trends/urine-biomarker-trend-chart';
 import { StoolConsistencyTrendChart } from '@/components/charts/trends/stool-consistency-trend-chart';
-
-const todayData = {
-  hydration: [
-    { name: '6am', glucose: 30 }, { name: '9am', glucose: 45 }, { name: '12pm', glucose: 40 }, { name: '3pm', glucose: 55 }, { name: '6pm', glucose: 60 }, { name: '9pm', glucose: 50 },
-  ],
-  ph: [
-    { name: '6am', ph: 6.5, sg: 1.020 }, { name: '9am', ph: 6.8, sg: 1.015 }, { name: '12pm', ph: 7.0, sg: 1.010 }, { name: '3pm', ph: 6.7, sg: 1.025 }, { name: '6pm', ph: 7.2, sg: 1.018 }, { name: '9pm', ph: 6.9, sg: 1.022 },
-  ],
-  biomarker: [
-    { name: '6am', protein: 10, glucose: 5 }, { name: '9am', protein: 12, glucose: 8 }, { name: '12pm', protein: 8, glucose: 6 }, { name: '3pm', protein: 15, glucose: 7 }, { name: '6pm', protein: 11, glucose: 9 }, { name: '9pm', protein: 13, glucose: 5 },
-  ],
-  stool: [
-    { name: '6am', bristol: 20, highRisk: 30 }, { name: '9am', bristol: 25, highRisk: 30 }, { name: '12pm', bristol: 22, highRisk: 30 }, { name: '3pm', bristol: 28, highRisk: 30 }, { name: '6pm', bristol: 30, highRisk: 30 }, { name: '9pm', bristol: 26, highRisk: 30 },
-  ],
-};
-
-const weeklyData = {
-  hydration: [
-    { name: 'Sun', glucose: 40 }, { name: 'Mon', glucose: 42 }, { name: 'Tue', glucose: 35 }, { name: 'Wed', glucose: 50 }, { name: 'Thu', glucose: 48 }, { name: 'Fri', glucose: 55 }, { name: 'Sat', glucose: 52 },
-  ],
-  ph: [
-    { name: 'Sun', ph: 6.8, sg: 1.021 }, { name: 'Mon', ph: 7.1, sg: 1.016 }, { name: 'Tue', ph: 6.6, sg: 1.025 }, { name: 'Wed', ph: 7.3, sg: 1.012 }, { name: 'Thu', ph: 6.9, sg: 1.020 }, { name: 'Fri', ph: 7.0, sg: 1.017 }, { name: 'Sat', ph: 6.7, sg: 1.023 },
-  ],
-  biomarker: [
-    { name: 'Sun', protein: 14, glucose: 7 }, { name: 'Mon', protein: 16, glucose: 9 }, { name: 'Tue', protein: 12, glucose: 6 }, { name: 'Wed', protein: 18, glucose: 10 }, { name: 'Thu', protein: 15, glucose: 8 }, { name: 'Fri', protein: 20, glucose: 12 }, { name: 'Sat', protein: 17, glucose: 9 },
-  ],
-  stool: [
-    { name: 'Sun', bristol: 25, highRisk: 30 }, { name: 'Mon', bristol: 28, highRisk: 30 }, { name: 'Tue', bristol: 22, highRisk: 30 }, { name: 'Wed', bristol: 30, highRisk: 30 }, { name: 'Thu', bristol: 27, highRisk: 30 }, { name: 'Fri', value: 32, highRisk: 30 }, { name: 'Sat', bristol: 29, highRisk: 30 },
-  ],
-};
-
-const monthlyData = {
-  hydration: [
-    { name: 'Jan', glucose: 60 }, { name: 'Feb', glucose: 58 }, { name: 'Mar', glucose: 65 }, { name: 'Apr', glucose: 62 }, { name: 'May', glucose: 70 }, { name: 'Jun', glucose: 68 }, { name: 'Jul', glucose: 72 },
-  ],
-  ph: [
-    { name: 'Jan', ph: 6.9, sg: 1.019 }, { name: 'Feb', ph: 7.0, sg: 1.015 }, { name: 'Mar', ph: 6.8, sg: 1.022 }, { name: 'Apr', ph: 7.2, sg: 1.014 }, { name: 'May', ph: 6.7, sg: 1.026 }, { name: 'Jun', ph: 7.1, sg: 1.018 }, { name: 'Jul', ph: 6.9, sg: 1.020 },
-  ],
-  biomarker: [
-    { name: 'Jan', protein: 18, glucose: 9 }, { name: 'Feb', protein: 22, glucose: 11 }, { name: 'Mar', protein: 20, glucose: 10 }, { name: 'Apr', protein: 25, glucose: 13 }, { name: 'May', protein: 23, glucose: 12 }, { name: 'Jun', protein: 28, glucose: 15 }, { name: 'Jul', protein: 26, glucose: 14 },
-  ],
-  stool: [
-    { name: 'Jan', bristol: 30, highRisk: 30 }, { name: 'Feb', bristol: 32, highRisk: 30 }, { name: 'Mar', bristol: 28, highRisk: 30 }, { name: 'Apr', value: 35, highRisk: 30 }, { name: 'May', bristol: 33, highRisk: 30 }, { name: 'Jun', value: 38, highRisk: 30 }, { name: 'Jul', value: 36, highRisk: 30 },
-  ],
-};
+import { Skeleton } from '@/components/ui/skeleton';
 
 type TimeRange = 'today' | 'weekly' | 'monthly';
 
-const ChartCard = ({ title, children }: { title: string; children: React.ReactNode }) => (
+// Helper function to convert Specific Gravity to a hydration percentage
+const sgToHydration = (sg: number | null | undefined): number => {
+  if (sg === null || sg === undefined || isNaN(sg) || sg === 0) return 0;
+  // Clamp SG to a reasonable physiological range to avoid extreme percentages
+  const clampedSg = Math.max(1.002, Math.min(1.035, sg));
+  // Invert the scale: lower SG means higher hydration
+  const percentage = 100 * (1.035 - clampedSg) / (1.035 - 1.002);
+  return Math.round(Math.max(0, Math.min(100, percentage)));
+};
+
+// Helper to parse Bristol scale from string like "Type 4"
+const parseBristol = (consistency: string | null | undefined): number => {
+    if (!consistency) return 0;
+    const match = consistency.match(/\d+/);
+    return match ? parseInt(match[0], 10) : 0;
+};
+
+// Helper to calculate average of a property in an array of objects
+const average = (arr: any[], prop: string): number => {
+  const validItems = arr.filter(item => typeof item[prop] === 'number' && !isNaN(item[prop]));
+  if (validItems.length === 0) return 0;
+  const sum = validItems.reduce((acc, item) => acc + item[prop], 0);
+  return sum / validItems.length;
+};
+
+
+const ChartCard = ({ title, children, isLoading }: { title: string; children: React.ReactNode; isLoading?: boolean }) => (
   <Card className="bg-white/5 border border-teal-500/20 shadow-lg shadow-teal-500/5">
     <CardHeader>
       <CardTitle className="text-gray-300 font-semibold text-lg">{title}</CardTitle>
     </CardHeader>
     <CardContent>
-      {children}
+      {isLoading ? (
+        <Skeleton className="h-64 w-full" />
+      ) : (
+        children
+      )}
     </CardContent>
   </Card>
 );
 
 export default function VitalsTrendsPage() {
   const [timeRange, setTimeRange] = useState<TimeRange>('weekly');
+  const { user } = useUser();
+  const firestore = useFirestore();
 
-  const dataMap = {
-    today: todayData,
-    weekly: weeklyData,
-    monthly: monthlyData,
-  };
+  const queryStartDate = useMemo(() => {
+    const now = new Date();
+    if (timeRange === 'today') return startOfDay(now);
+    if (timeRange === 'weekly') return startOfDay(subDays(now, 6));
+    if (timeRange === 'monthly') return startOfMonth(subMonths(now, 5));
+    return now;
+  }, [timeRange]);
 
-  const currentData = dataMap[timeRange];
+  const healthDataQuery = useMemoFirebase(() => {
+    if (!firestore || !user?.uid) return null;
+    return query(
+      collection(firestore, `users/${user.uid}/healthData`),
+      where('timestamp', '>=', queryStartDate),
+      orderBy('timestamp', 'asc')
+    );
+  }, [firestore, user?.uid, queryStartDate]);
+
+  const { data: rawHealthData, isLoading } = useCollection<any>(healthDataQuery);
+
+  const processedData = useMemo(() => {
+    if (!rawHealthData) {
+      return { hydration: [], ph: [], biomarker: [], stool: [] };
+    }
+
+    const healthData = rawHealthData.map(d => ({
+        ...d,
+        timestamp: d.timestamp instanceof Timestamp ? d.timestamp.toDate() : new Date(d.timestamp),
+    }));
+
+    if (timeRange === 'today') {
+        const hours = Array.from({ length: 24 }, (_, i) => new Date(new Date().setHours(i, 0, 0, 0)));
+        const groupedByHour = hours.map(hour => {
+            const name = format(hour, 'ha');
+            const entries = healthData.filter(d => startOfHour(d.timestamp).getTime() === hour.getTime());
+            
+            if (entries.length === 0) return null;
+
+            return {
+                name,
+                hydration: sgToHydration(average(entries, 'urineSpecificGravity')),
+                ph: average(entries, 'urinePH'),
+                sg: average(entries, 'urineSpecificGravity'),
+                protein: average(entries, 'urineProtein'),
+                glucose: average(entries, 'urineGlucose'),
+                bristol: average(entries.map(e => ({ value: parseBristol(e.stoolConsistency) })), 'value'),
+                normalStool: 4,
+            };
+        }).filter(d => d !== null);
+
+        return {
+            hydration: groupedByHour.map(d => ({ name: d!.name, hydration: d!.hydration })),
+            ph: groupedByHour.map(d => ({ name: d!.name, ph: d!.ph, sg: d!.sg })),
+            biomarker: groupedByHour.map(d => ({ name: d!.name, protein: d!.protein, glucose: d!.glucose })),
+            stool: groupedByHour.map(d => ({ name: d!.name, bristol: d!.bristol, normalStool: d!.normalStool })),
+        };
+    }
+
+    if (timeRange === 'weekly') {
+        const last7Days = eachDayOfInterval({ start: subDays(new Date(), 6), end: new Date() });
+        const groupedByDay = last7Days.map(day => {
+            const name = format(day, 'E');
+            const entries = healthData.filter(d => startOfDay(d.timestamp).getTime() === startOfDay(day).getTime());
+            
+            return {
+                name,
+                hydration: entries.length > 0 ? sgToHydration(average(entries, 'urineSpecificGravity')) : null,
+                ph: entries.length > 0 ? average(entries, 'urinePH') : null,
+                sg: entries.length > 0 ? average(entries, 'urineSpecificGravity') : null,
+                protein: entries.length > 0 ? average(entries, 'urineProtein') : null,
+                glucose: entries.length > 0 ? average(entries, 'urineGlucose') : null,
+                bristol: entries.length > 0 ? average(entries.map(e => ({ value: parseBristol(e.stoolConsistency) })), 'value') : null,
+                normalStool: 4,
+            };
+        });
+        return {
+            hydration: groupedByDay.map(d => ({ name: d.name, hydration: d.hydration })),
+            ph: groupedByDay.map(d => ({ name: d.name, ph: d.ph, sg: d.sg })),
+            biomarker: groupedByDay.map(d => ({ name: d.name, protein: d.protein, glucose: d.glucose })),
+            stool: groupedByDay.map(d => ({ name: d.name, bristol: d.bristol, normalStool: d.normalStool })),
+        };
+    }
+
+    if (timeRange === 'monthly') {
+        const last6Months = eachMonthOfInterval({ start: subMonths(new Date(), 5), end: new Date() });
+         const groupedByMonth = last6Months.map(month => {
+            const name = format(month, 'MMM');
+            const entries = healthData.filter(d => startOfMonth(d.timestamp).getTime() === startOfMonth(month).getTime());
+            
+            return {
+                name,
+                hydration: entries.length > 0 ? sgToHydration(average(entries, 'urineSpecificGravity')) : null,
+                ph: entries.length > 0 ? average(entries, 'urinePH') : null,
+                sg: entries.length > 0 ? average(entries, 'urineSpecificGravity') : null,
+                protein: entries.length > 0 ? average(entries, 'urineProtein') : null,
+                glucose: entries.length > 0 ? average(entries, 'urineGlucose') : null,
+                bristol: entries.length > 0 ? average(entries.map(e => ({ value: parseBristol(e.stoolConsistency) })), 'value') : null,
+                normalStool: 4,
+            };
+        });
+         return {
+            hydration: groupedByMonth.map(d => ({ name: d.name, hydration: d.hydration })),
+            ph: groupedByMonth.map(d => ({ name: d.name, ph: d.ph, sg: d.sg })),
+            biomarker: groupedByMonth.map(d => ({ name: d.name, protein: d.protein, glucose: d.glucose })),
+            stool: groupedByMonth.map(d => ({ name: d.name, bristol: d.bristol, normalStool: d.normalStool })),
+        };
+    }
+
+    return { hydration: [], ph: [], biomarker: [], stool: [] };
+  }, [rawHealthData, timeRange]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -97,17 +190,17 @@ export default function VitalsTrendsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-slide-up" style={{ animationDelay: '300ms' }}>
-        <ChartCard title="Hydration Trend (%)">
-          <HydrationTrendChart data={currentData.hydration} />
+        <ChartCard title="Hydration Trend (%)" isLoading={isLoading}>
+          <HydrationTrendChart data={processedData.hydration} />
         </ChartCard>
-        <ChartCard title="Urine pH and Specific Gravity Trend">
-          <UrinePhTrendChart data={currentData.ph} />
+        <ChartCard title="Urine pH and Specific Gravity Trend" isLoading={isLoading}>
+          <UrinePhTrendChart data={processedData.ph} />
         </ChartCard>
-        <ChartCard title="Dipstick Biomarker Trend (Protein/Glucose)">
-          <UrineBiomarkerTrendChart data={currentData.biomarker} />
+        <ChartCard title="Dipstick Biomarker Trend (Protein/Glucose)" isLoading={isLoading}>
+          <UrineBiomarkerTrendChart data={processedData.biomarker} />
         </ChartCard>
-        <ChartCard title="Stool Consistency Trend (Bristol Scale)">
-          <StoolConsistencyTrendChart data={currentData.stool} />
+        <ChartCard title="Stool Consistency Trend (Bristol Scale)" isLoading={isLoading}>
+          <StoolConsistencyTrendChart data={processedData.stool} />
         </ChartCard>
       </div>
     </div>

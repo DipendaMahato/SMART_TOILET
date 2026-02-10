@@ -381,19 +381,18 @@ export default function LiveSensorDataPage() {
     };
 
     return (
-        <div className="bg-navy p-4 md:p-8 rounded-2xl animate-fade-in min-h-full">
+        <div className="space-y-8 animate-fade-in">
             <div className="fixed -left-[9999px] top-0 opacity-0">
                 <ChemistryReport ref={reportRef} data={reportData} />
             </div>
 
-            <div className="mb-8 animate-slide-up" style={{ animationDelay: '100ms' }}>
+            <div className="animate-slide-up">
                 <h1 className="text-3xl font-headline font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-glow-green via-glow-cyan to-glow-blue animate-text-gradient bg-400">LIVE DATA</h1>
                 <p className="text-sm text-gray-400 flex items-center gap-2"><span className="text-status-green">●</span> Live Health &amp; Device Monitoring with Real-Time Alerts</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 
-                {/* Row 1: Vitals */}
                 <SensorCard className={cn("flex flex-col justify-between animate-slide-up", isPhOutOfRange ? "border-status-red/70 shadow-status-red/20" : "border-glow-teal-green/50")} style={{ animationDelay: '200ms' }}>
                     <div>
                         <div className="flex justify-between items-start">
@@ -473,12 +472,15 @@ export default function LiveSensorDataPage() {
                         <p className="text-xs text-gray-500 mt-1">Normal Range: 5 - 500 ppm</p>
                     </div>
                 </SensorCard>
-
-                {/* Row 2: Status & Environment */}
+                
                  <SensorCard className="flex flex-col items-center justify-center animate-slide-up border-primary/50" style={{ animationDelay: '600ms' }}>
                     <h3 className="font-semibold text-gray-300 mb-4 text-center">Toilet Usage Status</h3>
                     <CircularGauge value={isToiletOccupied ? 100 : 0} label={isToiletOccupied ? "IN USE" : "NOT IN USE"} />
                     <p className="text-xs text-gray-500 mt-4">{isToiletOccupied ? 'Status: Occupied for Stool' : 'Status: Available'}</p>
+                </SensorCard>
+
+                <SensorCard className="lg:col-span-1 animate-slide-up" style={{ animationDelay: '700ms' }}>
+                    <UrineQualityResult turbidityValue={sensorData?.turbidity} />
                 </SensorCard>
                 
                 <SensorCard className={cn("animate-slide-up", isTempHigh ? "border-status-red/70 shadow-status-red/20" : "border-primary/50")} style={{ animationDelay: '800ms' }}>
@@ -498,25 +500,12 @@ export default function LiveSensorDataPage() {
                     </div>
                 </SensorCard>
 
-
-                {/* Row 3: Device Stats & Controls */}
-                <SensorCard className="flex flex-col items-center justify-center text-center animate-slide-up border-glow-sky-royal-blue/50" style={{ animationDelay: '900ms' }}>
-                    <h3 className="font-semibold text-gray-300">Dipstick Availability</h3>
-                    <p className="text-5xl font-bold text-glow-sky-royal-blue my-4">{sensorData?.dipstickCount ?? '...'}</p>
-                    <p className="text-xs text-gray-500">Dipsticks Remaining</p>
-                </SensorCard>
-                
                 <SensorCard className="flex flex-col items-center justify-center text-center animate-slide-up border-glow-cyan-blue/50" style={{ animationDelay: '1000ms' }}>
                     <h3 className="font-semibold text-gray-300">Toilet Usage Count</h3>
                     <p className="text-5xl font-bold text-teal-400 my-1">{sensorData?.usageCount || 0}</p>
                     <p className="text-xs text-gray-500">used Today</p>
                 </SensorCard>
-
-                 <div className="lg:col-span-4 animate-slide-up" style={{ animationDelay: '1100ms' }}>
-                    <UrineQualityResult turbidityValue={sensorData?.turbidity} />
-                </div>
                 
-                {/* Row 4: Chemistry */}
                 <SensorCard className="lg:col-span-4 animate-slide-up border-glow-lime-emerald/50" style={{ animationDelay: '1200ms' }}>
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="font-semibold text-gray-300">Chemistry Results</h3>

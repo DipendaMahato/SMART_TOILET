@@ -1,3 +1,4 @@
+
 import { cn } from "@/lib/utils";
 import React from "react";
 
@@ -8,7 +9,7 @@ export const SensorCard = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "bg-white/5 backdrop-blur-sm border border-teal-500/20 rounded-2xl p-4 shadow-lg shadow-teal-500/10 transition-all duration-300 hover:border-teal-500/40 hover:shadow-teal-500/20",
+      "bg-card/80 backdrop-blur-lg border rounded-2xl p-6 shadow-lg shadow-black/20 transition-all duration-300 hover:-translate-y-1",
       className
     )}
     {...props}

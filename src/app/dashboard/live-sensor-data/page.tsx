@@ -63,8 +63,15 @@ export default function LiveSensorDataPage() {
             setLatestData(currentData);
 
             const prevData = previousDataRef.current;
+            if (!prevData) {
+                previousDataRef.current = currentData;
+                return;
+            }
+
             const currentSensorData = currentData.sensorData;
-            const prevSensorData = prevData?.sensorData;
+            const prevSensorData = prevData.sensorData;
+            const currentChemData = currentData.Chemistry_Result;
+            const prevChemData = prevData.Chemistry_Result;
 
             if (prevSensorData && firestore && user) {
                 const thresholds = {
@@ -155,6 +162,62 @@ export default function LiveSensorDataPage() {
                     }
                 }
             }
+
+            if (prevChemData && currentChemData && firestore && user) {
+                const checkAndNotify = (key: string, name: string, normalRangeText: string, isAbnormal: (val: any) => boolean) => {
+                    const currentValue = currentChemData[key];
+                    const prevValue = prevChemData[key];
+                    
+                    if (currentValue === undefined || prevValue === undefined) return;
+
+                    if (isAbnormal(currentValue) && !isAbnormal(prevValue)) {
+                        const toastDescription = `${name} reading of ${currentValue} is outside the safe range.`;
+                        toast({
+                            variant: 'destructive',
+                            title: `🔴 Health Alert: Abnormal ${name}`,
+                            description: `${toastDescription} Time: ${new Date().toLocaleTimeString()}`,
+                            duration: 20000,
+                        });
+                        addDoc(collection(firestore, `users/${user.uid}/notifications`), {
+                            userId: user.uid,
+                            timestamp: serverTimestamp(),
+                            message: `Abnormal ${name} level detected. Please consult a healthcare professional.`,
+                            type: 'Alert',
+                            sensorName: name,
+                            currentValue: String(currentValue),
+                            normalRange: normalRangeText,
+                            isRead: false
+                        });
+                    }
+                };
+
+                const isAbnormalNegative = (val: any) => {
+                    const lval = String(val).toLowerCase();
+                    if (lval === 'neg' || lval === 'negative' || lval === '0' || lval === '0.0') {
+                        return false;
+                    }
+                    const nval = parseFloat(val);
+                    if (!isNaN(nval) && nval === 0) {
+                        return false;
+                    }
+                    return true; 
+                };
+
+                checkAndNotify('chem_ph', 'pH (Chemistry)', '4.5 - 8.0', val => parseFloat(val) < 4.5 || parseFloat(val) > 8.0);
+                checkAndNotify('chem_specificGravity', 'Specific Gravity (Chemistry)', '1.005 - 1.030', val => parseFloat(val) < 1.005 || parseFloat(val) > 1.030);
+                checkAndNotify('chem_glucose', 'Glucose', 'Negative', isAbnormalNegative);
+                checkAndNotify('chem_protein', 'Protein', 'Negative/Trace (<30)', val => parseFloat(val) > 30);
+                checkAndNotify('chem_blood', 'Blood (Chemistry)', 'Negative', isAbnormalNegative);
+                checkAndNotify('chem_bilirubin', 'Bilirubin', 'Negative', isAbnormalNegative);
+                checkAndNotify('chem_ketones', 'Ketones', 'Negative', isAbnormalNegative);
+                checkAndNotify('chem_leukocytes', 'Leukocytes', 'Negative', isAbnormalNegative);
+                checkAndNotify('chem_nitrite', 'Nitrite', 'Negative', isAbnormalNegative);
+                checkAndNotify('chem_urobilinogen', 'Urobilinogen', '0.2 - 1.0', val => {
+                    if (String(val).toLowerCase() === 'norm' || String(val).toLowerCase() === 'normal') return false;
+                    const numVal = parseFloat(val);
+                    return isNaN(numVal) || numVal < 0.2 || numVal > 1.0;
+                });
+            }
             
             previousDataRef.current = currentData;
 
@@ -169,7 +232,6 @@ export default function LiveSensorDataPage() {
 
         return () => {
             unsubscribe();
-            previousDataRef.current = null;
         };
     }, [user, database, firestore, toast]);
     
@@ -264,40 +326,63 @@ export default function LiveSensorDataPage() {
         if (value === undefined || value === null || value === '...') return { status: 'N/A', color: 'text-gray-400' };
         
         const lowerCaseValue = String(value).toLowerCase();
+        const numValue = parseFloat(value);
 
         switch(key) {
             case 'chem_ph':
-                const ph = parseFloat(value);
-                if (isNaN(ph)) return { status: 'Invalid', color: 'text-status-yellow' };
-                return (ph >= 4.5 && ph <= 8.0) ? { status: 'Normal', color: 'text-status-green' } : { status: 'Abnormal', color: 'text-status-red' };
+                if (isNaN(numValue)) return { status: 'Invalid', color: 'text-status-yellow' };
+                return (numValue >= 4.5 && numValue <= 8.0) ? { status: 'Normal', color: 'text-status-green' } : { status: 'Abnormal', color: 'text-status-red' };
+            
             case 'chem_specificGravity':
-                const sg = parseFloat(value);
-                if (isNaN(sg)) return { status: 'Invalid', color: 'text-status-yellow' };
-                return (sg >= 1.005 && sg <= 1.030) ? { status: 'Normal', color: 'text-status-green' } : { status: 'Abnormal', color: 'text-status-red' };
+                if (isNaN(numValue)) return { status: 'Invalid', color: 'text-status-yellow' };
+                return (numValue >= 1.005 && numValue <= 1.030) ? { status: 'Normal', color: 'text-status-green' } : { status: 'Abnormal', color: 'text-status-red' };
+            
+            case 'chem_urobilinogen':
+                if (lowerCaseValue === 'norm' || lowerCaseValue === 'normal') return { status: 'Normal', color: 'text-status-green' };
+                if (isNaN(numValue)) return { status: 'Abnormal', color: 'text-status-red' };
+                return (numValue >= 0.2 && numValue <= 1.0) ? { status: 'Normal', color: 'text-status-green' } : { status: 'Abnormal', color: 'text-status-red' };
+            
             case 'chem_blood':
-                return (lowerCaseValue === 'neg' || lowerCaseValue === 'negative' || value === 0) ? { status: 'Negative', color: 'text-status-green' } : { status: 'Detected', color: 'text-status-red' };
             case 'chem_bilirubin':
             case 'chem_ketones':
             case 'chem_ascorbicAcid':
-            case 'chem_glucose':
-            case 'chem_protein':
             case 'chem_nitrite':
             case 'chem_leukocytes':
-                return (lowerCaseValue === 'neg' || lowerCaseValue === 'negative') ? { status: 'Negative', color: 'text-status-green' } : { status: 'Positive', color: 'text-status-red' };
-            case 'chem_urobilinogen':
-                return (lowerCaseValue === 'norm' || lowerCaseValue === 'normal') ? { status: 'Normal', color: 'text-status-green' } : { status: 'Abnormal', color: 'text-status-red' };
+            case 'chem_glucose':
+                const isNeg = lowerCaseValue === 'neg' || lowerCaseValue === 'negative' || numValue === 0;
+                if(isNeg) return { status: 'Negative', color: 'text-status-green' };
+                return { status: 'Positive', color: 'text-status-red' };
+
+            case 'chem_protein':
+                if (lowerCaseValue === 'neg' || lowerCaseValue === 'negative' || numValue === 0) {
+                    return { status: 'Negative', color: 'text-status-green' };
+                }
+                if (numValue > 0 && numValue <= 30) {
+                     return { status: 'Trace', color: 'text-status-yellow' };
+                }
+                return { status: 'Positive', color: 'text-status-red' };
+            
             default:
                 return { status: 'Unknown', color: 'text-gray-400' };
         }
     }
     
-    const ChemistryParameterCard = ({ label, value, status, color }: {label: string, value: any, status: string, color: string}) => (
-        <div className="bg-background/20 backdrop-blur-sm border border-white/10 rounded-xl p-3 text-center flex flex-col justify-between h-24">
-            <p className="text-xs text-gray-400 font-medium truncate" title={label}>{label}</p>
-            <p className="text-lg font-bold text-gray-200 my-1 truncate">{String(value)}</p>
-            <p className={`text-xs font-bold ${color}`}>{status}</p>
-        </div>
-    );
+    const ChemistryParameterCard = ({ label, value, status, color }: {label: string, value: any, status: string, color: string}) => {
+        const isAbnormal = color === 'text-status-red' || color === 'text-status-yellow';
+        return (
+            <div className={cn(
+                "bg-background/20 backdrop-blur-sm border rounded-xl p-3 text-center flex flex-col justify-between h-24 transition-all",
+                isAbnormal ? "border-status-red/50" : "border-white/10"
+            )}>
+                <div className="flex justify-between items-start">
+                    <p className="text-xs text-gray-400 font-medium truncate text-left" title={label}>{label}</p>
+                    {isAbnormal && <CircleAlert className="h-4 w-4 text-status-red flex-shrink-0" />}
+                </div>
+                <p className="text-lg font-bold text-gray-200 my-1 truncate">{String(value)}</p>
+                <p className={`text-xs font-bold ${color}`}>{status}</p>
+            </div>
+        );
+    };
 
     return (
         <div className="bg-navy p-4 md:p-8 rounded-2xl animate-fade-in min-h-full">
@@ -497,3 +582,5 @@ export default function LiveSensorDataPage() {
         </div>
     );
 }
+
+    

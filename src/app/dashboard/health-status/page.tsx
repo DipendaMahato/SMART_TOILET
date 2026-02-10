@@ -142,16 +142,48 @@ export default function HealthStatusPage() {
       </div>
 
       <div className="text-center animate-slide-up">
-        <div className="relative inline-block">
-          <ShieldCheck className="text-status-green h-48 w-48" style={{ fill: 'hsla(var(--status-green) / 0.1)' }} />
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <p className="text-sm text-muted-foreground">Overall Health Score</p>
-            <p className="text-5xl font-bold">
-              98 <span className="text-3xl text-status-green">- Excellent</span>
-            </p>
-          </div>
+        <div className="relative inline-flex items-center justify-center w-60 h-60">
+            <svg className="absolute w-full h-full" viewBox="0 0 100 100">
+                <circle
+                    className="text-border"
+                    strokeWidth="6"
+                    stroke="currentColor"
+                    fill="transparent"
+                    r="47"
+                    cx="50"
+                    cy="50"
+                />
+                <circle
+                    className="text-status-green"
+                    strokeWidth="6"
+                    strokeDasharray="295.3"
+                    strokeDashoffset={295.3 * (1 - 0.98)}
+                    strokeLinecap="round"
+                    stroke="currentColor"
+                    fill="transparent"
+                    r="47"
+                    cx="50"
+                    cy="50"
+                    style={{
+                        transform: 'rotate(-90deg)',
+                        transformOrigin: '50% 50%',
+                        filter: 'drop-shadow(0 0 8px hsl(var(--status-green)))'
+                    }}
+                />
+            </svg>
+            <div className="flex flex-col items-center justify-center text-center">
+                <p className="text-sm text-muted-foreground">Overall Health Score</p>
+                <div className="flex items-baseline">
+                    <span className="text-7xl font-bold">98</span>
+                    <span className="text-5xl font-bold text-muted-foreground/50 ml-1">-</span>
+                </div>
+                <ShieldCheck className="h-7 w-7 text-status-green -mt-2 mb-1" style={{ fill: 'hsla(var(--status-green) / 0.1)' }}/>
+                <p className="text-2xl font-bold text-status-green">
+                    Excellent
+                </p>
+            </div>
         </div>
-        <p className="text-xs text-muted-foreground mt-2">
+        <p className="text-xs text-muted-foreground mt-4">
           {currentDate ? `Last Assessment: ${currentDate}` : 'Loading date...'} - Data Period: Last 7 Days
         </p>
       </div>

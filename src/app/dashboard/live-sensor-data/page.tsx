@@ -392,7 +392,6 @@ export default function LiveSensorDataPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                
                 <SensorCard className={cn("flex flex-col justify-between animate-slide-up", isPhOutOfRange ? "border-status-red/70 shadow-status-red/20" : "border-glow-teal-green/50")} style={{ animationDelay: '200ms' }}>
                     <div>
                         <div className="flex justify-between items-start">
@@ -472,18 +471,26 @@ export default function LiveSensorDataPage() {
                         <p className="text-xs text-gray-500 mt-1">Normal Range: 5 - 500 ppm</p>
                     </div>
                 </SensorCard>
-                
-                 <SensorCard className="flex flex-col items-center justify-center animate-slide-up border-primary/50" style={{ animationDelay: '600ms' }}>
+            </div>
+            
+            <div className="animate-slide-up" style={{ animationDelay: '600ms' }}>
+                <UrineQualityResult tdsValue={sensorData?.tds_value} turbidityValue={sensorData?.turbidity} />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                 <SensorCard className="flex flex-col items-center justify-center animate-slide-up border-primary/50" style={{ animationDelay: '700ms' }}>
                     <h3 className="font-semibold text-gray-300 mb-4 text-center">Toilet Usage Status</h3>
                     <CircularGauge value={isToiletOccupied ? 100 : 0} label={isToiletOccupied ? "IN USE" : "NOT IN USE"} />
                     <p className="text-xs text-gray-500 mt-4">{isToiletOccupied ? 'Status: Occupied for Stool' : 'Status: Available'}</p>
                 </SensorCard>
 
-                <SensorCard className="lg:col-span-2 animate-slide-up" style={{ animationDelay: '700ms' }}>
-                    <UrineQualityResult tdsValue={sensorData?.tds_value} turbidityValue={sensorData?.turbidity} />
+                <SensorCard className="flex flex-col items-center justify-center text-center animate-slide-up border-glow-cyan-blue/50" style={{ animationDelay: '800ms' }}>
+                    <h3 className="font-semibold text-gray-300">Toilet Usage Count</h3>
+                    <p className="text-5xl font-bold text-teal-400 my-1">{sensorData?.usageCount || 0}</p>
+                    <p className="text-xs text-gray-500">used Today</p>
                 </SensorCard>
                 
-                <SensorCard className={cn("animate-slide-up", isTempHigh ? "border-status-red/70 shadow-status-red/20" : "border-primary/50")} style={{ animationDelay: '800ms' }}>
+                <SensorCard className={cn("animate-slide-up", isTempHigh ? "border-status-red/70 shadow-status-red/20" : "border-primary/50")} style={{ animationDelay: '900ms' }}>
                     <h3 className="font-semibold text-gray-300 mb-4 text-center">Temperature &amp; Humidity</h3>
                     <div className="flex justify-around items-center h-full">
                         <div className="text-center">
@@ -500,13 +507,23 @@ export default function LiveSensorDataPage() {
                     </div>
                 </SensorCard>
 
-                <SensorCard className="flex flex-col items-center justify-center text-center animate-slide-up border-glow-cyan-blue/50" style={{ animationDelay: '1000ms' }}>
-                    <h3 className="font-semibold text-gray-300">Toilet Usage Count</h3>
-                    <p className="text-5xl font-bold text-teal-400 my-1">{sensorData?.usageCount || 0}</p>
-                    <p className="text-xs text-gray-500">used Today</p>
+                 <SensorCard className="animate-slide-up border-secondary/50" style={{ animationDelay: '1000ms' }}>
+                    <h3 className="font-semibold text-gray-300 text-sm mb-2 flex items-center gap-2"><Zap size={16}/>Automation Controls</h3>
+                    <div className="space-y-4 mt-4 pt-4 border-t border-border/50">
+                        <div className='flex justify-between items-center'>
+                            <p className='text-sm text-gray-400'>Auto Flush</p>
+                            <Switch 
+                                checked={sensorData?.autoFlushEnable || false} 
+                                onCheckedChange={(checked) => sendCommand('autoFlushEnable', checked)} 
+                            />
+                        </div>
+                    </div>
                 </SensorCard>
-                
-                <SensorCard className="lg:col-span-4 animate-slide-up border-glow-lime-emerald/50" style={{ animationDelay: '1200ms' }}>
+
+            </div>
+
+             <div className="animate-slide-up" style={{ animationDelay: '1100ms' }}>
+                <SensorCard className="border-glow-lime-emerald/50">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="font-semibold text-gray-300">Chemistry Results</h3>
                         <div className="flex items-center gap-2">
@@ -533,20 +550,6 @@ export default function LiveSensorDataPage() {
                         })}
                     </div>
                 </SensorCard>
-
-                 <SensorCard className="lg:col-span-4 animate-slide-up border-secondary/50" style={{ animationDelay: '1300ms' }}>
-                    <h3 className="font-semibold text-gray-300 text-sm mb-2 flex items-center gap-2"><Zap size={16}/>Automation Controls</h3>
-                    <div className="space-y-2 mt-2">
-                        <div className='flex justify-between items-center'>
-                            <p className='text-sm text-gray-400'>Auto Flush</p>
-                            <Switch 
-                                checked={sensorData?.autoFlushEnable || false} 
-                                onCheckedChange={(checked) => sendCommand('autoFlushEnable', checked)} 
-                            />
-                        </div>
-                    </div>
-                </SensorCard>
-
             </div>
         </div>
     );

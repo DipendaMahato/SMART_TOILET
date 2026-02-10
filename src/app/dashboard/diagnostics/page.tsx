@@ -97,14 +97,14 @@ export default function DiagnosticsPage() {
                     };
 
                     if(chemistry) {
-                        const isNegative = (v: any) => v == 0 || String(v).toLowerCase() === 'negative' || String(v).toLowerCase() === 'neg';
+                        const isNegative = (v: any) => v == 0 || String(v).toLowerCase() === 'negative' || String(v).toLowerCase() === 'neg' || String(v).toLowerCase() === 'normal';
                         const formatNegative = (v: any) => isNegative(v) ? "Negative" : v;
                         
                         updateRow('Bilirubin (BIL)', chemistry.chem_bilirubin, isNegative, formatNegative);
                         updateRow('Urobilinogen (UBG)', chemistry.chem_urobilinogen, v => { const f = parseFloat(v); return !isNaN(f) && f >= 0.2 && f <= 1.0; });
                         updateRow('Ketone (KET)', chemistry.chem_ketones, isNegative, formatNegative);
                         updateRow('Ascorbic Acid (ASC)', chemistry.chem_ascorbicAcid, isNegative, formatNegative);
-                        updateRow('Glucose (GLU)', chemistry.chem_glucose, v => isNegative(v) || String(v).toLowerCase() === 'normal', v => (isNegative(v) || String(v).toLowerCase() === 'normal') ? "Normal" : v);
+                        updateRow('Glucose (GLU)', chemistry.chem_glucose, v => isNegative(v), v => isNegative(v) ? "Normal" : v);
                         updateRow('Protein (PRO)', chemistry.chem_protein, v => parseFloat(v) <= 30, v => {
                             const val = parseFloat(v);
                             if (val <= 0) return "Negative";
@@ -149,8 +149,8 @@ export default function DiagnosticsPage() {
             const userDocSnap = await getDoc(userDocRef);
             const userData = userDocSnap.exists() ? userDocSnap.data() : { displayName: user.displayName, email: user.email };
 
-            // Fetch latest sensor data from Realtime Database
-            const rtdbRef = ref(database, `Users/${user.uid}/sensorData`);
+            // Fetch latest health data (sensor and chemistry) from Realtime Database
+            const rtdbRef = ref(database, `Users/${user.uid}`);
             const rtdbSnap = await get(rtdbRef);
             const latestHealthData = rtdbSnap.exists() ? rtdbSnap.val() : {};
 
@@ -163,7 +163,7 @@ export default function DiagnosticsPage() {
                 if (element && window.html2pdf) {
                     const opt = {
                         margin: 0,
-                        filename: `Urine_Stool_Diagnostics_Report_${userData.firstName || 'User'}.pdf`,
+                        filename: `Urine_Diagnostics_Report_${userData.firstName || 'User'}.pdf`,
                         image: { type: 'jpeg', quality: 0.98 },
                         html2canvas: { scale: 3, useCORS: true },
                         jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }

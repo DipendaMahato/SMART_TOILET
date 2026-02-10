@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { useState, useEffect } from 'react';
 
 const subDashboards = [
   {
@@ -134,13 +135,33 @@ const AnimatedBorderCard = ({
 }
 
 export function DashboardContent() {
+  const [time, setTime] = useState<Date | null>(null);
+
+  useEffect(() => {
+    // Set initial time on client to avoid hydration mismatch
+    setTime(new Date());
+    const timer = setInterval(() => {
+      setTime(new Date());
+    }, 1000);
+    return () => {
+      clearInterval(timer);
+    };
+  }, []);
+
   return (
     <div className="space-y-8 animate-fade-in">
-      <div style={{ animationDelay: '200ms', animationFillMode: 'backwards' }} className="animate-slide-up">
-        <h1 className="text-3xl font-headline font-bold text-transparent bg-clip-text bg-gradient-to-r from-glow-mint to-glow-cyan animate-text-gradient bg-400">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Select a dashboard below to explore your health data in detail.
-        </p>
+      <div style={{ animationDelay: '200ms', animationFillMode: 'backwards' }} className="animate-slide-up flex justify-between items-start">
+        <div>
+            <h1 className="text-3xl font-headline font-bold text-transparent bg-clip-text bg-gradient-to-r from-glow-mint to-glow-cyan animate-text-gradient bg-400">Dashboard</h1>
+            <p className="text-muted-foreground">
+              Select a dashboard below to explore your health data in detail.
+            </p>
+        </div>
+        <div className="text-right shrink-0 pl-4">
+            <p className="text-sm font-mono text-muted-foreground">
+                {time ? time.toLocaleString() : 'Loading time...'}
+            </p>
+        </div>
       </div>
 
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">

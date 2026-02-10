@@ -1,6 +1,6 @@
 
 import { ForgotPasswordForm } from "@/components/auth/forgot-password-form";
-import Image from "next/image";
+import { AppLogo } from "@/components/logo";
 import Link from "next/link";
 
 export default function ForgotPasswordPage() {
@@ -8,7 +8,7 @@ export default function ForgotPasswordPage() {
     <div className="flex min-h-screen flex-col items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-6">
-            <Image src="/logo.png" alt="App Logo" width={80} height={80} />
+            <AppLogo className="h-20 w-20" />
         </div>
         <h1 className="font-headline text-3xl font-bold text-center mb-2 text-primary">
           Forgot Password

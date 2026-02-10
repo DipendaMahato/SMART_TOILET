@@ -1,3 +1,4 @@
+
 'use client';
 import React, { forwardRef } from 'react';
 import { Timestamp } from 'firebase/firestore';
@@ -112,15 +113,13 @@ export const ChemistryReport = forwardRef<HTMLDivElement, ReportProps>(({ data }
     return (
         <div ref={ref} style={{ width: '210mm', minHeight: '297mm', background: 'white', color: 'black', fontFamily: "'Arial', sans-serif" }}>
             <div style={{ padding: '25px', display: 'flex', flexDirection: 'column', height: '100%' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '2px solid #004a99', paddingBottom: '10px', marginBottom: '15px' }}>
-                    <img src="/logo.png" alt="logo" style={{ height: '60px' }}/>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '2px solid #004a99', paddingBottom: '10px', marginBottom: '15px' }}>
                     <div style={{ textAlign: 'center' }}>
                         <h1 style={{ margin: 0, color: '#004a99', fontSize: '24px', textTransform: 'uppercase' }}>USER CHEMISTRY REPORT</h1>
                         <div style={{ marginTop: '8px', fontSize: '14px', color: '#333' }}>
                             Contact: +91 6201158797 | Email: smarttoiletapp5@gmail.com
                         </div>
                     </div>
-                    <div style={{ width: '60px' }}></div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', border: '1px solid #ddd', padding: '10px', marginBottom: '15px', fontSize: '14px', borderRadius: '8px' }}>

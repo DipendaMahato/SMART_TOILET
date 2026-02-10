@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import Image from "next/image";
+import { AppLogo } from "@/components/logo";
 import {
   Menu,
   Search,
@@ -103,7 +103,7 @@ export default function AppHeader() {
               href="/dashboard"
               className="flex items-center gap-2 text-lg font-semibold mb-4 font-headline text-primary"
             >
-              <Image src="/logo.png" alt="App Logo" width={32} height={32} />
+              <AppLogo className="h-8 w-8" />
               <span className="text-sm">Smart Toilet</span>
             </Link>
             {navItems.map((item) => (

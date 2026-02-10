@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+import { AppLogo } from "@/components/logo";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Home,
@@ -60,7 +60,7 @@ export default function AppSidebar() {
     <aside className="hidden md:flex w-64 flex-col border-r bg-card/80 backdrop-blur-sm border-border/20">
       <div className="flex h-16 items-center justify-center border-b border-border/20 px-6">
         <Link href="/dashboard" className="flex items-center gap-2 font-headline text-lg font-semibold text-primary">
-          <Image src="/logo.png" alt="App Logo" width={32} height={32} />
+          <AppLogo className="h-8 w-8" />
           <span className="text-sm">Smart Toilet</span>
         </Link>
       </div>

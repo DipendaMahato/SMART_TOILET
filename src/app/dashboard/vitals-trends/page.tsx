@@ -8,10 +8,11 @@ import { subDays, startOfDay, format, isSameDay, parse, isValid } from 'date-fns
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Droplets, FlaskConical, Bone, Calendar as CalendarIcon, Clock, TestTube2, HeartPulse, Waves } from 'lucide-react';
+import { Droplets, FlaskConical, Bone, Calendar as CalendarIcon, Clock, TestTube2, HeartPulse, Waves, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
-
+import { Button } from '@/components/ui/button';
+import { useToast } from "@/hooks/use-toast";
 
 type TimeRange = 'today' | 'weekly' | 'monthly' | '';
 
@@ -101,10 +102,11 @@ const RecordSkeleton = () => (
 
 export default function VitalsTrendsPage() {
   const [timeRange, setTimeRange] = useState<TimeRange>('weekly');
-  const [customDate, setCustomDate] = useState<Date | undefined>();
   const [dateInput, setDateInput] = useState('');
+  const [searchedDate, setSearchedDate] = useState<Date | undefined>();
   const { user } = useUser();
   const database = useDatabase();
+  const { toast } = useToast();
 
   const healthDataReportsRef = useMemoFirebase(() => {
     if (!database || !user?.uid) return null;
@@ -153,7 +155,7 @@ export default function VitalsTrendsPage() {
           ascorbicAcid: chemistry.chem_ascorbicAcid,
           glucose: chemistry.chem_glucose,
           protein: chemistry.chem_protein,
-          blood: sensorData.blood_detected_sensor, // Sourced from sensorData
+          blood: sensorData.blood_detected_sensor,
           nitrite: chemistry.chem_nitrite,
           leukocytes: chemistry.chem_leukocytes,
           stoolConsistency: 'N/A', // Placeholder
@@ -162,11 +164,9 @@ export default function VitalsTrendsPage() {
       });
     });
     
-    // Now, filter the collected records based on the selected time range or custom date.
     const filteredRecords = allRecords.filter(record => {
-        if (customDate) {
-            // If a custom date is set, only include records from that day.
-            return isSameDay(record.timestamp, customDate);
+        if (searchedDate) {
+            return isSameDay(record.timestamp, searchedDate);
         }
         if (timeRange) {
             const now = new Date();
@@ -174,36 +174,49 @@ export default function VitalsTrendsPage() {
             if (timeRange === 'today') startDate = startOfDay(now);
             else if (timeRange === 'weekly') startDate = startOfDay(subDays(now, 6));
             else startDate = startOfDay(subDays(now, 29)); // monthly
-            // Include records that are on or after the calculated start date.
             return record.timestamp >= startDate;
-        }
-        // By default, if no filter is active (e.g., during initial load with empty input), show weekly.
-        if (!customDate && !timeRange) {
-            const weeklyStartDate = startOfDay(subDays(new Date(), 6));
-            return record.timestamp >= weeklyStartDate;
         }
         return false;
     });
 
-    // Sort the final, filtered records in descending order (newest first).
     return filteredRecords.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
-  }, [reports, timeRange, customDate]);
+  }, [reports, timeRange, searchedDate]);
 
   const handleTimeRangeChange = (value: string) => {
       if (value) {
           setTimeRange(value as TimeRange);
-          setCustomDate(undefined);
+          setSearchedDate(undefined);
           setDateInput('');
       }
   };
 
-  const handleDateSelect = (date: Date | undefined) => {
-      setCustomDate(date);
-      if (date) {
-          setTimeRange('');
-          setDateInput(format(date, 'yyyy-MM-dd'));
-      }
+  const handleSearch = () => {
+    if (!dateInput) {
+        setSearchedDate(undefined);
+        setTimeRange('weekly');
+        return;
+    }
+
+    const parsedDate = parse(dateInput, 'yyyy-MM-dd', new Date());
+
+    if (isValid(parsedDate) && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+        const [year, month, day] = dateInput.split('-').map(Number);
+        const localDate = new Date(year, month - 1, day);
+        setSearchedDate(localDate);
+        setTimeRange('');
+    } else {
+        toast({
+            variant: "destructive",
+            title: "Invalid Date Format",
+            description: "Please enter the date in YYYY-MM-DD format.",
+        });
+    }
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      handleSearch();
   };
 
 
@@ -224,32 +237,22 @@ export default function VitalsTrendsPage() {
                     <TabsTrigger value="monthly">Monthly</TabsTrigger>
                 </TabsList>
             </Tabs>
-             <div className="relative w-full md:w-[200px]">
-                <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                    type="text"
-                    placeholder="YYYY-MM-DD"
-                    value={dateInput}
-                    onChange={(e) => {
-                        const inputText = e.target.value;
-                        setDateInput(inputText);
-
-                        const parsedDate = parse(inputText, 'yyyy-MM-dd', new Date());
-
-                        if (isValid(parsedDate) && /^\d{4}-\d{2}-\d{2}$/.test(inputText)) {
-                            const [year, month, day] = inputText.split('-').map(Number);
-                            const localDate = new Date(year, month - 1, day);
-                            handleDateSelect(localDate);
-                        } else if (inputText === '') {
-                            if (customDate) {
-                                handleDateSelect(undefined);
-                                setTimeRange('weekly'); 
-                            }
-                        }
-                    }}
-                    className="w-full bg-card border-input pl-9"
-                />
-            </div>
+             <form onSubmit={handleFormSubmit} className="flex items-center gap-2">
+                <div className="relative w-full md:w-[180px]">
+                    <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        type="text"
+                        placeholder="YYYY-MM-DD"
+                        value={dateInput}
+                        onChange={(e) => setDateInput(e.target.value)}
+                        className="w-full bg-card border-input pl-9"
+                    />
+                </div>
+                <Button type="submit" size="icon">
+                    <Search className="h-4 w-4" />
+                    <span className="sr-only">Search</span>
+                </Button>
+            </form>
         </div>
       </div>
 
@@ -266,13 +269,14 @@ export default function VitalsTrendsPage() {
             ))
         )}
          {!isLoading && (!healthRecords || healthRecords.length === 0) && (
-            <div className="text-center py-16">
-                <p className="text-muted-foreground">No health records found for this period.</p>
+            <div className="text-center py-16 bg-card border border-border rounded-lg">
+                <p className="text-muted-foreground font-semibold text-lg">No health records found.</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                    {searchedDate ? `There are no records for ${format(searchedDate, 'PPP')}.` : 'No records for the selected period.'}
+                </p>
             </div>
         )}
       </div>
     </div>
   );
 }
-
-    

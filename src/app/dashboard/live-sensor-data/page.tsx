@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useUser, useFirestore, useDatabase } from '@/firebase';
 import { getDatabase, ref, onValue, update, get } from 'firebase/database';
-import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, getDoc, Timestamp } from 'firebase/firestore';
 import { SensorCard } from '@/components/dashboard/sensor-card';
 import { CircularGauge } from '@/components/charts/circular-gauge';
 import { ShieldCheck, Droplet, Zap, CircleAlert, CheckCircle, Thermometer, FlaskConical, Download, Waves } from 'lucide-react';
@@ -21,6 +21,22 @@ const WarningMessage = ({ text = 'Warning: Value out of range.' }: { text?: stri
         <span>{text}</span>
     </div>
 );
+
+// Helper to get the latest session from RTDB data
+const getLatestSession = (data: any) => {
+    if (!data?.Reports) return { latestDate: null, latestSessionId: null, latestSession: null };
+
+    const latestDate = Object.keys(data.Reports).sort().pop();
+    if (!latestDate) return { latestDate: null, latestSessionId: null, latestSession: null };
+    
+    const sessions = data.Reports[latestDate];
+    if (!sessions) return { latestDate, latestSessionId: null, latestSession: null };
+
+    const latestSessionId = Object.keys(sessions).sort().pop();
+    if (!latestSessionId) return { latestDate, latestSessionId: null, latestSession: null };
+
+    return { latestDate, latestSessionId, latestSession: sessions[latestSessionId] };
+}
 
 export default function LiveSensorDataPage() {
     const { user } = useUser();
@@ -58,25 +74,53 @@ export default function LiveSensorDataPage() {
         
         const userRef = ref(database, `Users/${user.uid}`);
         
-        const unsubscribe = onValue(userRef, (snapshot) => {
+        const unsubscribe = onValue(userRef, async (snapshot) => {
             const currentData = snapshot.val();
-            if (!currentData) return;
+            if (!currentData || !firestore || !user) return;
 
-            let currentLatestSession = null;
-            let currentUsageCount = 0;
-            const reports = currentData.Reports;
-            if (reports) {
-                const latestDate = Object.keys(reports).sort().pop();
-                if (latestDate) {
-                    const sessions = reports[latestDate];
-                    const latestSessionId = Object.keys(sessions).sort().pop();
-                    if (latestSessionId) {
-                        currentLatestSession = sessions[latestSessionId];
-                        currentUsageCount = currentLatestSession.sensorData?.usageCount ?? 0;
+            const { latestDate: currentLatestDate, latestSessionId: currentLatestSessionId, latestSession: currentLatestSession } = getLatestSession(currentData);
+            const prevData = previousDataRef.current;
+            const { latestSessionId: prevLatestSessionId } = getLatestSession(prevData);
+
+            if (currentLatestSessionId && currentLatestSessionId !== prevLatestSessionId) {
+                const chemistry = currentLatestSession.Chemistry_Result;
+                const metadata = currentLatestSession.metadata;
+
+                if (chemistry && metadata && currentLatestDate) {
+                    try {
+                        const dateString = `${currentLatestDate}T${metadata.time}`;
+                        const sessionTimestamp = new Date(dateString);
+
+                        if (!isNaN(sessionTimestamp.getTime())) {
+                            const healthData = {
+                                userId: user.uid,
+                                timestamp: Timestamp.fromDate(sessionTimestamp),
+                                urinePH: chemistry.chem_ph ?? null,
+                                urineSpecificGravity: chemistry.chem_specificGravity ?? null,
+                                urineProtein: chemistry.chem_protein ?? null,
+                                urineGlucose: chemistry.chem_glucose ?? null,
+                                stoolConsistency: 'Type 4', 
+                                stoolColor: 'Brown',
+                                ...chemistry,
+                                ...(currentLatestSession.sensorData || {})
+                            };
+                            await addDoc(collection(firestore, `users/${user.uid}/healthData`), healthData);
+                            toast({
+                                title: "New Health Record Saved",
+                                description: "A new session has been recorded to your health history.",
+                            });
+                        }
+                    } catch (error) {
+                        console.error("Error saving new health record to Firestore:", error);
+                        toast({
+                            variant: "destructive",
+                            title: "Sync Error",
+                            description: "Failed to save the latest health record.",
+                        });
                     }
                 }
             }
-            
+
             const unifiedCurrentData = {
                 sensorData: {
                     ...(currentLatestSession?.sensorData || {}),
@@ -86,18 +130,21 @@ export default function LiveSensorDataPage() {
             };
             
             setLatestData(unifiedCurrentData);
-            setUserCount(currentUsageCount);
+            setUserCount(unifiedCurrentData.sensorData?.usageCount ?? 0);
 
-            const prevData = previousDataRef.current;
-            if (!prevData) {
-                previousDataRef.current = unifiedCurrentData;
-                return;
-            }
+            const { latestSession: prevLatestSession } = getLatestSession(prevData);
+            const unifiedPrevData = {
+                sensorData: {
+                    ...(prevLatestSession?.sensorData || {}),
+                    isOccupied: prevData?.Live_Status?.isOccupied,
+                },
+                Chemistry_Result: prevLatestSession?.Chemistry_Result || {},
+            };
 
             const currentSensorData = unifiedCurrentData.sensorData;
-            const prevSensorData = prevData.sensorData;
+            const prevSensorData = unifiedPrevData.sensorData;
             const currentChemData = unifiedCurrentData.Chemistry_Result;
-            const prevChemData = prevData.Chemistry_Result;
+            const prevChemData = unifiedPrevData.Chemistry_Result;
 
             if (currentSensorData && prevSensorData && firestore && user) {
                 const thresholds = {
@@ -296,7 +343,7 @@ export default function LiveSensorDataPage() {
                 });
             }
             
-            previousDataRef.current = unifiedCurrentData;
+            previousDataRef.current = currentData;
 
         }, (error) => {
             console.error("Firebase onValue error:", error);
@@ -644,5 +691,7 @@ export default function LiveSensorDataPage() {
         </div>
     );
 }
+
+    
 
     

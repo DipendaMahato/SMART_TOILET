@@ -27,6 +27,7 @@ export default function LiveSensorDataPage() {
     const firestore = useFirestore();
     const database = useDatabase();
     const [latestData, setLatestData] = useState<any>(null);
+    const [userCount, setUserCount] = useState<number>(0);
     const { toast } = useToast();
     const previousDataRef = useRef<any>(null);
     const reportRef = useRef<HTMLDivElement>(null);
@@ -62,6 +63,12 @@ export default function LiveSensorDataPage() {
             if (!currentData) return;
 
             setLatestData(currentData);
+
+            if (currentData.Account_Info && typeof currentData.Account_Info.usercount === 'number') {
+                setUserCount(currentData.Account_Info.usercount);
+            } else {
+                setUserCount(0);
+            }
 
             const prevData = previousDataRef.current;
             if (!prevData) {
@@ -538,7 +545,7 @@ export default function LiveSensorDataPage() {
 
                 <SensorCard className="flex flex-col items-center justify-center text-center animate-slide-up border-glow-cyan-blue/50" style={{ animationDelay: '800ms' }}>
                     <h3 className="font-semibold text-gray-300">Toilet Usage Count</h3>
-                    <p className="text-5xl font-bold text-teal-400 my-1">{latestData?.Account_Info?.usercount || 0}</p>
+                    <p className="text-5xl font-bold text-teal-400 my-1">{userCount}</p>
                     <p className="text-xs text-gray-500">used Today</p>
                 </SensorCard>
                 

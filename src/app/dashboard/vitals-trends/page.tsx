@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, orderBy, Timestamp } from 'firebase/firestore';
+import { useUser, useDatabase, useRtdbValue, useMemoFirebase } from '@/firebase';
+import { ref } from 'firebase/database';
 import { subDays, startOfDay, format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -22,23 +22,16 @@ const sgToHydration = (sg: number | null | undefined): number => {
   return Math.round(Math.max(0, Math.min(100, percentage)));
 };
 
-// Helper to parse Bristol scale from string like "Type 4"
-const parseBristol = (consistency: string | null | undefined): number => {
-    if (!consistency) return 0;
-    const match = consistency.match(/\d+/);
-    return match ? parseInt(match[0], 10) : 0;
-};
-
 const HealthRecordCard = ({ record }: { record: any }) => {
-    const recordDate = record.timestamp instanceof Timestamp ? record.timestamp.toDate() : new Date(record.timestamp);
+    const recordDate = record.timestamp;
 
     const dataPoints = [
         { label: 'Hydration', value: `${sgToHydration(record.urineSpecificGravity)}%`, icon: Droplets, color: 'text-teal-400' },
         { label: 'Urine pH', value: record.urinePH ?? 'N/A', icon: FlaskConical, color: 'text-purple-400' },
-        { label: 'Specific Gravity', value: record.urineSpecificGravity ?? 'N/A', icon: FlaskConical, color: 'text-blue-400' },
+        { label: 'Specific Gravity', value: record.urineSpecificGravity ? parseFloat(record.urineSpecificGravity).toFixed(3) : 'N/A', icon: FlaskConical, color: 'text-blue-400' },
         { label: 'Protein', value: record.urineProtein ?? 'N/A', icon: FlaskConical, color: 'text-yellow-400' },
         { label: 'Glucose', value: record.urineGlucose ?? 'N/A', icon: FlaskConical, color: 'text-orange-400' },
-        { label: 'Stool Consistency', value: `Type ${parseBristol(record.stoolConsistency)}`, icon: Bone, color: 'text-amber-600' },
+        { label: 'Stool Consistency', value: record.stoolConsistency, icon: Bone, color: 'text-amber-600' },
     ];
 
     return (
@@ -61,7 +54,7 @@ const HealthRecordCard = ({ record }: { record: any }) => {
                             </div>
                             <div>
                                 <p className="text-sm text-gray-400">{label}</p>
-                                <p className="text-lg font-bold">{value}</p>
+                                <p className="text-lg font-bold">{String(value)}</p>
                             </div>
                         </div>
                     ))}
@@ -97,26 +90,58 @@ const RecordSkeleton = () => (
 export default function VitalsTrendsPage() {
   const [timeRange, setTimeRange] = useState<TimeRange>('weekly');
   const { user } = useUser();
-  const firestore = useFirestore();
+  const database = useDatabase();
 
-  const queryStartDate = useMemo(() => {
+  const healthDataReportsRef = useMemoFirebase(() => {
+    if (!database || !user?.uid) return null;
+    return ref(database, `Users/${user.uid}/Reports`);
+  }, [database, user?.uid]);
+
+  const { data: reports, isLoading } = useRtdbValue<any>(healthDataReportsRef);
+
+  const healthRecords = useMemo(() => {
+    if (!reports) return [];
+
     const now = new Date();
-    if (timeRange === 'today') return startOfDay(now);
-    if (timeRange === 'weekly') return startOfDay(subDays(now, 6));
-    if (timeRange === 'monthly') return startOfDay(subDays(now, 29));
-    return now;
-  }, [timeRange]);
+    let startDate: Date;
+    if (timeRange === 'today') startDate = startOfDay(now);
+    else if (timeRange === 'weekly') startDate = startOfDay(subDays(now, 6));
+    else startDate = startOfDay(subDays(now, 29));
 
-  const healthDataQuery = useMemoFirebase(() => {
-    if (!firestore || !user?.uid) return null;
-    return query(
-      collection(firestore, `users/${user.uid}/healthData`),
-      where('timestamp', '>=', queryStartDate),
-      orderBy('timestamp', 'desc')
-    );
-  }, [firestore, user?.uid, queryStartDate]);
+    const allRecords: any[] = [];
 
-  const { data: healthRecords, isLoading } = useCollection<any>(healthDataQuery);
+    Object.keys(reports).forEach(dateStr => {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return;
+      
+      const sessions = reports[dateStr];
+      if (typeof sessions !== 'object' || sessions === null) return;
+
+      Object.keys(sessions).forEach(sessionId => {
+        const session = sessions[sessionId];
+        if (typeof session !== 'object' || session === null) return;
+        
+        const timeStr = session.metadata?.time || '00:00:00';
+        const recordTimestamp = new Date(`${dateStr}T${timeStr}`);
+        
+        if (recordTimestamp >= startDate) {
+           const chemistry = session.Chemistry_Result || {};
+           const record = {
+                id: `${dateStr}-${sessionId}`,
+                timestamp: recordTimestamp,
+                urinePH: chemistry.chem_ph,
+                urineSpecificGravity: chemistry.chem_specificGravity,
+                urineProtein: chemistry.chem_protein,
+                urineGlucose: chemistry.chem_glucose,
+                stoolConsistency: 'N/A', // Stool data not available in provided RTDB structure
+           };
+           allRecords.push(record);
+        }
+      });
+    });
+    
+    return allRecords.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+
+  }, [reports, timeRange]);
 
   return (
     <div className="space-y-6 animate-fade-in">

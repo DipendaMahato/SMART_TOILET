@@ -78,49 +78,9 @@ export default function LiveSensorDataPage() {
             const currentData = snapshot.val();
             if (!currentData || !firestore || !user) return;
 
-            const { latestDate: currentLatestDate, latestSessionId: currentLatestSessionId, latestSession: currentLatestSession } = getLatestSession(currentData);
+            const { latestSession: currentLatestSession } = getLatestSession(currentData);
             const prevData = previousDataRef.current;
-            const { latestSessionId: prevLatestSessionId } = getLatestSession(prevData);
-
-            if (currentLatestSessionId && currentLatestSessionId !== prevLatestSessionId) {
-                const chemistry = currentLatestSession.Chemistry_Result;
-                const metadata = currentLatestSession.metadata;
-
-                if (chemistry && metadata && currentLatestDate) {
-                    try {
-                        const dateString = `${currentLatestDate}T${metadata.time}`;
-                        const sessionTimestamp = new Date(dateString);
-
-                        if (!isNaN(sessionTimestamp.getTime())) {
-                            const healthData = {
-                                userId: user.uid,
-                                timestamp: Timestamp.fromDate(sessionTimestamp),
-                                urinePH: chemistry.chem_ph ?? null,
-                                urineSpecificGravity: chemistry.chem_specificGravity ?? null,
-                                urineProtein: chemistry.chem_protein ?? null,
-                                urineGlucose: chemistry.chem_glucose ?? null,
-                                stoolConsistency: 'Type 4', 
-                                stoolColor: 'Brown',
-                                ...chemistry,
-                                ...(currentLatestSession.sensorData || {})
-                            };
-                            await addDoc(collection(firestore, `users/${user.uid}/healthData`), healthData);
-                            toast({
-                                title: "New Health Record Saved",
-                                description: "A new session has been recorded to your health history.",
-                            });
-                        }
-                    } catch (error) {
-                        console.error("Error saving new health record to Firestore:", error);
-                        toast({
-                            variant: "destructive",
-                            title: "Sync Error",
-                            description: "Failed to save the latest health record.",
-                        });
-                    }
-                }
-            }
-
+            
             const unifiedCurrentData = {
                 sensorData: {
                     ...(currentLatestSession?.sensorData || {}),
@@ -384,22 +344,11 @@ export default function LiveSensorDataPage() {
             const rtdbSnap = await get(rtdbRef);
             const rtdbData = rtdbSnap.exists() ? rtdbSnap.val() : {};
 
-            let latestSessionData = null;
-            const reports = rtdbData.Reports;
-            if (reports) {
-                const latestDate = Object.keys(reports).sort().pop();
-                if (latestDate) {
-                    const sessions = reports[latestDate];
-                    const latestSessionId = Object.keys(sessions).sort().pop();
-                    if (latestSessionId) {
-                        latestSessionData = sessions[latestSessionId];
-                    }
-                }
-            }
+            const { latestSession } = getLatestSession(rtdbData);
 
             const combinedHealthData = {
-                ...(latestSessionData?.sensorData || {}),
-                ...(latestSessionData?.Chemistry_Result || {}),
+                ...(latestSession?.sensorData || {}),
+                ...(latestSession?.Chemistry_Result || {}),
             };
 
             const combinedData = { user: userData, health: combinedHealthData };

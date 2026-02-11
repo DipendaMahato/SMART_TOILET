@@ -4,14 +4,17 @@
 import { useState, useMemo } from 'react';
 import { useUser, useDatabase, useRtdbValue, useMemoFirebase } from '@/firebase';
 import { ref } from 'firebase/database';
-import { subDays, startOfDay, format } from 'date-fns';
+import { subDays, startOfDay, format, isSameDay } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Droplets, FlaskConical, Bone, Calendar, Clock, TestTube2, HeartPulse, Waves } from 'lucide-react';
+import { Droplets, FlaskConical, Bone, Calendar as CalendarIcon, Clock, TestTube2, HeartPulse, Waves } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 
-type TimeRange = 'today' | 'weekly' | 'monthly';
+type TimeRange = 'today' | 'weekly' | 'monthly' | '';
 
 // Helper function to convert Specific Gravity to a hydration percentage
 const sgToHydration = (sg: number | null | undefined): number => {
@@ -51,7 +54,7 @@ const HealthRecordCard = ({ record }: { record: any }) => {
                     Health Record
                 </CardTitle>
                 <div className="text-xs text-gray-400 flex items-center gap-3">
-                    <div className="flex items-center gap-1.5"><Calendar size={14} /><span>{format(recordDate, 'PPP')}</span></div>
+                    <div className="flex items-center gap-1.5"><CalendarIcon size={14} /><span>{format(recordDate, 'PPP')}</span></div>
                     <div className="flex items-center gap-1.5"><Clock size={14} /><span>{format(recordDate, 'p')}</span></div>
                 </div>
             </CardHeader>
@@ -99,6 +102,7 @@ const RecordSkeleton = () => (
 
 export default function VitalsTrendsPage() {
   const [timeRange, setTimeRange] = useState<TimeRange>('weekly');
+  const [customDate, setCustomDate] = useState<Date | undefined>();
   const { user } = useUser();
   const database = useDatabase();
 
@@ -111,12 +115,6 @@ export default function VitalsTrendsPage() {
 
   const healthRecords = useMemo(() => {
     if (!reports) return [];
-
-    const now = new Date();
-    let startDate: Date;
-    if (timeRange === 'today') startDate = startOfDay(now);
-    else if (timeRange === 'weekly') startDate = startOfDay(subDays(now, 6));
-    else startDate = startOfDay(subDays(now, 29));
 
     const allRecords: any[] = [];
 
@@ -133,20 +131,34 @@ export default function VitalsTrendsPage() {
         const timeStr = session.metadata?.time || '00:00:00';
         const recordTimestamp = new Date(`${dateStr}T${timeStr}`);
         
-        if (recordTimestamp >= startDate && !isNaN(recordTimestamp.getTime())) {
+        if (isNaN(recordTimestamp.getTime())) return;
+        
+        let shouldInclude = false;
+        if (customDate) {
+            if(isSameDay(recordTimestamp, customDate)) {
+                shouldInclude = true;
+            }
+        } else if (timeRange) {
+            const now = new Date();
+            let startDate: Date;
+            if (timeRange === 'today') startDate = startOfDay(now);
+            else if (timeRange === 'weekly') startDate = startOfDay(subDays(now, 6));
+            else startDate = startOfDay(subDays(now, 29)); // monthly
+            if (recordTimestamp >= startDate) {
+                shouldInclude = true;
+            }
+        }
+
+        if (shouldInclude) {
            const chemistry = session.Chemistry_Result || {};
            const sensorData = session.sensorData || {};
            const record = {
                 id: `${dateStr}-${sessionId}`,
                 timestamp: recordTimestamp,
-                
-                // Sensor Data
                 ph: sensorData.ph_value_sensor,
                 specificGravity: sensorData.specific_gravity_sensor,
                 tds: sensorData.tds_value,
                 turbidity: sensorData.turbidity,
-
-                // Chemistry Data
                 bilirubin: chemistry.chem_bilirubin,
                 urobilinogen: chemistry.chem_urobilinogen,
                 ketone: chemistry.chem_ketones,
@@ -156,8 +168,6 @@ export default function VitalsTrendsPage() {
                 blood: chemistry.chem_blood,
                 nitrite: chemistry.chem_nitrite,
                 leukocytes: chemistry.chem_leukocytes,
-                
-                // Stool data (not in provided RTDB structure)
                 stoolConsistency: 'N/A',
            };
            allRecords.push(record);
@@ -167,7 +177,22 @@ export default function VitalsTrendsPage() {
     
     return allRecords.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
-  }, [reports, timeRange]);
+  }, [reports, timeRange, customDate]);
+
+  const handleTimeRangeChange = (value: string) => {
+      if (value) {
+          setTimeRange(value as TimeRange);
+          setCustomDate(undefined);
+      }
+  };
+
+  const handleDateSelect = (date: Date | undefined) => {
+      setCustomDate(date);
+      if (date) {
+          setTimeRange(''); // Invalidate active tab
+      }
+  };
+
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -178,13 +203,37 @@ export default function VitalsTrendsPage() {
             View and manage your recorded health data.
           </p>
         </div>
-        <Tabs defaultValue={timeRange} onValueChange={(value) => setTimeRange(value as TimeRange)} className="w-full md:w-auto">
-          <TabsList className="grid grid-cols-3 w-full md:w-auto bg-card border border-input">
-            <TabsTrigger value="today">Today</TabsTrigger>
-            <TabsTrigger value="weekly">Weekly</TabsTrigger>
-            <TabsTrigger value="monthly">Monthly</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="flex items-center gap-2 w-full md:w-auto">
+            <Tabs value={timeRange} onValueChange={handleTimeRangeChange} className="w-full md:w-auto">
+                <TabsList className="grid grid-cols-3 w-full md:w-auto bg-card border border-input">
+                    <TabsTrigger value="today">Today</TabsTrigger>
+                    <TabsTrigger value="weekly">Weekly</TabsTrigger>
+                    <TabsTrigger value="monthly">Monthly</TabsTrigger>
+                </TabsList>
+            </Tabs>
+             <Popover>
+                <PopoverTrigger asChild>
+                <Button
+                    variant={"outline"}
+                    className={cn(
+                    "w-full md:w-[200px] justify-start text-left font-normal bg-card border-input",
+                    !customDate && "text-muted-foreground"
+                    )}
+                >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {customDate ? format(customDate, "PPP") : <span>Pick a date</span>}
+                </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                <Calendar
+                    mode="single"
+                    selected={customDate}
+                    onSelect={handleDateSelect}
+                    initialFocus
+                />
+                </PopoverContent>
+            </Popover>
+        </div>
       </div>
 
       <div className="space-y-6 animate-slide-up" style={{ animationDelay: '300ms' }}>

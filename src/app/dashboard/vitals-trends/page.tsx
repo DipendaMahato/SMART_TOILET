@@ -8,7 +8,7 @@ import { subDays, startOfDay, format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Droplets, FlaskConical, Bone, Calendar, Clock, TestTube2, HeartPulse } from 'lucide-react';
+import { Droplets, FlaskConical, Bone, Calendar, Clock, TestTube2, HeartPulse, Waves } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type TimeRange = 'today' | 'weekly' | 'monthly';
@@ -28,8 +28,10 @@ const HealthRecordCard = ({ record }: { record: any }) => {
 
     const dataPoints = [
         { label: 'Hydration', value: `${sgToHydration(record.specificGravity)}%`, icon: Droplets, color: 'text-teal-400' },
-        { label: 'Urine pH', value: record.ph ?? 'N/A', icon: FlaskConical, color: 'text-purple-400' },
+        { label: 'Urine pH', value: record.ph ? parseFloat(record.ph).toFixed(2) : 'N/A', icon: FlaskConical, color: 'text-purple-400' },
         { label: 'Specific Gravity', value: record.specificGravity ? parseFloat(record.specificGravity).toFixed(3) : 'N/A', icon: FlaskConical, color: 'text-blue-400' },
+        { label: 'TDS', value: record.tds !== undefined ? `${record.tds} ppm` : 'N/A', icon: Waves, color: 'text-green-400' },
+        { label: 'Turbidity', value: record.turbidity !== undefined ? `${record.turbidity} NTU` : 'N/A', icon: Waves, color: 'text-gray-400' },
         { label: 'Protein', value: record.protein ?? 'N/A', icon: FlaskConical, color: 'text-yellow-400' },
         { label: 'Glucose', value: record.glucose ?? 'N/A', icon: FlaskConical, color: 'text-orange-400' },
         { label: 'Blood', value: record.blood === false ? 'Negative' : (record.blood ? 'Positive' : 'N/A'), icon: HeartPulse, color: 'text-red-500' },
@@ -133,9 +135,18 @@ export default function VitalsTrendsPage() {
         
         if (recordTimestamp >= startDate && !isNaN(recordTimestamp.getTime())) {
            const chemistry = session.Chemistry_Result || {};
+           const sensorData = session.sensorData || {};
            const record = {
                 id: `${dateStr}-${sessionId}`,
                 timestamp: recordTimestamp,
+                
+                // Sensor Data
+                ph: sensorData.ph_value_sensor,
+                specificGravity: sensorData.specific_gravity_sensor,
+                tds: sensorData.tds_value,
+                turbidity: sensorData.turbidity,
+
+                // Chemistry Data
                 bilirubin: chemistry.chem_bilirubin,
                 urobilinogen: chemistry.chem_urobilinogen,
                 ketone: chemistry.chem_ketones,
@@ -143,11 +154,11 @@ export default function VitalsTrendsPage() {
                 glucose: chemistry.chem_glucose,
                 protein: chemistry.chem_protein,
                 blood: chemistry.chem_blood,
-                ph: chemistry.chem_ph,
                 nitrite: chemistry.chem_nitrite,
                 leukocytes: chemistry.chem_leukocytes,
-                specificGravity: chemistry.chem_specificGravity,
-                stoolConsistency: 'N/A', // Stool data not available in provided RTDB structure
+                
+                // Stool data (not in provided RTDB structure)
+                stoolConsistency: 'N/A',
            };
            allRecords.push(record);
         }

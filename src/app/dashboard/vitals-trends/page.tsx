@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -7,7 +8,7 @@ import { subDays, startOfDay, format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Droplets, FlaskConical, Bone, Calendar, Clock } from 'lucide-react';
+import { Droplets, FlaskConical, Bone, Calendar, Clock, TestTube2, HeartPulse } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type TimeRange = 'today' | 'weekly' | 'monthly';
@@ -26,11 +27,18 @@ const HealthRecordCard = ({ record }: { record: any }) => {
     const recordDate = record.timestamp;
 
     const dataPoints = [
-        { label: 'Hydration', value: `${sgToHydration(record.urineSpecificGravity)}%`, icon: Droplets, color: 'text-teal-400' },
-        { label: 'Urine pH', value: record.urinePH ?? 'N/A', icon: FlaskConical, color: 'text-purple-400' },
-        { label: 'Specific Gravity', value: record.urineSpecificGravity ? parseFloat(record.urineSpecificGravity).toFixed(3) : 'N/A', icon: FlaskConical, color: 'text-blue-400' },
-        { label: 'Protein', value: record.urineProtein ?? 'N/A', icon: FlaskConical, color: 'text-yellow-400' },
-        { label: 'Glucose', value: record.urineGlucose ?? 'N/A', icon: FlaskConical, color: 'text-orange-400' },
+        { label: 'Hydration', value: `${sgToHydration(record.specificGravity)}%`, icon: Droplets, color: 'text-teal-400' },
+        { label: 'Urine pH', value: record.ph ?? 'N/A', icon: FlaskConical, color: 'text-purple-400' },
+        { label: 'Specific Gravity', value: record.specificGravity ? parseFloat(record.specificGravity).toFixed(3) : 'N/A', icon: FlaskConical, color: 'text-blue-400' },
+        { label: 'Protein', value: record.protein ?? 'N/A', icon: FlaskConical, color: 'text-yellow-400' },
+        { label: 'Glucose', value: record.glucose ?? 'N/A', icon: FlaskConical, color: 'text-orange-400' },
+        { label: 'Blood', value: record.blood === false ? 'Negative' : (record.blood ? 'Positive' : 'N/A'), icon: HeartPulse, color: 'text-red-500' },
+        { label: 'Bilirubin', value: record.bilirubin ?? 'N/A', icon: TestTube2, color: 'text-red-400' },
+        { label: 'Urobilinogen', value: record.urobilinogen ?? 'N/A', icon: TestTube2, color: 'text-pink-400' },
+        { label: 'Ketone', value: record.ketone ?? 'N/A', icon: TestTube2, color: 'text-indigo-400' },
+        { label: 'Ascorbic Acid', value: record.ascorbicAcid ?? 'N/A', icon: TestTube2, color: 'text-lime-400' },
+        { label: 'Nitrite', value: record.nitrite ?? 'N/A', icon: FlaskConical, color: 'text-gray-400' },
+        { label: 'Leukocytes', value: record.leukocytes ?? 'N/A', icon: FlaskConical, color: 'text-cyan-400' },
         { label: 'Stool Consistency', value: record.stoolConsistency, icon: Bone, color: 'text-amber-600' },
     ];
 
@@ -46,7 +54,7 @@ const HealthRecordCard = ({ record }: { record: any }) => {
                 </div>
             </CardHeader>
             <CardContent className="pt-6">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6">
                     {dataPoints.map(({ label, value, icon: Icon, color }) => (
                         <div key={label} className="flex items-center gap-3">
                             <div className={cn("p-2 rounded-lg bg-opacity-20", color.replace('text-', 'bg-') + '/10')}>
@@ -71,8 +79,8 @@ const RecordSkeleton = () => (
             <Skeleton className="h-5 w-1/4" />
         </CardHeader>
         <CardContent className="pt-6">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                {Array.from({ length: 6 }).map((_, i) => (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                {Array.from({ length: 12 }).map((_, i) => (
                     <div key={i} className="flex items-center gap-3">
                         <Skeleton className="h-10 w-10 rounded-lg" />
                         <div className="space-y-2">
@@ -128,10 +136,17 @@ export default function VitalsTrendsPage() {
            const record = {
                 id: `${dateStr}-${sessionId}`,
                 timestamp: recordTimestamp,
-                urinePH: chemistry.chem_ph,
-                urineSpecificGravity: chemistry.chem_specificGravity,
-                urineProtein: chemistry.chem_protein,
-                urineGlucose: chemistry.chem_glucose,
+                bilirubin: chemistry.chem_bilirubin,
+                urobilinogen: chemistry.chem_urobilinogen,
+                ketone: chemistry.chem_ketones,
+                ascorbicAcid: chemistry.chem_ascorbicAcid,
+                glucose: chemistry.chem_glucose,
+                protein: chemistry.chem_protein,
+                blood: chemistry.chem_blood,
+                ph: chemistry.chem_ph,
+                nitrite: chemistry.chem_nitrite,
+                leukocytes: chemistry.chem_leukocytes,
+                specificGravity: chemistry.chem_specificGravity,
                 stoolConsistency: 'N/A', // Stool data not available in provided RTDB structure
            };
            allRecords.push(record);

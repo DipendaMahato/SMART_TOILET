@@ -76,108 +76,94 @@ export default function LiveSensorDataPage() {
         
         const unsubscribe = onValue(userRef, async (snapshot) => {
             const currentData = snapshot.val();
+            const prevData = previousDataRef.current; // Get previous data
+
             if (!currentData || !firestore || !user) return;
 
-            const { latestSession: currentLatestSession } = getLatestSession(currentData);
-            const prevData = previousDataRef.current;
+            // Get latest session info from current data
+            const { latestSession: currentLatestSession, latestSessionId: currentLatestSessionId } = getLatestSession(currentData);
             
-            const unifiedCurrentData = {
-                sensorData: {
-                    ...(currentLatestSession?.sensorData || {}),
-                    isOccupied: currentData.Live_Status?.isOccupied,
-                },
-                Chemistry_Result: currentLatestSession?.Chemistry_Result || {},
-            };
-            
-            setLatestData(unifiedCurrentData);
-            setUserCount(unifiedCurrentData.sensorData?.usageCount ?? 0);
-
-            const { latestSession: prevLatestSession } = getLatestSession(prevData);
-            const unifiedPrevData = {
-                sensorData: {
-                    ...(prevLatestSession?.sensorData || {}),
-                    isOccupied: prevData?.Live_Status?.isOccupied,
-                },
-                Chemistry_Result: prevLatestSession?.Chemistry_Result || {},
-            };
-
-            const currentSensorData = unifiedCurrentData.sensorData;
-            const prevSensorData = unifiedPrevData.sensorData;
-            const currentChemData = unifiedCurrentData.Chemistry_Result;
-            const prevChemData = unifiedPrevData.Chemistry_Result;
-
-            if (currentSensorData && prevSensorData && firestore && user) {
-                const thresholds = {
-                    ph_value_sensor: { min: 4.5, max: 8.0, name: 'Urine pH' },
-                    specific_gravity_sensor: { min: 1.005, max: 1.030, name: 'Specific Gravity' },
-                    ammonia_gas_ppm: { min: 5, max: 500, name: 'Ammonia Level' },
-                };
-
-                (Object.keys(thresholds) as Array<keyof typeof thresholds>).forEach(key => {
-                    if (currentSensorData[key] === undefined || prevSensorData[key] === undefined) return;
-
-                    const config = thresholds[key];
-                    const currentValue = parseFloat(currentSensorData[key]);
-                    const prevValue = parseFloat(prevSensorData[key]);
-
-                    if (isNaN(currentValue) || isNaN(prevValue)) return;
-
-                    const isCurrentlyOutOfRange = currentValue < config.min || currentValue > config.max;
-                    const wasPreviouslyInRange = prevValue >= config.min && prevValue <= config.max;
-                    
-                    if (isCurrentlyOutOfRange && wasPreviouslyInRange) {
-                        const toastDescription = `${config.name} reading of ${currentValue} is outside the safe range of ${config.min} - ${config.max}.`;
-                        const alertMessage = '⚠️ Alert: Value out of range. Please take necessary precautions and consult a doctor as soon as possible.';
-                        
-                        toast({
-                            variant: 'destructive',
-                            title: `🔴 Alert: ${config.name} Out of Range`,
-                            description: `${toastDescription} Time: ${new Date().toLocaleTimeString()}`,
-                            duration: 20000,
-                        });
-                        addDoc(collection(firestore, `users/${user.uid}/notifications`), {
-                            userId: user.uid,
-                            timestamp: serverTimestamp(),
-                            message: alertMessage,
-                            type: 'Warning',
-                            sensorName: config.name,
-                            currentValue: currentValue.toString(),
-                            normalRange: `${config.min} - ${config.max}`,
-                            isRead: false
-                        });
-                    }
-                });
-
-                if (currentSensorData.blood_detected_sensor === true && prevSensorData.blood_detected_sensor === false) {
-                    const alertMessage = `Traces of blood were detected in the latest analysis. Please consult a healthcare professional.`;
+            // --- Start of Notification and Alert Logic ---
+            if (prevData) {
+                // 1. New Session Recorded Notification
+                const { latestSessionId: prevLatestSessionId } = getLatestSession(prevData);
+                if (currentLatestSessionId && currentLatestSessionId !== prevLatestSessionId) {
                     toast({
-                        variant: 'destructive',
-                        title: '🔴 Health Alert: Blood Detected',
-                        description: `${alertMessage} Time: ${new Date().toLocaleTimeString()}`,
-                        duration: 20000,
-                    });
-                    addDoc(collection(firestore, `users/${user.uid}/notifications`), {
-                        userId: user.uid,
-                        timestamp: serverTimestamp(),
-                        message: alertMessage,
-                        type: 'Alert',
-                        sensorName: 'Blood Detection',
-                        currentValue: 'Detected',
-                        normalRange: 'Negative',
-                        isRead: false
+                        title: "✅ New Health Record Saved",
+                        description: `Your latest health data from ${currentLatestSession?.metadata?.time || new Date().toLocaleTimeString()} has been recorded.`,
+                        duration: 6000,
                     });
                 }
                 
-                const tempThreshold = 37;
-                const currentTemp = parseFloat(currentSensorData.temperature);
-                const prevTemp = parseFloat(prevSensorData.temperature);
+                // 2. Out-of-Range Alerts Logic
+                const { latestSession: prevLatestSession } = getLatestSession(prevData);
+                const unifiedCurrentDataForAlerts = {
+                    sensorData: {
+                        ...(currentLatestSession?.sensorData || {}),
+                        isOccupied: currentData.Live_Status?.isOccupied,
+                    },
+                    Chemistry_Result: currentLatestSession?.Chemistry_Result || {},
+                };
+                const unifiedPrevData = {
+                    sensorData: {
+                        ...(prevLatestSession?.sensorData || {}),
+                        isOccupied: prevData?.Live_Status?.isOccupied,
+                    },
+                    Chemistry_Result: prevLatestSession?.Chemistry_Result || {},
+                };
+    
+                const currentSensorData = unifiedCurrentDataForAlerts.sensorData;
+                const prevSensorData = unifiedPrevData.sensorData;
+                const currentChemData = unifiedCurrentDataForAlerts.Chemistry_Result;
+                const prevChemData = unifiedPrevData.Chemistry_Result;
 
-                if (!isNaN(currentTemp) && !isNaN(prevTemp)) {
-                    if (currentTemp > tempThreshold && prevTemp <= tempThreshold) {
-                        const alertMessage = `Dehydration detected. Drink plenty of water regularly.`;
+                if (currentSensorData && prevSensorData) {
+                    const thresholds = {
+                        ph_value_sensor: { min: 4.5, max: 8.0, name: 'Urine pH' },
+                        specific_gravity_sensor: { min: 1.005, max: 1.030, name: 'Specific Gravity' },
+                        ammonia_gas_ppm: { min: 5, max: 500, name: 'Ammonia Level' },
+                    };
+    
+                    (Object.keys(thresholds) as Array<keyof typeof thresholds>).forEach(key => {
+                        if (currentSensorData[key] === undefined || prevSensorData[key] === undefined) return;
+    
+                        const config = thresholds[key];
+                        const currentValue = parseFloat(currentSensorData[key]);
+                        const prevValue = parseFloat(prevSensorData[key]);
+    
+                        if (isNaN(currentValue) || isNaN(prevValue)) return;
+    
+                        const isCurrentlyOutOfRange = currentValue < config.min || currentValue > config.max;
+                        const wasPreviouslyInRange = prevValue >= config.min && prevValue <= config.max;
+                        
+                        if (isCurrentlyOutOfRange && wasPreviouslyInRange) {
+                            const toastDescription = `${config.name} reading of ${currentValue} is outside the safe range of ${config.min} - ${config.max}.`;
+                            const alertMessage = '⚠️ Alert: Value out of range. Please take necessary precautions and consult a doctor as soon as possible.';
+                            
+                            toast({
+                                variant: 'destructive',
+                                title: `🔴 Alert: ${config.name} Out of Range`,
+                                description: `${toastDescription} Time: ${new Date().toLocaleTimeString()}`,
+                                duration: 20000,
+                            });
+                            addDoc(collection(firestore, `users/${user.uid}/notifications`), {
+                                userId: user.uid,
+                                timestamp: serverTimestamp(),
+                                message: alertMessage,
+                                type: 'Warning',
+                                sensorName: config.name,
+                                currentValue: currentValue.toString(),
+                                normalRange: `${config.min} - ${config.max}`,
+                                isRead: false
+                            });
+                        }
+                    });
+    
+                    if (currentSensorData.blood_detected_sensor === true && prevSensorData.blood_detected_sensor === false) {
+                        const alertMessage = `Traces of blood were detected in the latest analysis. Please consult a healthcare professional.`;
                         toast({
                             variant: 'destructive',
-                            title: '💧 Dehydration Alert',
+                            title: '🔴 Health Alert: Blood Detected',
                             description: `${alertMessage} Time: ${new Date().toLocaleTimeString()}`,
                             duration: 20000,
                         });
@@ -185,126 +171,165 @@ export default function LiveSensorDataPage() {
                             userId: user.uid,
                             timestamp: serverTimestamp(),
                             message: alertMessage,
-                            type: 'Warning',
-                            sensorName: 'Dehydration',
-                            currentValue: `High Temp (${currentTemp}°C)`,
-                            normalRange: 'Normal Temp (< 37°C)',
-                            isRead: false
-                        });
-                    }
-                }
-
-                // TDS Check for abnormal values
-                const tdsAbnormalThreshold = 500;
-                const currentTds = parseFloat(currentSensorData.tds_value);
-                const prevTds = parseFloat(prevSensorData.tds_value);
-                if (!isNaN(currentTds) && !isNaN(prevTds)) {
-                    if (currentTds > tdsAbnormalThreshold && prevTds <= tdsAbnormalThreshold) {
-                        const alertMessage = `High TDS level detected, which may indicate health issues. Further evaluation is recommended.`;
-                        toast({
-                            variant: 'destructive',
-                            title: '🔴 Health Alert: Abnormal TDS',
-                            description: `TDS value of ${currentTds} ppm is abnormal. Time: ${new Date().toLocaleTimeString()}`,
-                            duration: 20000,
-                        });
-                        addDoc(collection(firestore, `users/${user.uid}/notifications`), {
-                            userId: user.uid,
-                            timestamp: serverTimestamp(),
-                            message: alertMessage,
                             type: 'Alert',
-                            sensorName: 'TDS Level',
-                            currentValue: `${currentTds.toFixed(0)} ppm`,
-                            normalRange: '< 300 ppm',
+                            sensorName: 'Blood Detection',
+                            currentValue: 'Detected',
+                            normalRange: 'Negative',
                             isRead: false
                         });
                     }
-                }
-
-                // Turbidity Check for abnormal values
-                const turbidityAbnormalThreshold = 50;
-                const currentTurbidity = parseFloat(currentSensorData.turbidity);
-                const prevTurbidity = parseFloat(prevSensorData.turbidity);
-                if (!isNaN(currentTurbidity) && !isNaN(prevTurbidity)) {
-                    if (currentTurbidity > turbidityAbnormalThreshold && prevTurbidity <= turbidityAbnormalThreshold) {
-                        const alertMessage = `Urine is cloudy (High Turbidity). This can be a sign of a UTI or kidney issues. Please consult a doctor.`;
-                        toast({
-                            variant: 'destructive',
-                            title: '🔴 Health Alert: High Turbidity',
-                            description: `Turbidity value of ${currentTurbidity} NTU is abnormal. Time: ${new Date().toLocaleTimeString()}`,
-                            duration: 20000,
-                        });
-                        addDoc(collection(firestore, `users/${user.uid}/notifications`), {
-                            userId: user.uid,
-                            timestamp: serverTimestamp(),
-                            message: alertMessage,
-                            type: 'Alert',
-                            sensorName: 'Urine Turbidity',
-                            currentValue: `${currentTurbidity.toFixed(1)} NTU`,
-                            normalRange: '< 20 NTU',
-                            isRead: false
-                        });
-                    }
-                }
-            }
-
-            if (prevChemData && currentChemData && firestore && user) {
-                const checkAndNotify = (key: string, name: string, normalRangeText: string, isAbnormal: (val: any) => boolean) => {
-                    const currentValue = currentChemData[key];
-                    const prevValue = prevChemData[key];
                     
-                    if (currentValue === undefined || prevValue === undefined) return;
-
-                    if (isAbnormal(currentValue) && !isAbnormal(prevValue)) {
-                        const toastDescription = `${name} reading of ${currentValue} is outside the safe range.`;
-                        toast({
-                            variant: 'destructive',
-                            title: `🔴 Health Alert: Abnormal ${name}`,
-                            description: `${toastDescription} Time: ${new Date().toLocaleTimeString()}`,
-                            duration: 20000,
-                        });
-                        addDoc(collection(firestore, `users/${user.uid}/notifications`), {
-                            userId: user.uid,
-                            timestamp: serverTimestamp(),
-                            message: `Abnormal ${name} level detected. Please consult a healthcare professional.`,
-                            type: 'Alert',
-                            sensorName: name,
-                            currentValue: String(currentValue),
-                            normalRange: normalRangeText,
-                            isRead: false
-                        });
+                    const tempThreshold = 37;
+                    const currentTemp = parseFloat(currentSensorData.temperature);
+                    const prevTemp = parseFloat(prevSensorData.temperature);
+    
+                    if (!isNaN(currentTemp) && !isNaN(prevTemp)) {
+                        if (currentTemp > tempThreshold && prevTemp <= tempThreshold) {
+                            const alertMessage = `Dehydration detected. Drink plenty of water regularly.`;
+                            toast({
+                                variant: 'destructive',
+                                title: '💧 Dehydration Alert',
+                                description: `${alertMessage} Time: ${new Date().toLocaleTimeString()}`,
+                                duration: 20000,
+                            });
+                            addDoc(collection(firestore, `users/${user.uid}/notifications`), {
+                                userId: user.uid,
+                                timestamp: serverTimestamp(),
+                                message: alertMessage,
+                                type: 'Warning',
+                                sensorName: 'Dehydration',
+                                currentValue: `High Temp (${currentTemp}°C)`,
+                                normalRange: 'Normal Temp (< 37°C)',
+                                isRead: false
+                            });
+                        }
                     }
-                };
-
-                const isAbnormalNegative = (val: any) => {
-                    const lval = String(val).toLowerCase();
-                    if (lval === 'neg' || lval === 'negative' || lval === '0' || lval === '0.0') {
-                        return false;
+    
+                    // TDS Check for abnormal values
+                    const tdsAbnormalThreshold = 500;
+                    const currentTds = parseFloat(currentSensorData.tds_value);
+                    const prevTds = parseFloat(prevSensorData.tds_value);
+                    if (!isNaN(currentTds) && !isNaN(prevTds)) {
+                        if (currentTds > tdsAbnormalThreshold && prevTds <= tdsAbnormalThreshold) {
+                            const alertMessage = `High TDS level detected, which may indicate health issues. Further evaluation is recommended.`;
+                            toast({
+                                variant: 'destructive',
+                                title: '🔴 Health Alert: Abnormal TDS',
+                                description: `TDS value of ${currentTds} ppm is abnormal. Time: ${new Date().toLocaleTimeString()}`,
+                                duration: 20000,
+                            });
+                            addDoc(collection(firestore, `users/${user.uid}/notifications`), {
+                                userId: user.uid,
+                                timestamp: serverTimestamp(),
+                                message: alertMessage,
+                                type: 'Alert',
+                                sensorName: 'TDS Level',
+                                currentValue: `${currentTds.toFixed(0)} ppm`,
+                                normalRange: '< 300 ppm',
+                                isRead: false
+                            });
+                        }
                     }
-                    const nval = parseFloat(val);
-                    if (!isNaN(nval) && nval === 0) {
-                        return false;
+    
+                    // Turbidity Check for abnormal values
+                    const turbidityAbnormalThreshold = 50;
+                    const currentTurbidity = parseFloat(currentSensorData.turbidity);
+                    const prevTurbidity = parseFloat(prevSensorData.turbidity);
+                    if (!isNaN(currentTurbidity) && !isNaN(prevTurbidity)) {
+                        if (currentTurbidity > turbidityAbnormalThreshold && prevTurbidity <= turbidityAbnormalThreshold) {
+                            const alertMessage = `Urine is cloudy (High Turbidity). This can be a sign of a UTI or kidney issues. Please consult a doctor.`;
+                            toast({
+                                variant: 'destructive',
+                                title: '🔴 Health Alert: High Turbidity',
+                                description: `Turbidity value of ${currentTurbidity} NTU is abnormal. Time: ${new Date().toLocaleTimeString()}`,
+                                duration: 20000,
+                            });
+                            addDoc(collection(firestore, `users/${user.uid}/notifications`), {
+                                userId: user.uid,
+                                timestamp: serverTimestamp(),
+                                message: alertMessage,
+                                type: 'Alert',
+                                sensorName: 'Urine Turbidity',
+                                currentValue: `${currentTurbidity.toFixed(1)} NTU`,
+                                normalRange: '< 20 NTU',
+                                isRead: false
+                            });
+                        }
                     }
-                    return true; 
-                };
-
-                checkAndNotify('chem_ph', 'pH (Chemistry)', '4.5 - 8.0', val => parseFloat(val) < 4.5 || parseFloat(val) > 8.0);
-                checkAndNotify('chem_specificGravity', 'Specific Gravity (Chemistry)', '1.005 - 1.030', val => parseFloat(val) < 1.005 || parseFloat(val) > 1.030);
-                checkAndNotify('chem_glucose', 'Glucose', 'Negative', isAbnormalNegative);
-                checkAndNotify('chem_protein', 'Protein', 'Negative/Trace (<30)', val => parseFloat(val) > 30);
-                checkAndNotify('chem_blood', 'Blood (Chemistry)', 'Negative', isAbnormalNegative);
-                checkAndNotify('chem_bilirubin', 'Bilirubin', 'Negative', isAbnormalNegative);
-                checkAndNotify('chem_ketones', 'Ketones', 'Negative', isAbnormalNegative);
-                checkAndNotify('chem_leukocytes', 'Leukocytes', 'Negative', isAbnormalNegative);
-                checkAndNotify('chem_nitrite', 'Nitrite', 'Negative', isAbnormalNegative);
-                checkAndNotify('chem_urobilinogen', 'Urobilinogen', '0.2 - 1.0', val => {
-                    if (String(val).toLowerCase() === 'norm' || String(val).toLowerCase() === 'normal') return false;
-                    const numVal = parseFloat(val);
-                    return isNaN(numVal) || numVal < 0.2 || numVal > 1.0;
-                });
+                }
+    
+                if (prevChemData && currentChemData) {
+                    const checkAndNotify = (key: string, name: string, normalRangeText: string, isAbnormal: (val: any) => boolean) => {
+                        const currentValue = currentChemData[key];
+                        const prevValue = prevChemData[key];
+                        
+                        if (currentValue === undefined || prevValue === undefined) return;
+    
+                        if (isAbnormal(currentValue) && !isAbnormal(prevValue)) {
+                            const toastDescription = `${name} reading of ${currentValue} is outside the safe range.`;
+                            toast({
+                                variant: 'destructive',
+                                title: `🔴 Health Alert: Abnormal ${name}`,
+                                description: `${toastDescription} Time: ${new Date().toLocaleTimeString()}`,
+                                duration: 20000,
+                            });
+                            addDoc(collection(firestore, `users/${user.uid}/notifications`), {
+                                userId: user.uid,
+                                timestamp: serverTimestamp(),
+                                message: `Abnormal ${name} level detected. Please consult a healthcare professional.`,
+                                type: 'Alert',
+                                sensorName: name,
+                                currentValue: String(currentValue),
+                                normalRange: normalRangeText,
+                                isRead: false
+                            });
+                        }
+                    };
+    
+                    const isAbnormalNegative = (val: any) => {
+                        const lval = String(val).toLowerCase();
+                        if (lval === 'neg' || lval === 'negative' || lval === '0' || lval === '0.0') {
+                            return false;
+                        }
+                        const nval = parseFloat(val);
+                        if (!isNaN(nval) && nval === 0) {
+                            return false;
+                        }
+                        return true; 
+                    };
+    
+                    checkAndNotify('chem_ph', 'pH (Chemistry)', '4.5 - 8.0', val => parseFloat(val) < 4.5 || parseFloat(val) > 8.0);
+                    checkAndNotify('chem_specificGravity', 'Specific Gravity (Chemistry)', '1.005 - 1.030', val => parseFloat(val) < 1.005 || parseFloat(val) > 1.030);
+                    checkAndNotify('chem_glucose', 'Glucose', 'Negative', isAbnormalNegative);
+                    checkAndNotify('chem_protein', 'Protein', 'Negative/Trace (<30)', val => parseFloat(val) > 30);
+                    checkAndNotify('chem_blood', 'Blood (Chemistry)', 'Negative', isAbnormalNegative);
+                    checkAndNotify('chem_bilirubin', 'Bilirubin', 'Negative', isAbnormalNegative);
+                    checkAndNotify('chem_ketones', 'Ketones', 'Negative', isAbnormalNegative);
+                    checkAndNotify('chem_leukocytes', 'Leukocytes', 'Negative', isAbnormalNegative);
+                    checkAndNotify('chem_nitrite', 'Nitrite', 'Negative', isAbnormalNegative);
+                    checkAndNotify('chem_urobilinogen', 'Urobilinogen', '0.2 - 1.0', val => {
+                        if (String(val).toLowerCase() === 'norm' || String(val).toLowerCase() === 'normal') return false;
+                        const numVal = parseFloat(val);
+                        return isNaN(numVal) || numVal < 0.2 || numVal > 1.0;
+                    });
+                }
             }
             
+            // --- UI State Update Logic ---
+            const unifiedCurrentDataForState = {
+                sensorData: {
+                    ...(currentLatestSession?.sensorData || {}),
+                    isOccupied: currentData.Live_Status?.isOccupied,
+                },
+                Chemistry_Result: currentLatestSession?.Chemistry_Result || {},
+            };
+            
+            setLatestData(unifiedCurrentDataForState);
+            setUserCount(currentLatestSession?.sensorData?.usageCount ?? 0);
+            
+            // Update the ref for the next run
             previousDataRef.current = currentData;
-
+            
         }, (error) => {
             console.error("Firebase onValue error:", error);
             toast({
@@ -640,7 +665,3 @@ export default function LiveSensorDataPage() {
         </div>
     );
 }
-
-    
-
-    

@@ -62,23 +62,41 @@ export default function LiveSensorDataPage() {
             const currentData = snapshot.val();
             if (!currentData) return;
 
-            setLatestData(currentData);
-
-            if (currentData.Account_Info && typeof currentData.Account_Info.usercount === 'number') {
-                setUserCount(currentData.Account_Info.usercount);
-            } else {
-                setUserCount(0);
+            let currentLatestSession = null;
+            let currentUsageCount = 0;
+            const reports = currentData.Reports;
+            if (reports) {
+                const latestDate = Object.keys(reports).sort().pop();
+                if (latestDate) {
+                    const sessions = reports[latestDate];
+                    const latestSessionId = Object.keys(sessions).sort().pop();
+                    if (latestSessionId) {
+                        currentLatestSession = sessions[latestSessionId];
+                        currentUsageCount = currentLatestSession.sensorData?.usageCount ?? 0;
+                    }
+                }
             }
+            
+            const unifiedCurrentData = {
+                sensorData: {
+                    ...(currentLatestSession?.sensorData || {}),
+                    isOccupied: currentData.Live_Status?.isOccupied,
+                },
+                Chemistry_Result: currentLatestSession?.Chemistry_Result || {},
+            };
+            
+            setLatestData(unifiedCurrentData);
+            setUserCount(currentUsageCount);
 
             const prevData = previousDataRef.current;
             if (!prevData) {
-                previousDataRef.current = currentData;
+                previousDataRef.current = unifiedCurrentData;
                 return;
             }
 
-            const currentSensorData = currentData.sensorData;
+            const currentSensorData = unifiedCurrentData.sensorData;
             const prevSensorData = prevData.sensorData;
-            const currentChemData = currentData.Chemistry_Result;
+            const currentChemData = unifiedCurrentData.Chemistry_Result;
             const prevChemData = prevData.Chemistry_Result;
 
             if (currentSensorData && prevSensorData && firestore && user) {
@@ -278,7 +296,7 @@ export default function LiveSensorDataPage() {
                 });
             }
             
-            previousDataRef.current = currentData;
+            previousDataRef.current = unifiedCurrentData;
 
         }, (error) => {
             console.error("Firebase onValue error:", error);
@@ -319,9 +337,22 @@ export default function LiveSensorDataPage() {
             const rtdbSnap = await get(rtdbRef);
             const rtdbData = rtdbSnap.exists() ? rtdbSnap.val() : {};
 
+            let latestSessionData = null;
+            const reports = rtdbData.Reports;
+            if (reports) {
+                const latestDate = Object.keys(reports).sort().pop();
+                if (latestDate) {
+                    const sessions = reports[latestDate];
+                    const latestSessionId = Object.keys(sessions).sort().pop();
+                    if (latestSessionId) {
+                        latestSessionData = sessions[latestSessionId];
+                    }
+                }
+            }
+
             const combinedHealthData = {
-                ...(rtdbData.sensorData || {}),
-                ...(rtdbData.Chemistry_Result || {}),
+                ...(latestSessionData?.sensorData || {}),
+                ...(latestSessionData?.Chemistry_Result || {}),
             };
 
             const combinedData = { user: userData, health: combinedHealthData };
@@ -614,3 +645,4 @@ export default function LiveSensorDataPage() {
     );
 }
 
+    

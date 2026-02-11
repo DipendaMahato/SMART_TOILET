@@ -82,8 +82,21 @@ export default function DiagnosticsPage() {
         const unsubscribe = onValue(userRef, (snapshot) => {
             const data = snapshot.val();
             if (data) {
-                const sensorData = data.sensorData;
-                const chemistry = data.Chemistry_Result;
+                let latestSessionData = null;
+                const reports = data.Reports;
+                if (reports) {
+                    const latestDate = Object.keys(reports).sort().pop();
+                    if (latestDate) {
+                        const sessions = reports[latestDate];
+                        const latestSessionId = Object.keys(sessions).sort().pop();
+                        if (latestSessionId) {
+                            latestSessionData = sessions[latestSessionId];
+                        }
+                    }
+                }
+                
+                const sensorData = latestSessionData?.sensorData;
+                const chemistry = latestSessionData?.Chemistry_Result;
 
                 setUrineDiagnostics(prevDiagnostics => {
                     const newDiagnostics = JSON.parse(JSON.stringify(prevDiagnostics));
@@ -152,9 +165,27 @@ export default function DiagnosticsPage() {
             // Fetch latest health data (sensor and chemistry) from Realtime Database
             const rtdbRef = ref(database, `Users/${user.uid}`);
             const rtdbSnap = await get(rtdbRef);
-            const latestHealthData = rtdbSnap.exists() ? rtdbSnap.val() : {};
+            const rtdbData = rtdbSnap.exists() ? rtdbSnap.val() : {};
 
-            const combinedData = { user: userData, health: latestHealthData };
+            let latestSessionData = null;
+            const reports = rtdbData.Reports;
+            if (reports) {
+                const latestDate = Object.keys(reports).sort().pop();
+                if (latestDate) {
+                    const sessions = reports[latestDate];
+                    const latestSessionId = Object.keys(sessions).sort().pop();
+                    if (latestSessionId) {
+                        latestSessionData = sessions[latestSessionId];
+                    }
+                }
+            }
+            
+            const parsedHealthData = {
+                sensorData: latestSessionData?.sensorData,
+                Chemistry_Result: latestSessionData?.Chemistry_Result,
+            };
+
+            const combinedData = { user: userData, health: parsedHealthData };
             setReportData(combinedData);
 
             // Wait for state to update and component to re-render
@@ -250,5 +281,7 @@ export default function DiagnosticsPage() {
         </div>
     );
 }
+
+    
 
     

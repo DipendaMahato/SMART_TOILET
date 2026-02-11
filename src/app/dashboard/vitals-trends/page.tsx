@@ -4,14 +4,12 @@
 import { useState, useMemo } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, orderBy, Timestamp } from 'firebase/firestore';
-import { subMonths, subDays, startOfDay, endOfDay, startOfHour, format, eachDayOfInterval, lastDayOfMonth, eachMonthOfInterval, startOfMonth, getMonth } from 'date-fns';
+import { subDays, startOfDay, format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { HydrationTrendChart } from '@/components/charts/trends/hydration-trend-chart';
-import { UrinePhTrendChart } from '@/components/charts/trends/urine-ph-trend-chart';
-import { UrineBiomarkerTrendChart } from '@/components/charts/trends/urine-biomarker-trend-chart';
-import { StoolConsistencyTrendChart } from '@/components/charts/trends/stool-consistency-trend-chart';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Droplets, FlaskConical, Bone, Calendar, Clock } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 type TimeRange = 'today' | 'weekly' | 'monthly';
 
@@ -32,29 +30,70 @@ const parseBristol = (consistency: string | null | undefined): number => {
     return match ? parseInt(match[0], 10) : 0;
 };
 
-// Helper to calculate average of a property in an array of objects
-const average = (arr: any[], prop: string): number => {
-  const validItems = arr.filter(item => typeof item[prop] === 'number' && !isNaN(item[prop]));
-  if (validItems.length === 0) return 0;
-  const sum = validItems.reduce((acc, item) => acc + item[prop], 0);
-  return sum / validItems.length;
+const HealthRecordCard = ({ record }: { record: any }) => {
+    const recordDate = record.timestamp instanceof Timestamp ? record.timestamp.toDate() : new Date(record.timestamp);
+
+    const dataPoints = [
+        { label: 'Hydration', value: `${sgToHydration(record.urineSpecificGravity)}%`, icon: Droplets, color: 'text-teal-400' },
+        { label: 'Urine pH', value: record.urinePH ?? 'N/A', icon: FlaskConical, color: 'text-purple-400' },
+        { label: 'Specific Gravity', value: record.urineSpecificGravity ?? 'N/A', icon: FlaskConical, color: 'text-blue-400' },
+        { label: 'Protein', value: record.urineProtein ?? 'N/A', icon: FlaskConical, color: 'text-yellow-400' },
+        { label: 'Glucose', value: record.urineGlucose ?? 'N/A', icon: FlaskConical, color: 'text-orange-400' },
+        { label: 'Stool Consistency', value: `Type ${parseBristol(record.stoolConsistency)}`, icon: Bone, color: 'text-amber-600' },
+    ];
+
+    return (
+        <Card className="bg-white/5 border border-teal-500/20 shadow-lg shadow-teal-500/5 transition-all hover:border-teal-500/40">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 border-b border-teal-500/10">
+                <CardTitle className="text-base font-medium text-gray-300">
+                    Health Record
+                </CardTitle>
+                <div className="text-xs text-gray-400 flex items-center gap-3">
+                    <div className="flex items-center gap-1.5"><Calendar size={14} /><span>{format(recordDate, 'PPP')}</span></div>
+                    <div className="flex items-center gap-1.5"><Clock size={14} /><span>{format(recordDate, 'p')}</span></div>
+                </div>
+            </CardHeader>
+            <CardContent className="pt-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-6">
+                    {dataPoints.map(({ label, value, icon: Icon, color }) => (
+                        <div key={label} className="flex items-center gap-3">
+                            <div className={cn("p-2 rounded-lg bg-opacity-20", color.replace('text-', 'bg-') + '/10')}>
+                                <Icon className={cn("h-6 w-6", color)} />
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-400">{label}</p>
+                                <p className="text-lg font-bold">{value}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </CardContent>
+        </Card>
+    );
 };
 
+const RecordSkeleton = () => (
+     <Card className="bg-white/5 border border-teal-500/20">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <Skeleton className="h-5 w-1/3" />
+            <Skeleton className="h-5 w-1/4" />
+        </CardHeader>
+        <CardContent className="pt-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                        <Skeleton className="h-10 w-10 rounded-lg" />
+                        <div className="space-y-2">
+                            <Skeleton className="h-4 w-20" />
+                            <Skeleton className="h-5 w-12" />
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </CardContent>
+    </Card>
+)
 
-const ChartCard = ({ title, children, isLoading }: { title: string; children: React.ReactNode; isLoading?: boolean }) => (
-  <Card className="bg-white/5 border border-teal-500/20 shadow-lg shadow-teal-500/5">
-    <CardHeader>
-      <CardTitle className="text-gray-300 font-semibold text-lg">{title}</CardTitle>
-    </CardHeader>
-    <CardContent>
-      {isLoading ? (
-        <Skeleton className="h-64 w-full" />
-      ) : (
-        children
-      )}
-    </CardContent>
-  </Card>
-);
 
 export default function VitalsTrendsPage() {
   const [timeRange, setTimeRange] = useState<TimeRange>('weekly');
@@ -65,7 +104,7 @@ export default function VitalsTrendsPage() {
     const now = new Date();
     if (timeRange === 'today') return startOfDay(now);
     if (timeRange === 'weekly') return startOfDay(subDays(now, 6));
-    if (timeRange === 'monthly') return startOfMonth(subMonths(now, 5));
+    if (timeRange === 'monthly') return startOfDay(subDays(now, 29));
     return now;
   }, [timeRange]);
 
@@ -74,110 +113,19 @@ export default function VitalsTrendsPage() {
     return query(
       collection(firestore, `users/${user.uid}/healthData`),
       where('timestamp', '>=', queryStartDate),
-      orderBy('timestamp', 'asc')
+      orderBy('timestamp', 'desc')
     );
   }, [firestore, user?.uid, queryStartDate]);
 
-  const { data: rawHealthData, isLoading } = useCollection<any>(healthDataQuery);
-
-  const processedData = useMemo(() => {
-    if (!rawHealthData) {
-      return { hydration: [], ph: [], biomarker: [], stool: [] };
-    }
-
-    const healthData = rawHealthData.map(d => ({
-        ...d,
-        timestamp: d.timestamp instanceof Timestamp ? d.timestamp.toDate() : new Date(d.timestamp),
-    }));
-
-    if (timeRange === 'today') {
-        const hours = Array.from({ length: 24 }, (_, i) => new Date(new Date().setHours(i, 0, 0, 0)));
-        const groupedByHour = hours.map(hour => {
-            const name = format(hour, 'ha');
-            const entries = healthData.filter(d => startOfHour(d.timestamp).getTime() === hour.getTime());
-            
-            if (entries.length === 0) return null;
-
-            return {
-                name,
-                hydration: sgToHydration(average(entries, 'urineSpecificGravity')),
-                ph: average(entries, 'urinePH'),
-                sg: average(entries, 'urineSpecificGravity'),
-                protein: average(entries, 'urineProtein'),
-                glucose: average(entries, 'urineGlucose'),
-                bristol: average(entries.map(e => ({ value: parseBristol(e.stoolConsistency) })), 'value'),
-                normalStool: 4,
-            };
-        }).filter(d => d !== null);
-
-        return {
-            hydration: groupedByHour.map(d => ({ name: d!.name, hydration: d!.hydration })),
-            ph: groupedByHour.map(d => ({ name: d!.name, ph: d!.ph, sg: d!.sg })),
-            biomarker: groupedByHour.map(d => ({ name: d!.name, protein: d!.protein, glucose: d!.glucose })),
-            stool: groupedByHour.map(d => ({ name: d!.name, bristol: d!.bristol, normalStool: d!.normalStool })),
-        };
-    }
-
-    if (timeRange === 'weekly') {
-        const last7Days = eachDayOfInterval({ start: subDays(new Date(), 6), end: new Date() });
-        const groupedByDay = last7Days.map(day => {
-            const name = format(day, 'E');
-            const entries = healthData.filter(d => startOfDay(d.timestamp).getTime() === startOfDay(day).getTime());
-            
-            return {
-                name,
-                hydration: entries.length > 0 ? sgToHydration(average(entries, 'urineSpecificGravity')) : null,
-                ph: entries.length > 0 ? average(entries, 'urinePH') : null,
-                sg: entries.length > 0 ? average(entries, 'urineSpecificGravity') : null,
-                protein: entries.length > 0 ? average(entries, 'urineProtein') : null,
-                glucose: entries.length > 0 ? average(entries, 'urineGlucose') : null,
-                bristol: entries.length > 0 ? average(entries.map(e => ({ value: parseBristol(e.stoolConsistency) })), 'value') : null,
-                normalStool: 4,
-            };
-        });
-        return {
-            hydration: groupedByDay.map(d => ({ name: d.name, hydration: d.hydration })),
-            ph: groupedByDay.map(d => ({ name: d.name, ph: d.ph, sg: d.sg })),
-            biomarker: groupedByDay.map(d => ({ name: d.name, protein: d.protein, glucose: d.glucose })),
-            stool: groupedByDay.map(d => ({ name: d.name, bristol: d.bristol, normalStool: d.normalStool })),
-        };
-    }
-
-    if (timeRange === 'monthly') {
-        const last6Months = eachMonthOfInterval({ start: subMonths(new Date(), 5), end: new Date() });
-         const groupedByMonth = last6Months.map(month => {
-            const name = format(month, 'MMM');
-            const entries = healthData.filter(d => startOfMonth(d.timestamp).getTime() === startOfMonth(month).getTime());
-            
-            return {
-                name,
-                hydration: entries.length > 0 ? sgToHydration(average(entries, 'urineSpecificGravity')) : null,
-                ph: entries.length > 0 ? average(entries, 'urinePH') : null,
-                sg: entries.length > 0 ? average(entries, 'urineSpecificGravity') : null,
-                protein: entries.length > 0 ? average(entries, 'urineProtein') : null,
-                glucose: entries.length > 0 ? average(entries, 'urineGlucose') : null,
-                bristol: entries.length > 0 ? average(entries.map(e => ({ value: parseBristol(e.stoolConsistency) })), 'value') : null,
-                normalStool: 4,
-            };
-        });
-         return {
-            hydration: groupedByMonth.map(d => ({ name: d.name, hydration: d.hydration })),
-            ph: groupedByMonth.map(d => ({ name: d.name, ph: d.ph, sg: d.sg })),
-            biomarker: groupedByMonth.map(d => ({ name: d.name, protein: d.protein, glucose: d.glucose })),
-            stool: groupedByMonth.map(d => ({ name: d.name, bristol: d.bristol, normalStool: d.normalStool })),
-        };
-    }
-
-    return { hydration: [], ph: [], biomarker: [], stool: [] };
-  }, [rawHealthData, timeRange]);
+  const { data: healthRecords, isLoading } = useCollection<any>(healthDataQuery);
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-slide-up">
         <div>
-          <h1 className="text-3xl font-headline font-bold text-transparent bg-clip-text bg-gradient-to-r from-glow-lime-emerald to-glow-teal-green animate-text-gradient bg-400">Health Vitals &amp; Trends</h1>
+          <h1 className="text-3xl font-headline font-bold text-transparent bg-clip-text bg-gradient-to-r from-glow-lime-emerald to-glow-teal-green animate-text-gradient bg-400">User Health Records</h1>
           <p className="text-muted-foreground">
-            Analytical views of health vitals with daily, weekly, and long-term trend graphs.
+            View and manage your recorded health data.
           </p>
         </div>
         <Tabs defaultValue={timeRange} onValueChange={(value) => setTimeRange(value as TimeRange)} className="w-full md:w-auto">
@@ -189,19 +137,23 @@ export default function VitalsTrendsPage() {
         </Tabs>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-slide-up" style={{ animationDelay: '300ms' }}>
-        <ChartCard title="Hydration Trend (%)" isLoading={isLoading}>
-          <HydrationTrendChart data={processedData.hydration} />
-        </ChartCard>
-        <ChartCard title="Urine pH and Specific Gravity Trend" isLoading={isLoading}>
-          <UrinePhTrendChart data={processedData.ph} />
-        </ChartCard>
-        <ChartCard title="Dipstick Biomarker Trend (Protein/Glucose)" isLoading={isLoading}>
-          <UrineBiomarkerTrendChart data={processedData.biomarker} />
-        </ChartCard>
-        <ChartCard title="Stool Consistency Trend (Bristol Scale)" isLoading={isLoading}>
-          <StoolConsistencyTrendChart data={processedData.stool} />
-        </ChartCard>
+      <div className="space-y-6 animate-slide-up" style={{ animationDelay: '300ms' }}>
+        {isLoading && (
+            <>
+                <RecordSkeleton />
+                <RecordSkeleton />
+            </>
+        )}
+        {!isLoading && healthRecords && healthRecords.length > 0 && (
+            healthRecords.map(record => (
+                <HealthRecordCard key={record.id} record={record} />
+            ))
+        )}
+         {!isLoading && (!healthRecords || healthRecords.length === 0) && (
+            <div className="text-center py-16">
+                <p className="text-muted-foreground">No health records found for this period.</p>
+            </div>
+        )}
       </div>
     </div>
   );

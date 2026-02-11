@@ -118,64 +118,75 @@ export default function VitalsTrendsPage() {
 
     const allRecords: any[] = [];
 
+    // This loop iterates through all dates in the reports object from Firebase.
     Object.keys(reports).forEach(dateStr => {
+      // Basic validation for the date string format.
       if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return;
       
       const sessions = reports[dateStr];
       if (typeof sessions !== 'object' || sessions === null) return;
 
+      // This inner loop iterates through all sessions for a given date.
       Object.keys(sessions).forEach(sessionId => {
         const session = sessions[sessionId];
         if (typeof session !== 'object' || session === null) return;
         
+        // Combine date and time to create a precise timestamp for the record.
         const timeStr = session.metadata?.time || '00:00:00';
-        const recordTimestamp = new Date(`${dateStr}T${timeStr}`);
+        const recordTimestamp = parse(`${dateStr} ${timeStr}`, 'yyyy-MM-dd HH:mm:ss', new Date());
         
-        if (isNaN(recordTimestamp.getTime())) return;
+        if (!isValid(recordTimestamp)) return;
         
-        let shouldInclude = false;
+        // Map the data from Firebase to a structured record object.
+        const chemistry = session.Chemistry_Result || {};
+        const sensorData = session.sensorData || {};
+        const record = {
+          id: `${dateStr}-${sessionId}`,
+          timestamp: recordTimestamp,
+          ph: sensorData.ph_value_sensor,
+          specificGravity: sensorData.specific_gravity_sensor,
+          tds: sensorData.tds_value,
+          turbidity: sensorData.turbidity,
+          bilirubin: chemistry.chem_bilirubin,
+          urobilinogen: chemistry.chem_urobilinogen,
+          ketone: chemistry.chem_ketones,
+          ascorbicAcid: chemistry.chem_ascorbicAcid,
+          glucose: chemistry.chem_glucose,
+          protein: chemistry.chem_protein,
+          blood: sensorData.blood_detected_sensor, // Sourced from sensorData
+          nitrite: chemistry.chem_nitrite,
+          leukocytes: chemistry.chem_leukocytes,
+          stoolConsistency: 'N/A', // Placeholder
+        };
+        allRecords.push(record);
+      });
+    });
+    
+    // Now, filter the collected records based on the selected time range or custom date.
+    const filteredRecords = allRecords.filter(record => {
         if (customDate) {
-            if(isSameDay(recordTimestamp, customDate)) {
-                shouldInclude = true;
-            }
-        } else if (timeRange) {
+            // If a custom date is set, only include records from that day.
+            return isSameDay(record.timestamp, customDate);
+        }
+        if (timeRange) {
             const now = new Date();
             let startDate: Date;
             if (timeRange === 'today') startDate = startOfDay(now);
             else if (timeRange === 'weekly') startDate = startOfDay(subDays(now, 6));
             else startDate = startOfDay(subDays(now, 29)); // monthly
-            if (recordTimestamp >= startDate) {
-                shouldInclude = true;
-            }
+            // Include records that are on or after the calculated start date.
+            return record.timestamp >= startDate;
         }
-
-        if (shouldInclude) {
-           const chemistry = session.Chemistry_Result || {};
-           const sensorData = session.sensorData || {};
-           const record = {
-                id: `${dateStr}-${sessionId}`,
-                timestamp: recordTimestamp,
-                ph: sensorData.ph_value_sensor,
-                specificGravity: sensorData.specific_gravity_sensor,
-                tds: sensorData.tds_value,
-                turbidity: sensorData.turbidity,
-                bilirubin: chemistry.chem_bilirubin,
-                urobilinogen: chemistry.chem_urobilinogen,
-                ketone: chemistry.chem_ketones,
-                ascorbicAcid: chemistry.chem_ascorbicAcid,
-                glucose: chemistry.chem_glucose,
-                protein: chemistry.chem_protein,
-                blood: chemistry.chem_blood,
-                nitrite: chemistry.chem_nitrite,
-                leukocytes: chemistry.chem_leukocytes,
-                stoolConsistency: 'N/A',
-           };
-           allRecords.push(record);
+        // By default, if no filter is active (e.g., during initial load with empty input), show weekly.
+        if (!customDate && !timeRange) {
+            const weeklyStartDate = startOfDay(subDays(new Date(), 6));
+            return record.timestamp >= weeklyStartDate;
         }
-      });
+        return false;
     });
-    
-    return allRecords.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+
+    // Sort the final, filtered records in descending order (newest first).
+    return filteredRecords.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
   }, [reports, timeRange, customDate]);
 
@@ -263,3 +274,5 @@ export default function VitalsTrendsPage() {
     </div>
   );
 }
+
+    

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useUser, useFirestore, useDatabase } from '@/firebase';
 import { getDatabase, ref, onValue, update, get } from 'firebase/database';
-import { collection, addDoc, serverTimestamp, doc, getDoc, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, getDoc, Timestamp, setDoc } from 'firebase/firestore';
 import { SensorCard } from '@/components/dashboard/sensor-card';
 import { CircularGauge } from '@/components/charts/circular-gauge';
 import { ShieldCheck, Droplet, Zap, CircleAlert, CheckCircle, Thermometer, FlaskConical, Download, Waves } from 'lucide-react';
@@ -76,46 +76,37 @@ export default function LiveSensorDataPage() {
         
         const unsubscribe = onValue(userRef, async (snapshot) => {
             const currentData = snapshot.val();
-            const prevData = previousDataRef.current; // Get previous data
+            const prevData = previousDataRef.current;
 
             if (!currentData || !firestore || !user) return;
 
-            // Get latest session info from current data
             const { latestSession: currentLatestSession, latestSessionId: currentLatestSessionId } = getLatestSession(currentData);
             
-            // --- Start of Notification and Alert Logic ---
             if (prevData) {
-                // 1. New Session Recorded Notification
                 const { latestSessionId: prevLatestSessionId } = getLatestSession(prevData);
-                if (currentLatestSessionId && currentLatestSessionId !== prevLatestSessionId) {
+                if (currentLatestSessionId && currentLatestSessionId !== prevLatestSessionId && currentLatestSession) {
                     toast({
                         title: "✅ New Health Record Saved",
                         description: `Your latest health data from ${currentLatestSession?.metadata?.time || new Date().toLocaleTimeString()} has been recorded.`,
                         duration: 6000,
                     });
+
+                    // Save to Firestore
+                    const healthDataToSave = {
+                        userId: user.uid,
+                        timestamp: serverTimestamp(),
+                        ...currentLatestSession.sensorData,
+                        ...currentLatestSession.Chemistry_Result,
+                    };
+                    const healthDocRef = doc(collection(firestore, `users/${user.uid}/healthData`));
+                    await setDoc(healthDocRef, healthDataToSave);
                 }
                 
-                // 2. Out-of-Range Alerts Logic
                 const { latestSession: prevLatestSession } = getLatestSession(prevData);
-                const unifiedCurrentDataForAlerts = {
-                    sensorData: {
-                        ...(currentLatestSession?.sensorData || {}),
-                        isOccupied: currentData.Live_Status?.isOccupied,
-                    },
-                    Chemistry_Result: currentLatestSession?.Chemistry_Result || {},
-                };
-                const unifiedPrevData = {
-                    sensorData: {
-                        ...(prevLatestSession?.sensorData || {}),
-                        isOccupied: prevData?.Live_Status?.isOccupied,
-                    },
-                    Chemistry_Result: prevLatestSession?.Chemistry_Result || {},
-                };
-    
-                const currentSensorData = unifiedCurrentDataForAlerts.sensorData;
-                const prevSensorData = unifiedPrevData.sensorData;
-                const currentChemData = unifiedCurrentDataForAlerts.Chemistry_Result;
-                const prevChemData = unifiedPrevData.Chemistry_Result;
+                const currentSensorData = currentLatestSession?.sensorData;
+                const prevSensorData = prevLatestSession?.sensorData;
+                const currentChemData = currentLatestSession?.Chemistry_Result;
+                const prevChemData = prevLatestSession?.Chemistry_Result;
 
                 if (currentSensorData && prevSensorData) {
                     const thresholds = {
@@ -205,7 +196,6 @@ export default function LiveSensorDataPage() {
                         }
                     }
     
-                    // TDS Check for abnormal values
                     const tdsAbnormalThreshold = 500;
                     const currentTds = parseFloat(currentSensorData.tds_value);
                     const prevTds = parseFloat(prevSensorData.tds_value);
@@ -231,7 +221,6 @@ export default function LiveSensorDataPage() {
                         }
                     }
     
-                    // Turbidity Check for abnormal values
                     const turbidityAbnormalThreshold = 50;
                     const currentTurbidity = parseFloat(currentSensorData.turbidity);
                     const prevTurbidity = parseFloat(prevSensorData.turbidity);
@@ -315,7 +304,6 @@ export default function LiveSensorDataPage() {
                 }
             }
             
-            // --- UI State Update Logic ---
             const unifiedCurrentDataForState = {
                 sensorData: {
                     ...(currentLatestSession?.sensorData || {}),
@@ -327,7 +315,6 @@ export default function LiveSensorDataPage() {
             setLatestData(unifiedCurrentDataForState);
             setUserCount(currentLatestSession?.sensorData?.usageCount ?? 0);
             
-            // Update the ref for the next run
             previousDataRef.current = currentData;
             
         }, (error) => {
@@ -359,12 +346,10 @@ export default function LiveSensorDataPage() {
         setLoading(true);
 
         try {
-            // Fetch user profile from Firestore
             const userDocRef = doc(firestore, 'users', user.uid);
             const userDocSnap = await getDoc(userDocRef);
             const userData = userDocSnap.exists() ? userDocSnap.data() : { displayName: user.displayName, email: user.email };
 
-            // Fetch latest data from Realtime Database
             const rtdbRef = ref(database, `Users/${user.uid}`);
             const rtdbSnap = await get(rtdbRef);
             const rtdbData = rtdbSnap.exists() ? rtdbSnap.val() : {};
@@ -379,7 +364,6 @@ export default function LiveSensorDataPage() {
             const combinedData = { user: userData, health: combinedHealthData };
             setReportData(combinedData);
 
-            // Wait for state to update and component to re-render
             setTimeout(() => {
                 const element = reportRef.current;
                 if (element && window.html2pdf) {
@@ -411,7 +395,6 @@ export default function LiveSensorDataPage() {
         );
     }
     
-    // --- Status Calculations ---
     const phValue = sensorData?.ph_value_sensor ? parseFloat(sensorData.ph_value_sensor) : null;
     const isPhOutOfRange = phValue !== null && (phValue < 4.5 || phValue > 8.0);
     const phStatus = isPhOutOfRange ? "WARNING" : "NORMAL";
@@ -665,3 +648,5 @@ export default function LiveSensorDataPage() {
         </div>
     );
 }
+
+    

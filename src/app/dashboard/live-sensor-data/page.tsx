@@ -444,7 +444,7 @@ export default function LiveSensorDataPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <SensorCard className={cn("flex flex-col justify-between animate-slide-up", isPhOutOfRange ? "border-status-red/70 shadow-status-red/20" : "border-glow-teal-green/50")} style={{ animationDelay: '200ms' }}>
+                <SensorCard className={cn("flex flex-col justify-between animate-slide-up", isPhOutOfRange ? "border-status-red/70 shadow-status-red/20 animate-alert-glow" : "border-glow-teal-green/50")} style={{ animationDelay: '200ms' }}>
                     <div>
                         <div className="flex justify-between items-start">
                             <h3 className="font-semibold text-gray-300">Urine pH Level</h3>
@@ -461,7 +461,7 @@ export default function LiveSensorDataPage() {
                     </div>
                 </SensorCard>
 
-                <SensorCard className={cn("flex flex-col justify-between animate-slide-up", isSgOutOfRange ? "border-status-red/70 shadow-status-red/20" : "border-glow-cyan-blue/50")} style={{ animationDelay: '300ms' }}>
+                <SensorCard className={cn("flex flex-col justify-between animate-slide-up", isSgOutOfRange ? "border-status-red/70 shadow-status-red/20 animate-alert-glow" : "border-glow-cyan-blue/50")} style={{ animationDelay: '300ms' }}>
                     <div>
                         <div className="flex justify-between items-start">
                             <h3 className="font-semibold text-gray-300">Specific Gravity</h3>
@@ -481,7 +481,7 @@ export default function LiveSensorDataPage() {
                 <SensorCard 
                     className={cn(
                         "flex flex-col justify-between animate-slide-up",
-                        isBloodDetected ? "border-glow-red-rose/70" : "border-status-green/50"
+                        isBloodDetected ? "border-glow-red-rose/70 animate-alert-glow" : "border-status-green/50"
                     )} 
                     style={{ animationDelay: '400ms' }}
                 >
@@ -507,7 +507,7 @@ export default function LiveSensorDataPage() {
                     </div>
                 </SensorCard>
 
-                <SensorCard className={cn("flex flex-col justify-between animate-slide-up", isAmmoniaOutOfRange ? "border-status-red/70 shadow-status-red/20" : "border-glow-purple-violet/50")} style={{ animationDelay: '500ms' }}>
+                <SensorCard className={cn("flex flex-col justify-between animate-slide-up", isAmmoniaOutOfRange ? "border-status-red/70 shadow-status-red/20 animate-alert-glow" : "border-glow-purple-violet/50")} style={{ animationDelay: '500ms' }}>
                     <div>
                         <div className="flex justify-between items-start">
                             <h3 className="font-semibold text-gray-300">Ammonia (NH3)</h3>
@@ -538,11 +538,11 @@ export default function LiveSensorDataPage() {
 
                 <SensorCard className="flex flex-col items-center justify-center text-center animate-slide-up border-glow-cyan-blue/50" style={{ animationDelay: '800ms' }}>
                     <h3 className="font-semibold text-gray-300">Toilet Usage Count</h3>
-                    <p className="text-5xl font-bold text-teal-400 my-1">{sensorData?.usageCount || 0}</p>
+                    <p className="text-5xl font-bold text-teal-400 my-1">{latestData?.Account_Info?.usercount || 0}</p>
                     <p className="text-xs text-gray-500">used Today</p>
                 </SensorCard>
                 
-                <SensorCard className={cn("animate-slide-up", isTempHigh ? "border-status-red/70 shadow-status-red/20" : "border-primary/50")} style={{ animationDelay: '900ms' }}>
+                <SensorCard className={cn("animate-slide-up", isTempHigh ? "border-status-red/70 shadow-status-red/20 animate-alert-glow" : "border-primary/50")} style={{ animationDelay: '900ms' }}>
                     <h3 className="font-semibold text-gray-300 mb-4 text-center">Temperature &amp; Humidity</h3>
                     <div className="flex justify-around items-center h-full">
                         <div className="text-center">

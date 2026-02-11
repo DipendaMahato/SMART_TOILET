@@ -81,7 +81,7 @@ export default function LiveSensorDataPage() {
             const currentChemData = currentData.Chemistry_Result;
             const prevChemData = prevData.Chemistry_Result;
 
-            if (prevSensorData && firestore && user) {
+            if (currentSensorData && prevSensorData && firestore && user) {
                 const thresholds = {
                     ph_value_sensor: { min: 4.5, max: 8.0, name: 'Urine pH' },
                     specific_gravity_sensor: { min: 1.005, max: 1.030, name: 'Specific Gravity' },

@@ -4,15 +4,14 @@
 import { useState, useMemo } from 'react';
 import { useUser, useDatabase, useRtdbValue, useMemoFirebase } from '@/firebase';
 import { ref } from 'firebase/database';
-import { subDays, startOfDay, format, isSameDay } from 'date-fns';
+import { subDays, startOfDay, format, isSameDay, parse, isValid } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Droplets, FlaskConical, Bone, Calendar as CalendarIcon, Clock, TestTube2, HeartPulse, Waves } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
+import { Input } from '@/components/ui/input';
+
 
 type TimeRange = 'today' | 'weekly' | 'monthly' | '';
 
@@ -103,6 +102,7 @@ const RecordSkeleton = () => (
 export default function VitalsTrendsPage() {
   const [timeRange, setTimeRange] = useState<TimeRange>('weekly');
   const [customDate, setCustomDate] = useState<Date | undefined>();
+  const [dateInput, setDateInput] = useState('');
   const { user } = useUser();
   const database = useDatabase();
 
@@ -183,13 +183,15 @@ export default function VitalsTrendsPage() {
       if (value) {
           setTimeRange(value as TimeRange);
           setCustomDate(undefined);
+          setDateInput('');
       }
   };
 
   const handleDateSelect = (date: Date | undefined) => {
       setCustomDate(date);
       if (date) {
-          setTimeRange(''); // Invalidate active tab
+          setTimeRange('');
+          setDateInput(format(date, 'yyyy-MM-dd'));
       }
   };
 
@@ -211,28 +213,32 @@ export default function VitalsTrendsPage() {
                     <TabsTrigger value="monthly">Monthly</TabsTrigger>
                 </TabsList>
             </Tabs>
-             <Popover>
-                <PopoverTrigger asChild>
-                <Button
-                    variant={"outline"}
-                    className={cn(
-                    "w-full md:w-[200px] justify-start text-left font-normal bg-card border-input",
-                    !customDate && "text-muted-foreground"
-                    )}
-                >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {customDate ? format(customDate, "PPP") : <span>Pick a date</span>}
-                </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                <Calendar
-                    mode="single"
-                    selected={customDate}
-                    onSelect={handleDateSelect}
-                    initialFocus
+             <div className="relative w-full md:w-[200px]">
+                <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                    type="text"
+                    placeholder="YYYY-MM-DD"
+                    value={dateInput}
+                    onChange={(e) => {
+                        const inputText = e.target.value;
+                        setDateInput(inputText);
+
+                        const parsedDate = parse(inputText, 'yyyy-MM-dd', new Date());
+
+                        if (isValid(parsedDate) && /^\d{4}-\d{2}-\d{2}$/.test(inputText)) {
+                            const [year, month, day] = inputText.split('-').map(Number);
+                            const localDate = new Date(year, month - 1, day);
+                            handleDateSelect(localDate);
+                        } else if (inputText === '') {
+                            if (customDate) {
+                                handleDateSelect(undefined);
+                                setTimeRange('weekly'); 
+                            }
+                        }
+                    }}
+                    className="w-full bg-card border-input pl-9"
                 />
-                </PopoverContent>
-            </Popover>
+            </div>
         </div>
       </div>
 

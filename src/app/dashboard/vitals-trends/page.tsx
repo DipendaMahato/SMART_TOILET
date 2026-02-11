@@ -131,7 +131,7 @@ export default function VitalsTrendsPage() {
         const timeStr = session.metadata?.time || '00:00:00';
         const recordTimestamp = new Date(`${dateStr}T${timeStr}`);
         
-        if (recordTimestamp >= startDate) {
+        if (recordTimestamp >= startDate && !isNaN(recordTimestamp.getTime())) {
            const chemistry = session.Chemistry_Result || {};
            const record = {
                 id: `${dateStr}-${sessionId}`,

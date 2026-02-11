@@ -31,7 +31,7 @@ const navItems = [
   { href: "/dashboard/live-sensor-data", icon: RadioTower, label: "Live Data", color: "text-glow-cyan-blue" },
   { href: "/dashboard/ai-process-tracker", icon: BrainCircuit, label: "AI Process Tracker", color: "text-glow-purple-violet" },
   { href: "/dashboard/diagnostics", icon: FlaskConical, label: "Diagnostics", color: "text-glow-teal-green" },
-  { href: "/dashboard/vitals-trends", icon: Activity, label: "Vitals & Trends", color: "text-glow-lime-emerald" },
+  { href: "/dashboard/vitals-trends", icon: Activity, label: "User Health Records", color: "text-glow-lime-emerald" },
   { href: "/dashboard/health-status", icon: Heart, label: "Health Status", color: "text-glow-sky-royal-blue" },
   { href: "/dashboard/clinical-care", icon: Stethoscope, label: "Clinical Care", color: "text-glow-red-rose" },
   { href: "/dashboard/profile", icon: User, label: "Medical Profile", color: "text-primary" },

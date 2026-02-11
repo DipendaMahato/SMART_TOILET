@@ -53,8 +53,8 @@ const subDashboards = [
     animation: 'animate-orbit-glow',
   },
   {
-    title: 'Health Vitals & Trends',
-    description: 'Daily, weekly, and long-term trend graphs.',
+    title: 'User Health Records',
+    description: 'View and manage your recorded health data.',
     icon: Activity,
     href: '/dashboard/vitals-trends',
     borderColor: 'border-glow-lime-emerald',

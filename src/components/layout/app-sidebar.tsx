@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -23,8 +22,6 @@ import { useUser, useAuth } from "@/firebase";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { useEffect, useState } from "react";
-
 
 const navItems = [
   { href: "/dashboard", icon: Home, label: "Dashboard", color: "text-glow-cyan-blue" },
@@ -43,12 +40,6 @@ export default function AppSidebar() {
   const router = useRouter();
   const auth = useAuth();
   const { user } = useUser();
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
 
   const handleLogout = async () => {
     if (!auth) return;
@@ -67,7 +58,7 @@ export default function AppSidebar() {
       <div className="flex-1 overflow-y-auto">
         <nav className="flex flex-col gap-2 p-4">
           {navItems.map((item) => {
-            const isActive = isMounted && pathname === item.href;
+            const isActive = pathname === item.href;
             return (
             <Link
               key={item.label}

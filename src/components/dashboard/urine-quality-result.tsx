@@ -83,7 +83,7 @@ export function UrineQualityResult({ tdsValue, turbidityValue }: UrineQualityRes
     switch (status) {
         case 'Normal': return 'border-status-green/50';
         case 'Slightly Abnormal': return 'border-status-yellow/50 shadow-lg shadow-status-yellow/10';
-        case 'Abnormal': return 'border-status-red/50 shadow-lg shadow-status-red/10 animate-pulse';
+        case 'Abnormal': return 'border-status-red/50 shadow-lg shadow-status-red/10';
     }
   }
 

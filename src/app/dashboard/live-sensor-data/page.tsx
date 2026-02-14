@@ -22,21 +22,53 @@ const WarningMessage = ({ text = 'Warning: Value out of range.' }: { text?: stri
     </div>
 );
 
-// Helper to get the latest session from RTDB data
-const getLatestSession = (data: any) => {
-    if (!data?.Reports) return { latestDate: null, latestSessionId: null, latestSession: null };
+// Helper to get the latest combined session data from RTDB data
+const getLatestCombinedSession = (data: any) => {
+    if (!data?.Reports) return { latestCombinedSession: null, combinedSessionId: null };
 
     const latestDate = Object.keys(data.Reports).sort().pop();
-    if (!latestDate) return { latestDate: null, latestSessionId: null, latestSession: null };
+    if (!latestDate) return { latestCombinedSession: null, combinedSessionId: null };
     
-    const sessions = data.Reports[latestDate];
-    if (!sessions) return { latestDate, latestSessionId: null, latestSession: null };
+    const dailyReport = data.Reports[latestDate];
+    if (!dailyReport) return { latestCombinedSession: null, combinedSessionId: null };
 
-    const latestSessionId = Object.keys(sessions).sort().pop();
-    if (!latestSessionId) return { latestDate, latestSessionId: null, latestSession: null };
+    const hardwareSessions = dailyReport.Hardware_Sessions;
+    const medicalSessions = dailyReport.Medical_Sessions;
 
-    return { latestDate, latestSessionId, latestSession: sessions[latestSessionId] };
-}
+    let latestHardwareSession = null;
+    let latestHardwareSessionId = null;
+    if (hardwareSessions) {
+        latestHardwareSessionId = Object.keys(hardwareSessions).sort().pop();
+        if (latestHardwareSessionId) {
+            latestHardwareSession = hardwareSessions[latestHardwareSessionId];
+        }
+    }
+
+    let latestMedicalSession = null;
+    let latestMedicalSessionId = null;
+    if (medicalSessions) {
+        const medicalSessionKeys = Object.keys(medicalSessions);
+        if (medicalSessionKeys.length > 0) {
+            latestMedicalSessionId = medicalSessionKeys.sort().pop() as string;
+            latestMedicalSession = medicalSessions[latestMedicalSessionId];
+        }
+    }
+    
+    if (!latestHardwareSession && !latestMedicalSession) {
+        return { latestCombinedSession: null, combinedSessionId: null };
+    }
+
+    const latestCombinedSession = {
+        sensorData: latestHardwareSession?.sensorData || null,
+        Chemistry_Result: latestMedicalSession?.Chemistry_Result || null,
+        metadata: latestHardwareSession?.metadata || latestMedicalSession?.metadata || null,
+    };
+    
+    const combinedSessionId = `${latestHardwareSessionId || 'nohw'}_${latestMedicalSessionId || 'nomed'}`;
+
+    return { latestCombinedSession, combinedSessionId };
+};
+
 
 export default function LiveSensorDataPage() {
     const { user } = useUser();
@@ -80,29 +112,20 @@ export default function LiveSensorDataPage() {
 
             if (!currentData || !firestore || !user) return;
 
-            const { latestSession: currentLatestSession, latestSessionId: currentLatestSessionId } = getLatestSession(currentData);
+            const { latestCombinedSession: currentLatestSession, combinedSessionId: currentCombinedSessionId } = getLatestCombinedSession(currentData);
             
             if (prevData) {
-                const { latestSessionId: prevLatestSessionId } = getLatestSession(prevData);
-                if (currentLatestSessionId && currentLatestSessionId !== prevLatestSessionId && currentLatestSession) {
+                const { combinedSessionId: prevCombinedSessionId } = getLatestCombinedSession(prevData);
+                
+                if (currentCombinedSessionId && currentCombinedSessionId !== prevCombinedSessionId && currentLatestSession) {
                     toast({
                         title: "✅ New Health Record Saved",
                         description: `Your latest health data from ${currentLatestSession?.metadata?.time || new Date().toLocaleTimeString()} has been recorded.`,
                         duration: 6000,
                     });
-
-                    // Save to Firestore
-                    const healthDataToSave = {
-                        userId: user.uid,
-                        timestamp: serverTimestamp(),
-                        ...currentLatestSession.sensorData,
-                        ...currentLatestSession.Chemistry_Result,
-                    };
-                    const healthDocRef = doc(collection(firestore, `users/${user.uid}/healthData`));
-                    await setDoc(healthDocRef, healthDataToSave);
                 }
                 
-                const { latestSession: prevLatestSession } = getLatestSession(prevData);
+                const { latestCombinedSession: prevLatestSession } = getLatestCombinedSession(prevData);
                 const currentSensorData = currentLatestSession?.sensorData;
                 const prevSensorData = prevLatestSession?.sensorData;
                 const currentChemData = currentLatestSession?.Chemistry_Result;
@@ -276,8 +299,9 @@ export default function LiveSensorDataPage() {
                     };
     
                     const isAbnormalNegative = (val: any) => {
+                        if (val === undefined || val === null) return false;
                         const lval = String(val).toLowerCase();
-                        if (lval === 'neg' || lval === 'negative' || lval === '0' || lval === '0.0') {
+                        if (lval === 'neg' || lval === 'negative' || lval === '0' || lval === '0.0' || val === false) {
                             return false;
                         }
                         const nval = parseFloat(val);
@@ -290,7 +314,7 @@ export default function LiveSensorDataPage() {
                     checkAndNotify('chem_ph', 'pH (Chemistry)', '4.5 - 8.0', val => parseFloat(val) < 4.5 || parseFloat(val) > 8.0);
                     checkAndNotify('chem_specificGravity', 'Specific Gravity (Chemistry)', '1.005 - 1.030', val => parseFloat(val) < 1.005 || parseFloat(val) > 1.030);
                     checkAndNotify('chem_glucose', 'Glucose', 'Negative', isAbnormalNegative);
-                    checkAndNotify('chem_protein', 'Protein', 'Negative/Trace (<30)', val => parseFloat(val) > 30);
+                    checkAndNotify('chem_protein', 'Protein', 'Negative/Trace (<30)', val => !isAbnormalNegative(val) && parseFloat(val) > 30);
                     checkAndNotify('chem_blood', 'Blood (Chemistry)', 'Negative', isAbnormalNegative);
                     checkAndNotify('chem_bilirubin', 'Bilirubin', 'Negative', isAbnormalNegative);
                     checkAndNotify('chem_ketones', 'Ketones', 'Negative', isAbnormalNegative);
@@ -354,14 +378,9 @@ export default function LiveSensorDataPage() {
             const rtdbSnap = await get(rtdbRef);
             const rtdbData = rtdbSnap.exists() ? rtdbSnap.val() : {};
 
-            const { latestSession } = getLatestSession(rtdbData);
+            const { latestCombinedSession } = getLatestCombinedSession(rtdbData);
 
-            const combinedHealthData = {
-                ...(latestSession?.sensorData || {}),
-                ...(latestSession?.Chemistry_Result || {}),
-            };
-
-            const combinedData = { user: userData, health: combinedHealthData };
+            const combinedData = { user: userData, health: latestCombinedSession };
             setReportData(combinedData);
 
             setTimeout(() => {
@@ -439,7 +458,7 @@ export default function LiveSensorDataPage() {
             case 'chem_nitrite':
             case 'chem_leukocytes':
             case 'chem_glucose':
-                const isNeg = lowerCaseValue === 'neg' || lowerCaseValue === 'negative' || numValue === 0;
+                const isNeg = lowerCaseValue === 'neg' || lowerCaseValue === 'negative' || numValue === 0 || value === false;
                 if(isNeg) return { status: 'Negative', color: 'text-status-green' };
                 return { status: 'Positive', color: 'text-status-red' };
 
@@ -503,7 +522,7 @@ export default function LiveSensorDataPage() {
                     </div>
                 </SensorCard>
 
-                <SensorCard className={cn("flex flex-col justify-between animate-slide-up", isSgOutOfRange ? "border-status-red/70 shadow-status-red/20 animate-alert-glow" : "border-glow-cyan-blue/50")} style={{ animationDelay: '300ms' }}>
+                <SensorCard className={cn("flex flex-col justify-between animate-slide-up", isSgOutOfRange ? "border-glow-cyan-blue/70 shadow-glow-cyan-blue/20" : "border-glow-cyan-blue/50")} style={{ animationDelay: '300ms' }}>
                     <div>
                         <div className="flex justify-between items-start">
                             <h3 className="font-semibold text-gray-300">Specific Gravity</h3>

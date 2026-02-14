@@ -14,6 +14,47 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 type Status = "Normal" | "Needs Attention" | "Abnormal";
 
+const getLatestCombinedSession = (data: any) => {
+    if (!data?.Reports) return { latestCombinedSession: null };
+
+    const latestDate = Object.keys(data.Reports).sort().pop();
+    if (!latestDate) return { latestCombinedSession: null };
+    
+    const dailyReport = data.Reports[latestDate];
+    if (!dailyReport) return { latestCombinedSession: null };
+
+    const hardwareSessions = dailyReport.Hardware_Sessions;
+    const medicalSessions = dailyReport.Medical_Sessions;
+
+    let latestHardwareSession = null;
+    if (hardwareSessions) {
+        const latestHardwareSessionId = Object.keys(hardwareSessions).sort().pop();
+        if (latestHardwareSessionId) {
+            latestHardwareSession = hardwareSessions[latestHardwareSessionId];
+        }
+    }
+
+    let latestMedicalSession = null;
+    if (medicalSessions) {
+        const latestMedicalSessionId = Object.keys(medicalSessions).sort().pop();
+        if (latestMedicalSessionId) {
+            latestMedicalSession = medicalSessions[latestMedicalSessionId];
+        }
+    }
+
+    if (!latestHardwareSession && !latestMedicalSession) {
+        return { latestCombinedSession: null };
+    }
+
+    const latestCombinedSession = {
+        sensorData: latestHardwareSession?.sensorData || {},
+        Chemistry_Result: latestMedicalSession?.Chemistry_Result || {},
+    };
+    
+    return { latestCombinedSession };
+}
+
+
 const initialUrineDiagnostics = [
     { parameter: 'Bilirubin (BIL)', value: 'Negative', range: 'Negative', status: 'Normal' as Status },
     { parameter: 'Urobilinogen (UBG)', value: 'Normal', range: '0.2 – 1.0 mg/dL', status: 'Normal' as Status },
@@ -82,21 +123,10 @@ export default function DiagnosticsPage() {
         const unsubscribe = onValue(userRef, (snapshot) => {
             const data = snapshot.val();
             if (data) {
-                let latestSessionData = null;
-                const reports = data.Reports;
-                if (reports) {
-                    const latestDate = Object.keys(reports).sort().pop();
-                    if (latestDate) {
-                        const sessions = reports[latestDate];
-                        const latestSessionId = Object.keys(sessions).sort().pop();
-                        if (latestSessionId) {
-                            latestSessionData = sessions[latestSessionId];
-                        }
-                    }
-                }
+                const { latestCombinedSession } = getLatestCombinedSession(data);
                 
-                const sensorData = latestSessionData?.sensorData;
-                const chemistry = latestSessionData?.Chemistry_Result;
+                const sensorData = latestCombinedSession?.sensorData;
+                const chemistry = latestCombinedSession?.Chemistry_Result;
 
                 setUrineDiagnostics(prevDiagnostics => {
                     const newDiagnostics = JSON.parse(JSON.stringify(prevDiagnostics));
@@ -110,25 +140,26 @@ export default function DiagnosticsPage() {
                     };
 
                     if(chemistry) {
-                        const isNegative = (v: any) => v == 0 || String(v).toLowerCase() === 'negative' || String(v).toLowerCase() === 'neg' || String(v).toLowerCase() === 'normal';
+                        const isNegative = (v: any) => v === 0 || v === false || String(v).toLowerCase() === 'negative' || String(v).toLowerCase() === 'neg' || String(v).toLowerCase() === 'normal';
                         const formatNegative = (v: any) => isNegative(v) ? "Negative" : v;
                         
                         updateRow('Bilirubin (BIL)', chemistry.chem_bilirubin, isNegative, formatNegative);
-                        updateRow('Urobilinogen (UBG)', chemistry.chem_urobilinogen, v => { const f = parseFloat(v); return !isNaN(f) && f >= 0.2 && f <= 1.0; });
+                        updateRow('Urobilinogen (UBG)', chemistry.chem_urobilinogen, v => { 
+                            if(String(v).toLowerCase() === 'normal' || String(v).toLowerCase() === 'norm') return true;
+                            const f = parseFloat(v); return !isNaN(f) && f >= 0.2 && f <= 1.0; 
+                        });
                         updateRow('Ketone (KET)', chemistry.chem_ketones, isNegative, formatNegative);
                         updateRow('Ascorbic Acid (ASC)', chemistry.chem_ascorbicAcid, isNegative, formatNegative);
                         updateRow('Glucose (GLU)', chemistry.chem_glucose, v => isNegative(v), v => isNegative(v) ? "Normal" : v);
-                        updateRow('Protein (PRO)', chemistry.chem_protein, v => parseFloat(v) <= 30, v => {
+                        updateRow('Protein (PRO)', chemistry.chem_protein, v => isNegative(v) || parseFloat(v) <= 30, v => {
+                            if (isNegative(v)) return "Negative";
                             const val = parseFloat(v);
-                            if (val <= 0) return "Negative";
                             if (val <= 30) return "Trace";
                             return String(val);
                         });
                         updateRow('Blood (BLD)', chemistry.chem_blood, isNegative, v => isNegative(v) ? "Negative" : `${v} Ery/µL`);
-                        updateRow('pH Level', chemistry.chem_ph, v => parseFloat(v) >= 4.5 && parseFloat(v) <= 8.0, v => parseFloat(v).toFixed(2));
                         updateRow('Nitrite (NIT)', chemistry.chem_nitrite, isNegative, v => isNegative(v) ? 'Negative' : 'Positive');
                         updateRow('Leukocytes (LEU)', chemistry.chem_leukocytes, isNegative, v => isNegative(v) ? "Negative" : `${v} Leu/µL`);
-                        updateRow('Specific Gravity (SG)', chemistry.chem_specificGravity, v => { const f = parseFloat(v); return !isNaN(f) && f >= 1.005 && f <= 1.030; }, v => parseFloat(v).toFixed(3));
                     }
                     
                     if (sensorData) {
@@ -138,6 +169,8 @@ export default function DiagnosticsPage() {
                             turbidityRow.value = `${turbidityValue.toFixed(1)} NTU`;
                             turbidityRow.status = turbidityValue < 20 ? "Normal" : "Abnormal";
                         }
+                         updateRow('pH Level', sensorData.ph_value_sensor, v => parseFloat(v) >= 4.5 && parseFloat(v) <= 8.0, v => parseFloat(v).toFixed(2));
+                         updateRow('Specific Gravity (SG)', sensorData.specific_gravity_sensor, v => { const f = parseFloat(v); return !isNaN(f) && f >= 1.005 && f <= 1.030; }, v => parseFloat(v).toFixed(3));
                     }
 
                     return newDiagnostics;
@@ -167,22 +200,11 @@ export default function DiagnosticsPage() {
             const rtdbSnap = await get(rtdbRef);
             const rtdbData = rtdbSnap.exists() ? rtdbSnap.val() : {};
 
-            let latestSessionData = null;
-            const reports = rtdbData.Reports;
-            if (reports) {
-                const latestDate = Object.keys(reports).sort().pop();
-                if (latestDate) {
-                    const sessions = reports[latestDate];
-                    const latestSessionId = Object.keys(sessions).sort().pop();
-                    if (latestSessionId) {
-                        latestSessionData = sessions[latestSessionId];
-                    }
-                }
-            }
+            const { latestCombinedSession } = getLatestCombinedSession(rtdbData);
             
             const parsedHealthData = {
-                sensorData: latestSessionData?.sensorData,
-                Chemistry_Result: latestSessionData?.Chemistry_Result,
+                sensorData: latestCombinedSession?.sensorData,
+                Chemistry_Result: latestCombinedSession?.Chemistry_Result,
             };
 
             const combinedData = { user: userData, health: parsedHealthData };
@@ -281,7 +303,5 @@ export default function DiagnosticsPage() {
         </div>
     );
 }
-
-    
 
     

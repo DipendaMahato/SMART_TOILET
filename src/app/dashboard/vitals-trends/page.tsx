@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -148,8 +149,8 @@ export default function VitalsTrendsPage() {
         return;
     }
 
-    const parts = recordId.split('-Session_');
-    if (parts.length !== 2) {
+    const parts = recordId.split('-');
+    if (parts.length < 4) { // e.g., "2026-02-14-Sens_165030" -> ["2026", "02", "14", "Sens_165030"]
         toast({
             variant: "destructive",
             title: "Error",
@@ -157,11 +158,12 @@ export default function VitalsTrendsPage() {
         });
         return;
     }
-    const dateStr = parts[0];
-    const sessionTime = parts[1];
-    const sessionKey = `Session_${sessionTime}`;
-
-    const recordRef = ref(database, `Users/${user.uid}/Reports/${dateStr}/${sessionKey}`);
+    const dateStr = parts.slice(0, 3).join('-');
+    const sessionKey = parts.slice(3).join('-');
+    
+    // We only delete the hardware session as it's the primary key for the record.
+    // The associated medical session will become orphaned but won't appear in the UI.
+    const recordRef = ref(database, `Users/${user.uid}/Reports/${dateStr}/Hardware_Sessions/${sessionKey}`);
 
     try {
         await remove(recordRef);
@@ -184,47 +186,66 @@ export default function VitalsTrendsPage() {
 
     const allRecords: any[] = [];
 
-    // This loop iterates through all dates in the reports object from Firebase.
     Object.keys(reports).forEach(dateStr => {
-      // Basic validation for the date string format.
       if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return;
       
-      const sessions = reports[dateStr];
-      if (typeof sessions !== 'object' || sessions === null) return;
+      const dailyReport = reports[dateStr];
+      if (typeof dailyReport !== 'object' || dailyReport === null) return;
 
-      // This inner loop iterates through all sessions for a given date.
-      Object.keys(sessions).forEach(sessionId => {
-        const session = sessions[sessionId];
-        if (typeof session !== 'object' || session === null) return;
-        
-        // Combine date and time to create a precise timestamp for the record.
-        const timeStr = session.metadata?.time || '00:00:00';
-        const recordTimestamp = parse(`${dateStr} ${timeStr}`, 'yyyy-MM-dd HH:mm:ss', new Date());
-        
-        if (!isValid(recordTimestamp)) return;
-        
-        // Map the data from Firebase to a structured record object.
-        const chemistry = session.Chemistry_Result || {};
-        const sensorData = session.sensorData || {};
-        const record = {
-          id: `${dateStr}-${sessionId}`,
-          timestamp: recordTimestamp,
-          ph: sensorData.ph_value_sensor,
-          specificGravity: sensorData.specific_gravity_sensor,
-          tds: sensorData.tds_value,
-          turbidity: sensorData.turbidity,
-          bilirubin: chemistry.chem_bilirubin,
-          urobilinogen: chemistry.chem_urobilinogen,
-          ketone: chemistry.chem_ketones,
-          ascorbicAcid: chemistry.chem_ascorbicAcid,
-          glucose: chemistry.chem_glucose,
-          protein: chemistry.chem_protein,
-          blood: sensorData.blood_detected_sensor,
-          nitrite: chemistry.chem_nitrite,
-          leukocytes: chemistry.chem_leukocytes,
-          stoolConsistency: 'N/A', // Placeholder
-        };
-        allRecords.push(record);
+      const hardwareSessions = dailyReport.Hardware_Sessions || {};
+      const medicalSessions = dailyReport.Medical_Sessions || {};
+
+      const sortedHwKeys = Object.keys(hardwareSessions).sort();
+      const sortedMedKeys = Object.keys(medicalSessions).sort();
+
+      sortedHwKeys.forEach(hwKey => {
+          const hwSession = hardwareSessions[hwKey];
+          if (typeof hwSession !== 'object' || hwSession === null || !hwSession.metadata) return;
+          
+          const hwTimeStr = hwSession.metadata.time || '00:00:00';
+          const hwTimestamp = parse(`${dateStr} ${hwTimeStr}`, 'yyyy-MM-dd HH:mm:ss', new Date());
+          
+          if (!isValid(hwTimestamp)) return;
+
+          let matchedMedSession: any = null;
+          let minTimeDiff = Infinity;
+          
+          sortedMedKeys.forEach(medKey => {
+              const medSession = medicalSessions[medKey];
+              const medTimeStr = medSession.metadata?.time || '00:00:00';
+              const medTimestamp = parse(`${dateStr} ${medTimeStr}`, 'yyyy-MM-dd HH:mm:ss', new Date());
+              
+              if(isValid(medTimestamp)) {
+                  const timeDiff = medTimestamp.getTime() - hwTimestamp.getTime();
+                  if (timeDiff >= 0 && timeDiff < minTimeDiff) {
+                      minTimeDiff = timeDiff;
+                      matchedMedSession = medSession;
+                  }
+              }
+          });
+          
+          const chemistry = matchedMedSession?.Chemistry_Result || {};
+          const sensorData = hwSession.sensorData || {};
+          
+          const record = {
+            id: `${dateStr}-${hwKey}`,
+            timestamp: hwTimestamp,
+            ph: sensorData.ph_value_sensor,
+            specificGravity: sensorData.specific_gravity_sensor,
+            tds: sensorData.tds_value,
+            turbidity: sensorData.turbidity,
+            bilirubin: chemistry.chem_bilirubin,
+            urobilinogen: chemistry.chem_urobilinogen,
+            ketone: chemistry.chem_ketones,
+            ascorbicAcid: chemistry.chem_ascorbicAcid,
+            glucose: chemistry.chem_glucose,
+            protein: chemistry.chem_protein,
+            blood: sensorData.blood_detected_sensor,
+            nitrite: chemistry.chem_nitrite,
+            leukocytes: chemistry.chem_leukocytes,
+            stoolConsistency: 'N/A', // Placeholder
+          };
+          allRecords.push(record);
       });
     });
     
@@ -344,3 +365,5 @@ export default function VitalsTrendsPage() {
     </div>
   );
 }
+
+    

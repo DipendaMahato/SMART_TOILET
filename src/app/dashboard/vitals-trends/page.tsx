@@ -1,14 +1,14 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
 import { useUser, useDatabase, useRtdbValue, useMemoFirebase } from '@/firebase';
-import { ref } from 'firebase/database';
+import { ref, remove } from 'firebase/database';
 import { subDays, startOfDay, format, isSameDay, parse, isValid } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Droplets, FlaskConical, Bone, Calendar as CalendarIcon, Clock, TestTube2, HeartPulse, Waves, Search } from 'lucide-react';
+import { Droplets, FlaskConical, Bone, Calendar as CalendarIcon, Clock, TestTube2, HeartPulse, Waves, Search, Trash2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -26,7 +26,7 @@ const sgToHydration = (sg: number | null | undefined): number => {
   return Math.round(Math.max(0, Math.min(100, percentage)));
 };
 
-const HealthRecordCard = ({ record }: { record: any }) => {
+const HealthRecordCard = ({ record, onDelete }: { record: any, onDelete: (id: string) => void }) => {
     const recordDate = record.timestamp;
 
     const dataPoints = [
@@ -53,9 +53,32 @@ const HealthRecordCard = ({ record }: { record: any }) => {
                 <CardTitle className="text-base font-medium text-gray-300">
                     Health Record
                 </CardTitle>
-                <div className="text-xs text-gray-400 flex items-center gap-3">
-                    <div className="flex items-center gap-1.5"><CalendarIcon size={14} /><span>{format(recordDate, 'PPP')}</span></div>
-                    <div className="flex items-center gap-1.5"><Clock size={14} /><span>{format(recordDate, 'p')}</span></div>
+                <div className="flex items-center gap-4">
+                    <div className="text-xs text-gray-400 flex items-center gap-3">
+                        <div className="flex items-center gap-1.5"><CalendarIcon size={14} /><span>{format(recordDate, 'PPP')}</span></div>
+                        <div className="flex items-center gap-1.5"><Clock size={14} /><span>{format(recordDate, 'p')}</span></div>
+                    </div>
+                     <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-status-red" aria-label="Delete Record">
+                                <Trash2 size={16} />
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure you want to delete this record?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete this health record from the database.
+                            </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => onDelete(record.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                Yes, Delete
+                            </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 </div>
             </CardHeader>
             <CardContent className="pt-6">
@@ -114,6 +137,47 @@ export default function VitalsTrendsPage() {
   }, [database, user?.uid]);
 
   const { data: reports, isLoading } = useRtdbValue<any>(healthDataReportsRef);
+
+  const handleDeleteRecord = async (recordId: string) => {
+    if (!database || !user?.uid) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Cannot delete record. Database not connected or user not authenticated.",
+        });
+        return;
+    }
+
+    const parts = recordId.split('-Session_');
+    if (parts.length !== 2) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Invalid record ID format for deletion.",
+        });
+        return;
+    }
+    const dateStr = parts[0];
+    const sessionTime = parts[1];
+    const sessionKey = `Session_${sessionTime}`;
+
+    const recordRef = ref(database, `Users/${user.uid}/Reports/${dateStr}/${sessionKey}`);
+
+    try {
+        await remove(recordRef);
+        toast({
+            title: "Record Deleted",
+            description: `The health record from ${format(parse(dateStr, 'yyyy-MM-dd', new Date()), 'PPP')} has been successfully deleted.`,
+        });
+    } catch (error: any) {
+        console.error("Error deleting record:", error);
+        toast({
+            variant: "destructive",
+            title: "Deletion Failed",
+            description: error.message || "An unexpected error occurred.",
+        });
+    }
+  };
 
   const healthRecords = useMemo(() => {
     if (!reports) return [];
@@ -265,7 +329,7 @@ export default function VitalsTrendsPage() {
         )}
         {!isLoading && healthRecords && healthRecords.length > 0 && (
             healthRecords.map(record => (
-                <HealthRecordCard key={record.id} record={record} />
+                <HealthRecordCard key={record.id} record={record} onDelete={handleDeleteRecord} />
             ))
         )}
          {!isLoading && (!healthRecords || healthRecords.length === 0) && (

@@ -52,6 +52,10 @@ const systemPrompt = `You are 'Smart Toilet Assistance', a friendly and knowledg
 **Handling Out-of-Scope Questions:**
 - If asked about topics that are not related to health, wellness, or the application, politely decline by saying something like, "I'm a health assistant, so I can't help with that, but I'm here for any health questions you have! 😊"`;
 
+// Hardcoding the API key to ensure it is available and to bypass any environment variable loading issues.
+const OPENROUTER_API_KEY = "sk-eeb9c5be46b94055897c4ef5f9eec563";
+
+
 // The main exported function that will be called by the server action
 export async function chat(input: ChatInput): Promise<ChatOutput> {
   const { history, message } = input;
@@ -66,7 +70,7 @@ export async function chat(input: ChatInput): Promise<ChatOutput> {
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({

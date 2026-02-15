@@ -8,7 +8,7 @@ import { mockMedicalProfile, mockToiletSensorData } from '@/lib/data';
 import { generateHealthInsights } from '@/ai/flows/generate-health-insights';
 import { refineInsightsWithReasoning } from '@/ai/flows/refine-insights-with-reasoning';
 import { sendOtp as sendOtpFlow, SendOtpInput } from '@/ai/flows/send-otp-flow';
-import { chat } from '@/ai/flows/chat-flow';
+import { chat, ChatMessage } from '@/ai/flows/chat-flow';
 import { analyzeDipstick as analyzeDipstickFlow, AnalyzeDipstickInput } from '@/ai/flows/analyze-dipstick-flow';
 
 
@@ -57,9 +57,9 @@ export async function sendOtp(input: SendOtpInput) {
     }
 }
 
-export async function chatWithAi(history: { role: 'user' | 'model'; content: string }[], message: string) {
+export async function chatWithAi(history: ChatMessage[], message: string) {
     try {
-        const result = await chat(message);
+        const result = await chat({ history, message });
         
         if (result && result.response) {
             return { response: result.response };

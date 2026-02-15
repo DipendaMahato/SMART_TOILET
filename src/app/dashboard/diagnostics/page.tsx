@@ -17,7 +17,10 @@ type Status = "Normal" | "Needs Attention" | "Abnormal";
 const getLatestCombinedSession = (data: any) => {
     if (!data?.Reports) return { latestCombinedSession: null };
 
-    const latestDate = Object.keys(data.Reports).sort().pop();
+    const dateKeys = Object.keys(data.Reports).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k));
+    if (dateKeys.length === 0) return { latestCombinedSession: null };
+
+    const latestDate = dateKeys.sort().pop();
     if (!latestDate) return { latestCombinedSession: null };
     
     const dailyReport = data.Reports[latestDate];
@@ -27,7 +30,7 @@ const getLatestCombinedSession = (data: any) => {
     const medicalSessions = dailyReport.Medical_Sessions;
 
     let latestHardwareSession = null;
-    if (hardwareSessions) {
+    if (hardwareSessions && Object.keys(hardwareSessions).length > 0) {
         const latestHardwareSessionId = Object.keys(hardwareSessions).sort().pop();
         if (latestHardwareSessionId) {
             latestHardwareSession = hardwareSessions[latestHardwareSessionId];
@@ -35,7 +38,7 @@ const getLatestCombinedSession = (data: any) => {
     }
 
     let latestMedicalSession = null;
-    if (medicalSessions) {
+    if (medicalSessions && Object.keys(medicalSessions).length > 0) {
         const latestMedicalSessionId = Object.keys(medicalSessions).sort().pop();
         if (latestMedicalSessionId) {
             latestMedicalSession = medicalSessions[latestMedicalSessionId];
@@ -52,7 +55,7 @@ const getLatestCombinedSession = (data: any) => {
     };
     
     return { latestCombinedSession };
-}
+};
 
 
 const initialUrineDiagnostics = [
@@ -133,7 +136,7 @@ export default function DiagnosticsPage() {
 
                     const updateRow = (parameter:string, value:any, normalCheck: (v:any) => boolean, valueFormatter = (v:any) => String(v)) => {
                         const row = newDiagnostics.find((r: any) => r.parameter === parameter);
-                        if (row && value !== undefined) {
+                        if (row && value !== undefined && value !== null) {
                             row.value = valueFormatter(value);
                             row.status = normalCheck(value) ? "Normal" : "Abnormal";
                         }
@@ -154,7 +157,7 @@ export default function DiagnosticsPage() {
                         updateRow('Protein (PRO)', chemistry.chem_protein, v => isNegative(v) || parseFloat(v) <= 30, v => {
                             if (isNegative(v)) return "Negative";
                             const val = parseFloat(v);
-                            if (val <= 30) return "Trace";
+                            if (!isNaN(val) && val <= 30) return "Trace";
                             return String(val);
                         });
                         updateRow('Blood (BLD)', chemistry.chem_blood, isNegative, v => isNegative(v) ? "Negative" : `${v} Ery/µL`);
@@ -166,10 +169,10 @@ export default function DiagnosticsPage() {
                          const turbidityRow = newDiagnostics.find((r: any) => r.parameter === 'Turbidity');
                         if (turbidityRow && sensorData.turbidity !== undefined) {
                             const turbidityValue = parseFloat(sensorData.turbidity);
-                            turbidityRow.value = `${turbidityValue.toFixed(1)} NTU`;
+                            turbidityRow.value = isNaN(turbidityValue) ? '...' : `${turbidityValue.toFixed(1)} NTU`;
                             turbidityRow.status = turbidityValue < 20 ? "Normal" : "Abnormal";
                         }
-                         updateRow('pH Level', sensorData.ph_value_sensor, v => parseFloat(v) >= 4.5 && parseFloat(v) <= 8.0, v => parseFloat(v).toFixed(2));
+                         updateRow('pH Level', sensorData.ph_value_sensor, v => { const f = parseFloat(v); return !isNaN(f) && f >= 4.5 && f <= 8.0; }, v => parseFloat(v).toFixed(2));
                          updateRow('Specific Gravity (SG)', sensorData.specific_gravity_sensor, v => { const f = parseFloat(v); return !isNaN(f) && f >= 1.005 && f <= 1.030; }, v => parseFloat(v).toFixed(3));
                     }
 
@@ -303,5 +306,3 @@ export default function DiagnosticsPage() {
         </div>
     );
 }
-
-    

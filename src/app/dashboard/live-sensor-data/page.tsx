@@ -26,9 +26,12 @@ const WarningMessage = ({ text = 'Warning: Value out of range.' }: { text?: stri
 const getLatestCombinedSession = (data: any) => {
     if (!data?.Reports) return { latestCombinedSession: null, combinedSessionId: null };
 
-    const latestDate = Object.keys(data.Reports).sort().pop();
-    if (!latestDate) return { latestCombinedSession: null, combinedSessionId: null };
+    const dateKeys = Object.keys(data.Reports).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k));
+    if (dateKeys.length === 0) return { latestCombinedSession: null, combinedSessionId: null };
     
+    const latestDate = dateKeys.sort().pop();
+    if (!latestDate) return { latestCombinedSession: null, combinedSessionId: null };
+
     const dailyReport = data.Reports[latestDate];
     if (!dailyReport) return { latestCombinedSession: null, combinedSessionId: null };
 
@@ -37,7 +40,7 @@ const getLatestCombinedSession = (data: any) => {
 
     let latestHardwareSession = null;
     let latestHardwareSessionId = null;
-    if (hardwareSessions) {
+    if (hardwareSessions && Object.keys(hardwareSessions).length > 0) {
         latestHardwareSessionId = Object.keys(hardwareSessions).sort().pop();
         if (latestHardwareSessionId) {
             latestHardwareSession = hardwareSessions[latestHardwareSessionId];
@@ -46,14 +49,13 @@ const getLatestCombinedSession = (data: any) => {
 
     let latestMedicalSession = null;
     let latestMedicalSessionId = null;
-    if (medicalSessions) {
-        const medicalSessionKeys = Object.keys(medicalSessions);
-        if (medicalSessionKeys.length > 0) {
-            latestMedicalSessionId = medicalSessionKeys.sort().pop() as string;
+    if (medicalSessions && Object.keys(medicalSessions).length > 0) {
+        latestMedicalSessionId = Object.keys(medicalSessions).sort().pop();
+        if (latestMedicalSessionId) {
             latestMedicalSession = medicalSessions[latestMedicalSessionId];
         }
     }
-    
+
     if (!latestHardwareSession && !latestMedicalSession) {
         return { latestCombinedSession: null, combinedSessionId: null };
     }
@@ -64,7 +66,7 @@ const getLatestCombinedSession = (data: any) => {
         metadata: latestHardwareSession?.metadata || latestMedicalSession?.metadata || null,
     };
     
-    const combinedSessionId = `${latestHardwareSessionId || 'nohw'}_${latestMedicalSessionId || 'nomed'}`;
+    const combinedSessionId = `${latestDate}_${latestHardwareSessionId || 'nohw'}_${latestMedicalSessionId || 'nomed'}`;
 
     return { latestCombinedSession, combinedSessionId };
 };
@@ -112,33 +114,27 @@ export default function LiveSensorDataPage() {
 
             if (!currentData || !firestore || !user) return;
 
-            // Get latest data from historical reports
             const { latestCombinedSession: currentLatestSession, combinedSessionId: currentCombinedSessionId } = getLatestCombinedSession(currentData);
             
-            // Create a unified view of sensor data, prioritizing live data over historical reports
-            const currentLiveSensorData = {
-                ...(currentLatestSession?.sensorData || {}), // Fallback to report data
-                ...(currentData.sensorData || {}),             // Prioritize live data from `sensorData` node
-                isOccupied: currentData.Live_Status?.isOccupied, // Live occupation status
-            };
+            const currentSensorData = currentLatestSession?.sensorData || {};
             const currentChemData = currentLatestSession?.Chemistry_Result || {};
 
-            // Update the component's state for rendering
+            const isOccupiedValue = currentData.Live_Status?.isOccupied === 1 ? 1 : 0;
+            const unifiedSensorData = {
+                ...currentSensorData,
+                isOccupied: isOccupiedValue,
+            };
+
             setLatestData({
-                sensorData: currentLiveSensorData,
+                sensorData: unifiedSensorData,
                 Chemistry_Result: currentChemData,
             });
-            setUserCount(currentLiveSensorData?.usageCount ?? 0);
+            setUserCount(unifiedSensorData?.usageCount ?? 0);
 
             // --- NOTIFICATION LOGIC ---
             if (prevData) {
-                // Get previous state's data for comparison
                 const { latestCombinedSession: prevLatestSession, combinedSessionId: prevCombinedSessionId } = getLatestCombinedSession(prevData);
-                const prevLiveSensorData = {
-                    ...(prevLatestSession?.sensorData || {}),
-                    ...(prevData.sensorData || {}),
-                    isOccupied: prevData.Live_Status?.isOccupied,
-                };
+                const prevSensorData = prevLatestSession?.sensorData || {};
                 const prevChemData = prevLatestSession?.Chemistry_Result || {};
 
                 // New health record toast
@@ -151,7 +147,7 @@ export default function LiveSensorDataPage() {
                 }
                 
                 // Sensor value alert checks
-                if (prevLiveSensorData && currentLiveSensorData) {
+                if (prevSensorData && currentSensorData) {
                     const thresholds = {
                         ph_value_sensor: { min: 4.5, max: 8.0, name: 'Urine pH' },
                         specific_gravity_sensor: { min: 1.005, max: 1.030, name: 'Specific Gravity' },
@@ -159,11 +155,11 @@ export default function LiveSensorDataPage() {
                     };
     
                     (Object.keys(thresholds) as Array<keyof typeof thresholds>).forEach(key => {
-                        if (currentLiveSensorData[key] === undefined || prevLiveSensorData[key] === undefined) return;
+                        if (currentSensorData[key] === undefined || prevSensorData[key] === undefined) return;
     
                         const config = thresholds[key];
-                        const currentValue = parseFloat(currentLiveSensorData[key]);
-                        const prevValue = parseFloat(prevLiveSensorData[key]);
+                        const currentValue = parseFloat(currentSensorData[key]);
+                        const prevValue = parseFloat(prevSensorData[key]);
     
                         if (isNaN(currentValue) || isNaN(prevValue)) return;
     
@@ -193,7 +189,7 @@ export default function LiveSensorDataPage() {
                         }
                     });
     
-                    if (currentLiveSensorData.blood_detected_sensor === true && prevLiveSensorData.blood_detected_sensor === false) {
+                    if (currentSensorData.blood_detected_sensor === true && prevSensorData.blood_detected_sensor === false) {
                         const alertMessage = `Traces of blood were detected in the latest analysis. Please consult a healthcare professional.`;
                         toast({
                             variant: 'destructive',
@@ -214,8 +210,8 @@ export default function LiveSensorDataPage() {
                     }
                     
                     const tempThreshold = 37;
-                    const currentTemp = parseFloat(currentLiveSensorData.temperature);
-                    const prevTemp = parseFloat(prevLiveSensorData.temperature);
+                    const currentTemp = parseFloat(currentSensorData.temperature);
+                    const prevTemp = parseFloat(prevSensorData.temperature);
     
                     if (!isNaN(currentTemp) && !isNaN(prevTemp)) {
                         if (currentTemp > tempThreshold && prevTemp <= tempThreshold) {
@@ -240,8 +236,8 @@ export default function LiveSensorDataPage() {
                     }
     
                     const tdsAbnormalThreshold = 500;
-                    const currentTds = parseFloat(currentLiveSensorData.tds_value);
-                    const prevTds = parseFloat(prevLiveSensorData.tds_value);
+                    const currentTds = parseFloat(currentSensorData.tds_value);
+                    const prevTds = parseFloat(prevSensorData.tds_value);
                     if (!isNaN(currentTds) && !isNaN(prevTds)) {
                         if (currentTds > tdsAbnormalThreshold && prevTds <= tdsAbnormalThreshold) {
                             const alertMessage = `High TDS level detected, which may indicate health issues. Further evaluation is recommended.`;
@@ -265,8 +261,8 @@ export default function LiveSensorDataPage() {
                     }
     
                     const turbidityAbnormalThreshold = 50;
-                    const currentTurbidity = parseFloat(currentLiveSensorData.turbidity);
-                    const prevTurbidity = parseFloat(prevLiveSensorData.turbidity);
+                    const currentTurbidity = parseFloat(currentSensorData.turbidity);
+                    const prevTurbidity = parseFloat(prevSensorData.turbidity);
                     if (!isNaN(currentTurbidity) && !isNaN(prevTurbidity)) {
                         if (currentTurbidity > turbidityAbnormalThreshold && prevTurbidity <= turbidityAbnormalThreshold) {
                             const alertMessage = `Urine is cloudy (High Turbidity). This can be a sign of a UTI or kidney issues. Please consult a doctor.`;
@@ -364,13 +360,6 @@ export default function LiveSensorDataPage() {
             unsubscribe();
         };
     }, [user, database, firestore, toast]);
-    
-    const sendCommand = (key: string, value: boolean) => {
-        if (!user?.uid || !database) return;
-        const sensorDataRef = ref(database, `Users/${user.uid}/sensorData`);
-        update(sensorDataRef, { [key]: value })
-            .catch((err) => alert("Error sending command: " + err.message));
-    };
 
     const handleDownload = async () => {
         if (!user || !firestore || !database) {
@@ -637,7 +626,7 @@ export default function LiveSensorDataPage() {
                             <p className='text-sm text-gray-400'>Auto Flush</p>
                             <Switch 
                                 checked={sensorData?.autoFlushEnable || false} 
-                                onCheckedChange={(checked) => sendCommand('autoFlushEnable', checked)} 
+                                disabled={true}
                             />
                         </div>
                     </div>

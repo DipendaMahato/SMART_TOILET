@@ -151,33 +151,25 @@ export default function VitalsTrendsPage() {
 
     const parts = recordId.split('-');
     const type = parts[0];
+    const dateStr = parts.slice(1, 4).join('-');
+    const sessionKey = parts.slice(4).join('_');
     let recordRef;
-
+    
     if (type === 'MED') {
-        const dateStr = parts.slice(1, 4).join('-');
-        const sessionKey = parts.slice(4).join('-');
         if (!dateStr || !sessionKey) {
              toast({ variant: "destructive", title: "Error", description: "Invalid Medical record ID format." });
              return;
         }
         recordRef = ref(database, `Users/${user.uid}/Reports/${dateStr}/Medical_Sessions/${sessionKey}`);
     } else if (type === 'HW') {
-        const dateStr = parts.slice(1, 4).join('-');
-        const sessionKey = parts.slice(4).join('-');
         if (!dateStr || !sessionKey) {
             toast({ variant: "destructive", title: "Error", description: "Invalid Hardware record ID format." });
             return;
         }
         recordRef = ref(database, `Users/${user.uid}/Reports/${dateStr}/Hardware_Sessions/${sessionKey}`);
     } else {
-        // Fallback for old ID format before HW/MED prefixes
-        const dateStr = parts.slice(0, 3).join('-');
-        const sessionKey = parts.slice(3).join('-');
-        if (!dateStr || !sessionKey) {
-            toast({ variant: "destructive", title: "Error", description: "Invalid record ID format for deletion." });
-            return;
-        }
-        recordRef = ref(database, `Users/${user.uid}/Reports/${dateStr}/Hardware_Sessions/${sessionKey}`);
+        toast({ variant: "destructive", title: "Error", description: "Invalid record ID format for deletion." });
+        return;
     }
 
     try {
@@ -202,9 +194,9 @@ export default function VitalsTrendsPage() {
     const allRecords: any[] = [];
     const matchedMedSessionKeys = new Set<string>();
 
-    Object.keys(reports).forEach(dateStr => {
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return;
-      
+    const dateKeys = Object.keys(reports).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k));
+
+    dateKeys.forEach(dateStr => {
       const dailyReport = reports[dateStr];
       if (typeof dailyReport !== 'object' || dailyReport === null) return;
 

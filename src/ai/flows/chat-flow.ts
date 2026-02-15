@@ -2,22 +2,24 @@
 'use server';
 
 /**
- * @fileOverview A conversational AI flow for the Smart Toilet Assistant.
+ * @fileOverview A conversational AI flow for the Smart Toilet Assistant using OpenRouter.
  *
  * - chat - A function that handles the chat conversation.
  * - ChatInput - The input type for the chat function.
  * - ChatOutput - The return type for the chat function.
  */
-import { ai, geminiPro } from '@/ai/genkit';
 import { z } from 'zod';
 
 const MessageSchema = z.object({
-  role: z.enum(['user', 'model']),
+  role: z.enum(['user', 'model', 'system']),
   content: z.string(),
 });
 
 const ChatInputSchema = z.object({
-  history: z.array(MessageSchema),
+  history: z.array(z.object({
+    role: z.enum(['user', 'model']),
+    content: z.string(),
+  })),
   message: z.string().describe('The latest user message.'),
 });
 export type ChatInput = z.infer<typeof ChatInputSchema>;
@@ -53,17 +55,31 @@ export async function chat(input: ChatInput): Promise<ChatOutput> {
 
   const messages = [
     { role: 'system', content: systemPrompt },
-    ...history,
+    ...history.map(m => ({ role: m.role === 'model' ? 'assistant' : 'user', content: m.content })),
     { role: 'user', content: message }
-  ] as { role: 'system' | 'user' | 'model'; content: string }[];
+  ];
 
   try {
-    const llmResponse = await ai.generate({
-      model: geminiPro,
-      messages: messages,
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        "model": "google/gemini-flash-1.5",
+        "messages": messages
+      })
     });
+    
+    if (!response.ok) {
+        const errorBody = await response.text();
+        console.error("Error from OpenRouter API:", response.status, errorBody);
+        throw new Error(`API request failed with status ${response.status}: ${errorBody}`);
+    }
 
-    const responseText = llmResponse.text;
+    const data = await response.json();
+    const responseText = data.choices[0].message.content;
 
     if (!responseText) {
       throw new Error("No response content from AI model.");

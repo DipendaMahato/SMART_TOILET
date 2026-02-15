@@ -408,6 +408,33 @@ export default function LiveSensorDataPage() {
         }
     };
 
+    const handleAutoFlushToggle = (checked: boolean) => {
+        if (!database || !user?.uid) {
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Cannot change setting. User not authenticated or database not available.',
+            });
+            return;
+        }
+        const controlRef = ref(database, `Users/${user.uid}/sensorData`);
+        update(controlRef, { autoFlushEnable: checked })
+            .then(() => {
+                toast({
+                    title: 'Auto Flush Updated',
+                    description: `Auto Flush is now ${checked ? 'ON' : 'OFF'}.`,
+                });
+            })
+            .catch((error) => {
+                console.error("Auto Flush update failed:", error);
+                toast({
+                    variant: 'destructive',
+                    title: 'Update Failed',
+                    description: 'Could not update Auto Flush setting.',
+                });
+            });
+    };
+
     const StatusBadge = ({ label, status, className }: { label?: string, status: string, className?: string }) => {
         return (
             <div className="flex items-center gap-1.5">
@@ -630,7 +657,7 @@ export default function LiveSensorDataPage() {
                             <p className='text-sm text-gray-400'>Auto Flush</p>
                             <Switch 
                                 checked={sensorData?.autoFlushEnable || false} 
-                                disabled={true}
+                                onCheckedChange={handleAutoFlushToggle}
                             />
                         </div>
                     </div>
@@ -670,3 +697,5 @@ export default function LiveSensorDataPage() {
         </div>
     );
 }
+
+    

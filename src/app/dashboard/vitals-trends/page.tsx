@@ -38,7 +38,7 @@ const HealthRecordCard = ({ record, onDelete }: { record: any, onDelete: (id: st
         { label: 'Turbidity', value: record.turbidity !== undefined ? `${record.turbidity} NTU` : 'N/A', icon: Waves, color: 'text-gray-400' },
         { label: 'Protein', value: record.protein ?? 'N/A', icon: FlaskConical, color: 'text-yellow-400' },
         { label: 'Glucose', value: record.glucose ?? 'N/A', icon: FlaskConical, color: 'text-orange-400' },
-        { label: 'Blood', value: record.blood === false ? 'Negative' : (record.blood ? 'Positive' : 'N/A'), icon: HeartPulse, color: 'text-red-500' },
+        { label: 'Blood', value: (record.blood === false || record.blood === 0 || String(record.blood).toLowerCase().includes('neg')) ? 'Negative' : record.blood ? 'Positive' : 'N/A', icon: HeartPulse, color: 'text-red-500' },
         { label: 'Bilirubin', value: record.bilirubin ?? 'N/A', icon: TestTube2, color: 'text-red-400' },
         { label: 'Urobilinogen', value: record.urobilinogen ?? 'N/A', icon: TestTube2, color: 'text-pink-400' },
         { label: 'Ketone', value: record.ketone ?? 'N/A', icon: TestTube2, color: 'text-indigo-400' },
@@ -230,20 +230,28 @@ export default function VitalsTrendsPage() {
           const record = {
             id: `${dateStr}-${hwKey}`,
             timestamp: hwTimestamp,
-            ph: sensorData.ph_value_sensor,
-            specificGravity: sensorData.specific_gravity_sensor,
+            
+            // Prioritize chemistry results, fallback to sensor data for overlapping fields
+            ph: chemistry.chem_ph ?? sensorData.ph_value_sensor,
+            specificGravity: chemistry.chem_specificGravity ?? sensorData.specific_gravity_sensor,
+            blood: chemistry.chem_blood ?? sensorData.blood_detected_sensor,
+            protein: chemistry.chem_protein,
+            glucose: chemistry.chem_glucose,
+
+            // Sensor-only data
             tds: sensorData.tds_value,
             turbidity: sensorData.turbidity,
+            
+            // Other chemistry data
             bilirubin: chemistry.chem_bilirubin,
             urobilinogen: chemistry.chem_urobilinogen,
             ketone: chemistry.chem_ketones,
             ascorbicAcid: chemistry.chem_ascorbicAcid,
-            glucose: chemistry.chem_glucose,
-            protein: chemistry.chem_protein,
-            blood: sensorData.blood_detected_sensor,
             nitrite: chemistry.chem_nitrite,
             leukocytes: chemistry.chem_leukocytes,
-            stoolConsistency: 'N/A', // Placeholder
+
+            // Placeholder
+            stoolConsistency: 'N/A',
           };
           allRecords.push(record);
       });
@@ -365,5 +373,7 @@ export default function VitalsTrendsPage() {
     </div>
   );
 }
+
+    
 
     

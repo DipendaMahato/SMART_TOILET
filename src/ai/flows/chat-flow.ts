@@ -88,7 +88,7 @@ export async function chat(input: ChatInput): Promise<ChatOutput> {
   try {
     const genAI = new GoogleGenerativeAI(API_KEY);
     const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash-latest",
+        model: "gemini-pro",
         systemInstruction: systemPrompt,
     });
       

@@ -1,15 +1,16 @@
-
 'use server';
 
 /**
- * @fileOverview A conversational AI flow for the Smart Toilet Assistant using OpenRouter.
+ * @fileOverview A conversational AI flow for the Smart Toilet Assistant.
  *
  * - chat - A function that handles the chat conversation.
  * - ChatInput - The input type for the chat function.
  * - ChatOutput - The return type for the chat function.
  */
 
+import { ai } from '@/ai/genkit';
 import { z } from 'zod';
+import { geminiPro } from '@/ai/genkit';
 
 // Define the shape of a single message for chat history
 const ChatMessageSchema = z.object({
@@ -30,8 +31,16 @@ const ChatOutputSchema = z.object({
 });
 export type ChatOutput = z.infer<typeof ChatOutputSchema>;
 
-// Define the system prompt to guide the AI's behavior
-const systemPrompt = `You are 'Smart Toilet Assistance', a friendly and knowledgeable AI health assistant for a smart toilet application. Your goal is to provide supportive and informative conversations in a human-like manner.
+
+const chatFlow = ai.defineFlow(
+  {
+    name: 'chatFlow',
+    inputSchema: ChatInputSchema,
+    outputSchema: ChatOutputSchema,
+  },
+  async (input) => {
+    const { history, message } = input;
+    const systemPrompt = `You are 'Smart Toilet Assistance', a friendly and knowledgeable AI health assistant for a smart toilet application. Your goal is to provide supportive and informative conversations in a human-like manner.
 
 **Your Persona & Tone:**
 - Communicate like a real, empathetic, and knowledgeable friend.
@@ -52,57 +61,45 @@ const systemPrompt = `You are 'Smart Toilet Assistance', a friendly and knowledg
 **Handling Out-of-Scope Questions:**
 - If asked about topics that are not related to health, wellness, or the application, politely decline by saying something like, "I'm a health assistant, so I can't help with that, but I'm here for any health questions you have! 😊"`;
 
-// Hardcoding the API key to ensure it is available and to bypass any environment variable loading issues.
-const OPENROUTER_API_KEY = "sk-eeb9c5be46b94055897c4ef5f9eec563";
+    const model = geminiPro;
+
+    // Construct the messages for the model
+    const messagesForApi = [
+        ...history.map(msg => ({
+            role: msg.role,
+            content: [{ text: msg.content }]
+        })),
+        {
+            role: 'user' as 'user',
+            content: [{ text: message }]
+        }
+    ];
+
+    const generateResponse = await ai.generate({
+        model: model,
+        prompt: {
+            system: systemPrompt,
+            messages: messagesForApi,
+        },
+    });
+
+    const responseText = generateResponse.text;
+
+    return { response: responseText };
+  }
+);
 
 
 // The main exported function that will be called by the server action
 export async function chat(input: ChatInput): Promise<ChatOutput> {
-  const { history, message } = input;
-
-  const messagesForApi = [
-    { role: 'system', content: systemPrompt },
-    ...history,
-    { role: 'user', content: message },
-  ];
-
   try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        "model": "google/gemini-flash-1.5",
-        "messages": messagesForApi
-      })
-    });
-
-    if (!response.ok) {
-        const errorBody = await response.text();
-        console.error("OpenRouter API Error:", response.status, errorBody);
-        throw new Error(`API request failed with status ${response.status}: ${errorBody}`);
+    const result = await chatFlow(input);
+    if (!result.response) {
+      throw new Error('No response from AI model.');
     }
-
-    const data = await response.json();
-    
-    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-        console.error("Invalid response structure from OpenRouter:", data);
-        throw new Error("Received an invalid response from the AI service.");
-    }
-    
-    const aiMessage = data.choices[0].message.content;
-
-    if (!aiMessage) {
-        return { response: 'Sorry, I could not generate a response.' };
-    }
-
-    return { response: aiMessage };
-
+    return { response: result.response };
   } catch (error: any) {
-    console.error("Error connecting to OpenRouter:", error);
-    // Provide a user-friendly error message
+    console.error("Error in AI chat flow:", error);
     return { response: "Sorry, I had trouble connecting. Please try again." };
   }
 }

@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -9,7 +8,7 @@
  * - ChatOutput - The return type for the chat function.
  */
 
-import * as genai from "@google/genai";
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
 import { z } from 'zod';
 
 // Schema definitions remain the same
@@ -50,24 +49,22 @@ const systemPrompt = `You are 'Smart Toilet Assistance', a friendly and knowledg
 **Handling Out-of-Scope Questions:**
 - If asked about topics that are not related to health, wellness, or the application, politely decline by saying something like, "I'm a health assistant, so I can't help with that, but I'm here for any health questions you have! 😊"`;
 
-const genAI = new genai.GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-
 const safetySettings = [
   {
-    category: genai.HarmCategory.HARM_CATEGORY_HARASSMENT,
-    threshold: genai.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
   },
   {
-    category: genai.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-    threshold: genai.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
   },
   {
-    category: genai.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-    threshold: genai.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
   },
   {
-    category: genai.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-    threshold: genai.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
   },
 ];
 
@@ -77,6 +74,8 @@ export async function chat(input: ChatInput): Promise<ChatOutput> {
     const { history, message } = input;
 
     try {
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+
         const model = genAI.getGenerativeModel({ 
             model: "gemini-pro",
             systemInstruction: systemPrompt,

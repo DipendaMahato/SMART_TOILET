@@ -12,5 +12,5 @@ export const ai = genkit({
   enableTracingAndMetrics: true,
 });
 
-// Use a model that is confirmed to work in other parts of the application.
-export const geminiPro = googleAI.model('gemini-pro-vision');
+// Use a performant text model for general purpose use.
+export const geminiPro = googleAI.model('gemini-1.5-flash');

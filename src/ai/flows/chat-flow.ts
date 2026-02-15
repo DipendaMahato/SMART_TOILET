@@ -34,7 +34,7 @@ export async function chat(message: string): Promise<ChatOutput> {
   ];
 
   const payload = {
-    model: "deepseek/deepseek-r1-0528:free",
+    model: "mistralai/mistral-7b-instruct:free", // Switched to a more reliable free model
     messages: messages,
   };
 
@@ -51,9 +51,10 @@ export async function chat(message: string): Promise<ChatOutput> {
     });
 
     if (!res.ok) {
-      const errorBody = await res.json();
+      // Use .text() for robust error handling, as the error body may not be JSON
+      const errorBody = await res.text();
       console.error("OpenRouter API Error:", res.status, errorBody);
-      throw new Error(`API request failed with status ${res.status}: ${errorBody.error?.message || JSON.stringify(errorBody)}`);
+      throw new Error(`API request failed with status ${res.status}: ${errorBody}`);
     }
 
     const data = await res.json();
@@ -61,8 +62,7 @@ export async function chat(message: string): Promise<ChatOutput> {
 
     if (!responseText) {
       console.warn("AI response was empty.", { data });
-      let errorMessage = "My response was empty.";
-      throw new Error(errorMessage);
+      throw new Error("The AI returned an empty response.");
     }
     
     return { response: responseText };

@@ -8,7 +8,7 @@
 import { z } from 'zod';
 
 // Using the provided OpenRouter API Key directly to ensure connection.
-const API_KEY = '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';
+const API_KEY = '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';
 const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 // This is the output schema.

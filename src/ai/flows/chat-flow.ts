@@ -1,22 +1,24 @@
-
 'use server';
 
 /**
- * @fileOverview A conversational AI flow for the Smart Toilet Assistant using the Google AI SDK.
+ * @fileOverview A conversational AI flow for the Smart Toilet Assistant.
  *
  * - chat - A function that handles the chat conversation.
  * - ChatInput - The input type for the chat function.
  * - ChatOutput - The return type for the chat function.
  */
-import { z } from 'zod';
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold, Content } from "@google/genai";
 
-// Schema definitions remain the same
+import { ai, geminiPro } from '@/ai/genkit';
+import { z } from 'zod';
+import { generate } from 'genkit/generate';
+
+const ChatMessageSchema = z.object({
+  role: z.enum(['user', 'model']),
+  content: z.string(),
+});
+
 const ChatInputSchema = z.object({
-  history: z.array(z.object({
-    role: z.enum(['user', 'model']),
-    content: z.string(),
-  })),
+  history: z.array(ChatMessageSchema),
   message: z.string().describe('The latest user message.'),
 });
 export type ChatInput = z.infer<typeof ChatInputSchema>;
@@ -25,9 +27,6 @@ const ChatOutputSchema = z.object({
   response: z.string().describe("The AI model's response."),
 });
 export type ChatOutput = z.infer<typeof ChatOutputSchema>;
-
-// Get API key from environment variables
-const API_KEY = process.env.GEMINI_API_KEY;
 
 const systemPrompt = `You are 'Smart Toilet Assistance', a friendly and knowledgeable AI health assistant for a smart toilet application. Your goal is to provide supportive and informative conversations in a human-like manner.
 
@@ -50,74 +49,41 @@ const systemPrompt = `You are 'Smart Toilet Assistance', a friendly and knowledg
 **Handling Out-of-Scope Questions:**
 - If asked about topics that are not related to health, wellness, or the application, politely decline by saying something like, "I'm a health assistant, so I can't help with that, but I'm here for any health questions you have! 😊"`;
 
-const generationConfig = {
-  temperature: 0.9,
-  topK: 1,
-  topP: 1,
-  maxOutputTokens: 2048,
-};
-
-const safetySettings = [
-  {
-    category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-  },
-];
-
-
+// This wrapper function will be called by the action.
 export async function chat(input: ChatInput): Promise<ChatOutput> {
-  const { history, message } = input;
+  return chatFlow(input);
+}
 
-  if (!API_KEY) {
-      console.error("GEMINI_API_KEY environment variable not set.");
-      return { response: "Sorry, the AI service is not configured correctly. Please contact support." };
-  }
-
-  try {
-    const genAI = new GoogleGenerativeAI(API_KEY);
-    const model = genAI.getGenerativeModel({
-        model: "gemini-pro",
-        systemInstruction: systemPrompt,
-    });
-      
-    // Format the history for the Google AI SDK
-    const formattedHistory: Content[] = history.map(h => ({
+const chatFlow = ai.defineFlow(
+  {
+    name: 'chatFlow',
+    inputSchema: ChatInputSchema,
+    outputSchema: ChatOutputSchema,
+  },
+  async ({ history, message }) => {
+    const formattedHistory = history.map(h => ({
       role: h.role,
-      parts: [{ text: h.content }],
+      content: [{ text: h.content }],
     }));
 
-    const chatSession = model.startChat({
-        generationConfig,
-        safetySettings,
-        history: formattedHistory,
-    });
+    try {
+        const response = await generate({
+            model: geminiPro,
+            prompt: message,
+            history: formattedHistory,
+            system: systemPrompt,
+        });
+        
+        const textResponse = response.text;
 
-    const result = await chatSession.sendMessage(message);
-    const responseText = result.response.text();
+        if (!textResponse) {
+            return { response: 'Sorry, I could not generate a response.' };
+        }
 
-    if (!responseText) {
-      throw new Error("No response content from AI model.");
+        return { response: textResponse };
+    } catch (error) {
+        console.error("Error in Genkit chat flow:", error);
+        return { response: "Sorry, I had trouble connecting. Please try again." };
     }
-
-    return { response: responseText };
-
-  } catch (error) {
-    console.error("Error in chat flow with Google AI SDK:", error);
-    if (error instanceof Error && error.message.includes('API key')) {
-        return { response: "Sorry, there's an issue with the API key configuration. Please contact support." };
-    }
-    return { response: "Sorry, I had trouble connecting. Please try again." };
   }
-}
+);

@@ -12,8 +12,6 @@
 import * as genai from "@google/genai";
 import { z } from 'zod';
 
-const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = genai;
-
 // Schema definitions remain the same
 const ChatMessageSchema = z.object({
   role: z.enum(['user', 'model']),
@@ -52,24 +50,24 @@ const systemPrompt = `You are 'Smart Toilet Assistance', a friendly and knowledg
 **Handling Out-of-Scope Questions:**
 - If asked about topics that are not related to health, wellness, or the application, politely decline by saying something like, "I'm a health assistant, so I can't help with that, but I'm here for any health questions you have! 😊"`;
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const genAI = new genai.GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 const safetySettings = [
   {
-    category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    category: genai.HarmCategory.HARM_CATEGORY_HARASSMENT,
+    threshold: genai.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
   },
   {
-    category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    category: genai.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+    threshold: genai.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
   },
   {
-    category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    category: genai.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+    threshold: genai.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
   },
   {
-    category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    category: genai.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+    threshold: genai.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
   },
 ];
 

@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A conversational AI flow for the Smart Toilet Assistant.
@@ -41,28 +42,25 @@ const chatFlow = ai.defineFlow(
   async (input) => {
     const { history, message, userProfile, healthData } = input;
     
-    // Data Handling: Converting context into a formatted string for the AI
-    const currentContext = `
-      USER PROFILE: ${userProfile || 'No profile provided'}
-      LATEST SENSOR DATA: ${healthData || 'No sensor readings currently available'}
-    `;
-
-    // Combine context and user message into the final prompt
-    const finalUserMessage = `Context: ${currentContext}\n\nUser Message: ${message}`;
-    
-    const llmResponse = await ai.generate({
-        model: geminiPro,
-        prompt: finalUserMessage,
-        history: history,
-        // Role Definition: Specialized for the Smart Toilet Health Monitoring System
-        system: `You are the "Smart Toilet Medical Assistant," a specialized diagnostic AI. 
+    // Combine all instructions and context into a single prompt.
+    const fullPrompt = `You are the "Smart Toilet Medical Assistant," a specialized diagnostic AI. 
       Your goal is to analyze user health trends based on urine and stool sensor data.
       
       CONTEXT RULES:
       - Use the provided User Profile for age, weight, and medical history.
       - Analyze the Health Data for specific sensor values: pH, Protein, Glucose, and hydration levels.
       - If sensor values are abnormal (e.g., high glucose), suggest consulting a doctor but do not give a final medical diagnosis.
-      - Be professional, empathetic, and concise.`,
+      - Be professional, empathetic, and concise.
+
+      USER PROFILE: ${userProfile || 'No profile provided'}
+      LATEST SENSOR DATA: ${healthData || 'No sensor readings currently available'}
+
+      User Message: ${message}`;
+    
+    const llmResponse = await ai.generate({
+        model: geminiPro,
+        prompt: fullPrompt,
+        history: history,
     });
     
     const responseText = llmResponse.text;

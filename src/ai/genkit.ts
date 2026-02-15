@@ -13,4 +13,5 @@ export const ai = genkit({
 });
 
 // Use a performant text model for general purpose use.
-export const geminiPro = googleAI.model('gemini-1.5-flash');
+export const geminiPro = googleAI.model('gemini-pro');
+

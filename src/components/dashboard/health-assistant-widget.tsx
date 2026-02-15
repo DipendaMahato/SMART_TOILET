@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from "react";
@@ -55,22 +54,17 @@ export function HealthAssistantWidget() {
         setLoading(true);
         setResponse("Processing your request...");
 
-        try {
-            // Simplified for debugging: Start with an empty history to isolate the AI call.
-            const history: Message[] = [];
-            const result = await chatWithAi(history, question);
-            
-            if (result.error) {
-                throw new Error(result.error);
-            }
-
-            setResponse(result.response);
-        } catch (error: any) {
-            console.error(error);
+        const history: Message[] = [];
+        const result = await chatWithAi(history, question);
+        
+        if (result.error) {
+            console.error("AI Chat Error:", result.error);
             setResponse("I am sorry, I am having trouble connecting to the service right now.");
-        } finally {
-            setLoading(false);
+        } else {
+            setResponse(result.response);
         }
+        
+        setLoading(false);
     };
 
     const age = profile?.dateOfBirth ? getAge(profile.dateOfBirth) : null;

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -43,20 +42,18 @@ export function AiAssistantChat() {
     setInput('');
     setLoading(true);
     
-    try {
-      // Pass the history *before* the new message, and the new message itself.
-      const result = await chatWithAi(messages, currentInput);
-      if (result.error) {
-        throw new Error(result.error);
-      }
-      const modelMessage: Message = { role: 'model', content: result.response };
-      setMessages(prev => [...prev, modelMessage]);
-    } catch (error) {
+    const result = await chatWithAi(messages, currentInput);
+    
+    if (result.error) {
+      console.error("AI Chat Error:", result.error);
       const errorMessage: Message = { role: 'model', content: 'Sorry, I had trouble connecting. Please try again.' };
       setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setLoading(false);
+    } else {
+      const modelMessage: Message = { role: 'model', content: result.response };
+      setMessages(prev => [...prev, modelMessage]);
     }
+    
+    setLoading(false);
   };
 
   return (

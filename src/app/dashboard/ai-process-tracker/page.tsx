@@ -2,7 +2,7 @@
 import { AiAssistantChat } from '@/components/dashboard/ai-assistant-chat';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { BrainCircuit, CheckCircle, Database, Filter, FlaskConical, Camera, RefreshCw, Loader2 } from 'lucide-react';
+import { BrainCircuit, CheckCircle, Database, Filter, FlaskConical, Camera, RefreshCw, Loader2, X } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -48,42 +48,65 @@ const processStages = [
 
 export default function AiProcessTrackerPage() {
   const [hasCameraPermission, setHasCameraPermission] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+
   const videoRef = useRef<HTMLVideoElement>(null);
-  const { toast } = useToast();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { toast } = useToast();
+  
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<DipstickResult[] | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  useEffect(() => {
-    const getCameraPermission = async () => {
+  const openCamera = async () => {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({video: true});
+        const cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        setStream(cameraStream);
+        setIsCameraOpen(true);
         setHasCameraPermission(true);
-
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
       } catch (error) {
         console.error('Error accessing camera:', error);
         setHasCameraPermission(false);
         toast({
           variant: 'destructive',
           title: 'Camera Access Denied',
-          description: 'Please enable camera permissions in your browser settings to use this app.',
+          description: 'Please enable camera permissions in your browser settings to use this feature.',
         });
       }
-    };
+    }
+  };
 
-    getCameraPermission();
-  }, [toast]);
+  const closeCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+    }
+    setStream(null);
+    setIsCameraOpen(false);
+  };
+  
+  useEffect(() => {
+    if (isCameraOpen && stream && videoRef.current) {
+      videoRef.current.srcObject = stream;
+    } else if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+
+    // Cleanup on component unmount
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [isCameraOpen, stream]);
   
   const handleCaptureAndAnalyze = async () => {
-    if (!videoRef.current || !canvasRef.current || !hasCameraPermission) {
+    if (!videoRef.current || !canvasRef.current || !isCameraOpen) {
         toast({
             variant: 'destructive',
             title: 'Camera not ready',
-            description: 'Please ensure camera permissions are enabled and the video feed is active.',
+            description: 'Please open the camera before capturing an image.',
         });
         return;
     }
@@ -100,6 +123,7 @@ export default function AiProcessTrackerPage() {
 
     const imageDataUri = canvas.toDataURL('image/jpeg');
     setCapturedImage(imageDataUri);
+    closeCamera();
     
     setIsAnalyzing(true);
     setAnalysisResult(null);
@@ -127,6 +151,7 @@ export default function AiProcessTrackerPage() {
   const handleRetake = () => {
     setCapturedImage(null);
     setAnalysisResult(null);
+    openCamera();
   };
 
   return (
@@ -189,32 +214,43 @@ export default function AiProcessTrackerPage() {
                 <div className="relative w-full aspect-video bg-black rounded-md flex items-center justify-center">
                     {capturedImage ? (
                         <Image src={capturedImage} alt="Captured dipstick" layout="fill" objectFit="contain" className="rounded-md" />
-                    ) : (
+                    ) : isCameraOpen ? (
                         <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted playsInline />
+                    ) : (
+                        <div className="flex flex-col items-center gap-4 text-muted-foreground">
+                            <Camera className="h-16 w-16" />
+                            <p>Camera is off</p>
+                        </div>
                     )}
                 </div>
                 
-                {!hasCameraPermission && !capturedImage && (
-                    <Alert variant="destructive">
-                        <AlertTitle>Camera Access Required</AlertTitle>
-                        <AlertDescription>
-                            Please allow camera access to use this feature.
-                        </AlertDescription>
-                    </Alert>
-                )}
-
                 <div className="flex gap-2">
+                    {!isCameraOpen && !capturedImage ? (
+                        <Button className="w-full" onClick={openCamera} disabled={isAnalyzing}>
+                            <Camera className="mr-2 h-4 w-4" />
+                            Open Camera
+                        </Button>
+                    ) : null}
+
+                    {isCameraOpen && !capturedImage ? (
+                        <>
+                            <Button className="w-full" disabled={!hasCameraPermission || isAnalyzing} onClick={handleCaptureAndAnalyze}>
+                                <Camera className="mr-2 h-4 w-4" />
+                                Capture & Analyze
+                            </Button>
+                            <Button variant="outline" className="w-full" onClick={closeCamera} disabled={isAnalyzing}>
+                                <X className="mr-2 h-4 w-4" />
+                                Close Camera
+                            </Button>
+                        </>
+                    ) : null}
+                    
                     {capturedImage ? (
                         <Button className="w-full" variant="outline" onClick={handleRetake} disabled={isAnalyzing}>
                             <RefreshCw className="mr-2 h-4 w-4" />
                             Retake Photo
                         </Button>
-                    ) : (
-                        <Button className="w-full" disabled={!hasCameraPermission || isAnalyzing} onClick={handleCaptureAndAnalyze}>
-                            <Camera className="mr-2 h-4 w-4" />
-                            Capture & Analyze Photo
-                        </Button>
-                    )}
+                    ) : null}
                 </div>
                 
                 {isAnalyzing && (

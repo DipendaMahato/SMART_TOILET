@@ -44,13 +44,19 @@ const prompt = ai.definePrompt({
   model: geminiProVision,
   input: {schema: AnalyzeDipstickInputSchema},
   output: {schema: AnalyzeDipstickOutputSchema},
-  prompt: `You are an expert at analyzing urine dipstick test results from an image.
-  Analyze the provided image of the urine dipstick against a standard color chart.
-  For each parameter pad on the dipstick (Leukocytes, Nitrite, Urobilinogen, Protein, pH, Blood, Specific Gravity, Ketone, Bilirubin, Glucose), identify the resulting color and determine its corresponding value.
-  Classify each result's status as "Normal", "Needs Attention", or "Abnormal" based on standard medical reference ranges.
-  Return the results as a structured array of objects.
+  prompt: `You are a medical lab AI expert specializing in analyzing urine dipstick test results from images.
 
-  Dipstick Photo: {{media url=imageDataUri}}`,
+Your task is to analyze the provided image of the urine dipstick.
+
+1.  **Examine the Image**: Carefully look at the dipstick in the photo.
+2.  **Identify Parameters**: For each parameter pad (Leukocytes, Nitrite, Urobilinogen, Protein, pH, Blood, Specific Gravity, Ketone, Bilirubin, Glucose), identify the resulting color.
+3.  **Determine Value**: Compare the color to a standard medical reference chart to determine the value.
+4.  **Classify Status**: Based on the value, classify the status as "Normal", "Needs Attention", or "Abnormal".
+5.  **Handle Bad Images**: If the image is unclear, blurry, or not a valid dipstick, you must still return a result, but use the value "Invalid Image" for each parameter and the status "Abnormal".
+6.  **Format Output**: You MUST return the results as a valid JSON object that strictly follows the provided output schema. Ensure all fields are present for all 10 parameters.
+
+Analyze the following image:
+Dipstick Photo: {{media url=imageDataUri}}`,
 });
 
 const analyzeDipstickFlow = ai.defineFlow(

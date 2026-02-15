@@ -67,10 +67,6 @@ export function AiAssistantChat() {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
   }, [messages, loading]);
-  
-  useEffect(() => {
-    setMessages([{ role: 'model', content: "Hello! I’m Smart Toilet Assistant, here to help you with your health insights. How can I assist you today? 🩺📊" }]);
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,6 +78,7 @@ export function AiAssistantChat() {
     setInput('');
     setLoading(true);
     
+    // The `messages` state here is from the previous render, so it correctly represents the history *before* the current user message.
     const result = await chatWithAi(messages, currentInput, userProfile, healthData);
     
     if (result.error) {
@@ -109,6 +106,16 @@ export function AiAssistantChat() {
         <CardContent className="flex-1 flex flex-col gap-4 overflow-hidden">
             <ScrollArea className="flex-1 pr-4" ref={scrollAreaRef}>
             <div className="space-y-6">
+                {/* Static initial greeting message */}
+                <div className="flex items-start gap-3">
+                    <Avatar className="h-8 w-8 border">
+                        <AvatarFallback><Bot size={16} /></AvatarFallback>
+                    </Avatar>
+                    <div className="max-w-xs rounded-lg px-4 py-2 text-sm md:max-w-md bg-muted">
+                        <p className="whitespace-pre-wrap">Hello! I’m Smart Toilet Assistant, here to help you with your health insights. How can I assist you today? 🩺📊</p>
+                    </div>
+                </div>
+
                 {messages.map((message, index) => (
                 <div
                     key={index}

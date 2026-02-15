@@ -13,4 +13,4 @@ export const ai = genkit({
 });
 
 // Use a more stable and widely available model to prevent access issues.
-export const geminiPro = googleAI.model('gemini-pro');
+export const geminiPro = googleAI.model('gemini-1.5-flash-latest');

@@ -9,15 +9,17 @@
  * - ChatOutput - The return type for the chat function.
  */
 
+import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { Message } from 'genkit/ai';
 
 const MessageSchema = z.object({
-  role: z.enum(['user', 'model', 'system']),
+  role: z.enum(['user', 'model']),
   content: z.string(),
 });
 
 const ChatInputSchema = z.object({
-  history: z.array(MessageSchema.omit({ role: true }).extend({ role: z.enum(['user', 'model']) })),
+  history: z.array(MessageSchema),
   message: z.string().describe('The latest user message.'),
 });
 export type ChatInput = z.infer<typeof ChatInputSchema>;
@@ -49,46 +51,42 @@ const systemPrompt = `You are 'Smart Toilet Assistance', a friendly and knowledg
 **Handling Out-of-Scope Questions:**
 - If asked about topics that are not related to health, wellness, or the application, politely decline by saying something like, "I'm a health assistant, so I can't help with that, but I'm here for any health questions you have! 😊"`;
 
+const chatFlow = ai.defineFlow(
+  {
+    name: 'chatFlow',
+    inputSchema: ChatInputSchema,
+    outputSchema: ChatOutputSchema,
+  },
+  async ({ history, message }) => {
+    
+    const genkitHistory: Message[] = history.map(h => ({
+      role: h.role,
+      content: [{text: h.content}],
+    }));
 
-export async function chat(input: ChatInput): Promise<ChatOutput> {
-  const { history, message } = input;
-
-  const messages = [
-    { role: 'system', content: systemPrompt },
-    ...history,
-    { role: 'user', content: message },
-  ];
-
-  try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://studio.firebase.google.com/",
-        "X-Title": "Smart Toilet App",
+    const llmResponse = await ai.generate({
+      model: 'google/gemini-1.5-flash-latest',
+      prompt: message,
+      history: genkitHistory,
+      config: {
+        systemPrompt,
       },
-      body: JSON.stringify({
-        "model": "deepseek/deepseek-r1-0528:free",
-        "messages": messages
-      })
     });
 
-    if (!response.ok) {
-      const errorBody = await response.text();
-      console.error("OpenRouter API Error:", errorBody);
-      throw new Error(`API request failed with status ${response.status}`);
-    }
-
-    const data = await response.json();
-    const aiResponse = data.choices[0]?.message?.content;
-
-    if (!aiResponse) {
+    const response = llmResponse.text;
+    
+    if (!response) {
       throw new Error("No response content from AI model.");
     }
+    
+    return { response };
+  }
+);
 
-    return { response: aiResponse };
 
+export async function chat(input: ChatInput): Promise<ChatOutput> {
+  try {
+    return await chatFlow(input);
   } catch (error) {
     console.error("Error in chat flow:", error);
     // Return a user-friendly error in the expected output format

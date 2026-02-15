@@ -9,6 +9,7 @@ import { generateHealthInsights } from '@/ai/flows/generate-health-insights';
 import { refineInsightsWithReasoning } from '@/ai/flows/refine-insights-with-reasoning';
 import { sendOtp as sendOtpFlow, SendOtpInput } from '@/ai/flows/send-otp-flow';
 import { chat } from '@/ai/flows/chat-flow';
+import { analyzeDipstick as analyzeDipstickFlow, AnalyzeDipstickInput } from '@/ai/flows/analyze-dipstick-flow';
 
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -58,7 +59,6 @@ export async function sendOtp(input: SendOtpInput) {
 
 export async function chatWithAi(history: { role: 'user' | 'model'; content: string }[], message: string) {
     try {
-        // Simplified to ignore history for now to test core connection
         const result = await chat(message);
         
         if (result && result.response) {
@@ -69,5 +69,15 @@ export async function chatWithAi(history: { role: 'user' | 'model'; content: str
     } catch (error: any) {
         console.error('Error in AI chat action:', error);
         return { error: 'Sorry, I am currently unable to connect to the AI service. Please try again later.' };
+    }
+}
+
+export async function analyzeDipstick(input: AnalyzeDipstickInput) {
+    try {
+        const result = await analyzeDipstickFlow(input);
+        return result;
+    } catch (error: any) {
+        console.error('Error analyzing dipstick:', error);
+        return { error: 'Failed to analyze dipstick image. Please try again.' };
     }
 }

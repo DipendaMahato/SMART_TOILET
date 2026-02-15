@@ -2,11 +2,16 @@
 import { AiAssistantChat } from '@/components/dashboard/ai-assistant-chat';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { BrainCircuit, CheckCircle, Database, Filter, FlaskConical, Camera } from 'lucide-react';
+import { BrainCircuit, CheckCircle, Database, Filter, FlaskConical, Camera, RefreshCw, Loader2 } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import Image from 'next/image';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { analyzeDipstick } from '@/lib/actions';
+import type { DipstickResult } from '@/ai/flows/analyze-dipstick-flow';
 
 const processStages = [
     {
@@ -35,7 +40,7 @@ const processStages = [
     },
      {
         name: 'Insight Generation',
-        description: 'Actionable health insights are created for the user. You can also manually scan a dipstick below.',
+        description: 'Actionable health insights are created. You can also manually scan a dipstick below.',
         icon: CheckCircle,
         status: 'pending',
     },
@@ -45,6 +50,10 @@ export default function AiProcessTrackerPage() {
   const [hasCameraPermission, setHasCameraPermission] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<DipstickResult[] | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   useEffect(() => {
     const getCameraPermission = async () => {
@@ -68,6 +77,57 @@ export default function AiProcessTrackerPage() {
 
     getCameraPermission();
   }, [toast]);
+  
+  const handleCaptureAndAnalyze = async () => {
+    if (!videoRef.current || !canvasRef.current || !hasCameraPermission) {
+        toast({
+            variant: 'destructive',
+            title: 'Camera not ready',
+            description: 'Please ensure camera permissions are enabled and the video feed is active.',
+        });
+        return;
+    }
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const context = canvas.getContext('2d');
+    if (!context) return;
+    context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+
+    const imageDataUri = canvas.toDataURL('image/jpeg');
+    setCapturedImage(imageDataUri);
+    
+    setIsAnalyzing(true);
+    setAnalysisResult(null);
+
+    const result = await analyzeDipstick({ imageDataUri });
+
+    if (result.error) {
+        toast({
+            variant: 'destructive',
+            title: 'Analysis Failed',
+            description: result.error,
+        });
+        setAnalysisResult(null);
+    } else {
+        setAnalysisResult(result.results);
+        toast({
+            title: 'Analysis Complete',
+            description: 'Dipstick analysis results are now available.',
+        });
+    }
+
+    setIsAnalyzing(false);
+  };
+
+  const handleRetake = () => {
+    setCapturedImage(null);
+    setAnalysisResult(null);
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fade-in">
@@ -119,14 +179,22 @@ export default function AiProcessTrackerPage() {
               Manual Dipstick Analysis
             </CardTitle>
             <CardDescription>
-              Use your camera to scan a urine dipstick for an instant health parameter analysis.
+              {capturedImage ? "Review the captured image and analysis results." : "Use your camera to scan a urine dipstick for an instant health parameter analysis."}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-                <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted playsInline />
+                <canvas ref={canvasRef} className="hidden" />
+
+                <div className="relative w-full aspect-video bg-black rounded-md flex items-center justify-center">
+                    {capturedImage ? (
+                        <Image src={capturedImage} alt="Captured dipstick" layout="fill" objectFit="contain" className="rounded-md" />
+                    ) : (
+                        <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted playsInline />
+                    )}
+                </div>
                 
-                {!hasCameraPermission && (
+                {!hasCameraPermission && !capturedImage && (
                     <Alert variant="destructive">
                         <AlertTitle>Camera Access Required</AlertTitle>
                         <AlertDescription>
@@ -135,10 +203,55 @@ export default function AiProcessTrackerPage() {
                     </Alert>
                 )}
 
-                <Button className="w-full" disabled={!hasCameraPermission} onClick={() => alert("Analysis feature coming soon!")}>
-                    <Camera className="mr-2 h-4 w-4" />
-                    Analyze Dipstick Photo
-                </Button>
+                <div className="flex gap-2">
+                    {capturedImage ? (
+                        <Button className="w-full" variant="outline" onClick={handleRetake} disabled={isAnalyzing}>
+                            <RefreshCw className="mr-2 h-4 w-4" />
+                            Retake Photo
+                        </Button>
+                    ) : (
+                        <Button className="w-full" disabled={!hasCameraPermission || isAnalyzing} onClick={handleCaptureAndAnalyze}>
+                            <Camera className="mr-2 h-4 w-4" />
+                            Capture & Analyze Photo
+                        </Button>
+                    )}
+                </div>
+                
+                {isAnalyzing && (
+                    <div className="flex items-center justify-center text-muted-foreground gap-2 pt-4">
+                        <Loader2 className="animate-spin" />
+                        <p>Our AI is analyzing your image... this may take a moment.</p>
+                    </div>
+                )}
+                
+                {analysisResult && (
+                    <div className="pt-4">
+                        <h3 className="font-semibold text-lg mb-2">Analysis Results</h3>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Parameter</TableHead>
+                                    <TableHead>Value</TableHead>
+                                    <TableHead className="text-right">Status</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {analysisResult.map((res, index) => (
+                                    <TableRow key={index}>
+                                        <TableCell className="font-medium">{res.parameter}</TableCell>
+                                        <TableCell>{res.value}</TableCell>
+                                        <TableCell className="text-right">
+                                            <Badge variant={
+                                                res.status === 'Normal' ? 'green' : 
+                                                res.status === 'Abnormal' ? 'destructive' : 'yellow'
+                                            }>{res.status}</Badge>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                )}
             </div>
           </CardContent>
         </Card>

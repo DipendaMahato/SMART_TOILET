@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -8,8 +9,10 @@
  * - ChatOutput - The return type for the chat function.
  */
 
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
+import * as genai from "@google/genai";
 import { z } from 'zod';
+
+const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = genai;
 
 // Schema definitions remain the same
 const ChatMessageSchema = z.object({

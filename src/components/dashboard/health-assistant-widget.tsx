@@ -51,22 +51,13 @@ export function HealthAssistantWidget() {
     }, [user, firestore]);
 
     const askHealthAI = async () => {
-        if (!question || !user || !firestore) return;
+        if (!question) return;
         setLoading(true);
         setResponse("Processing your request...");
 
         try {
-            const healthDataRef = collection(firestore, `users/${user.uid}/healthData`);
-            const q = query(healthDataRef, orderBy("timestamp", "desc"), limit(1));
-            const snapshot = await getDocs(q);
-            
-            let contextData = "No recent data found.";
-            if (!snapshot.empty) {
-                const d = snapshot.docs[0].data();
-                 contextData = `Urine pH: ${d.urinePH || '6.5'}, Specific Gravity: ${d.urineSpecificGravity || '1.015'}, Urine Protein: ${d.urineProtein || 'Negative'}, Urine Glucose: ${d.urineGlucose || 'Negative'}, Stool Consistency: ${d.stoolConsistency || 'Type 4'}. Status: Normal.`;
-            }
-            
-            const history: Message[] = [{ role: 'model', content: contextData }];
+            // Simplified for debugging: Start with an empty history to isolate the AI call.
+            const history: Message[] = [];
             const result = await chatWithAi(history, question);
             
             if (result.error) {

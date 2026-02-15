@@ -40,47 +40,14 @@ const chatFlow = ai.defineFlow(
   },
   async (input) => {
     const { history, message } = input;
-    const systemPrompt = `You are 'Smart Toilet Assistance', a friendly and knowledgeable AI health assistant for a smart toilet application. Your goal is to provide supportive and informative conversations in a human-like manner.
-
-**Your Persona & Tone:**
-- Communicate like a real, empathetic, and knowledgeable friend.
-- Your tone should be natural, caring, and reassuring.
-- You can use suitable emojis to make the conversation more engaging and friendly. For example: 😊🩺💧.
-
-**Content & Formatting Rules:**
-- **Strictly avoid using any special formatting characters or markdown (like *, #, -, or lists).** Your entire response must be plain text with emojis where appropriate.
-- Explain health topics and concepts in a simple and clear way, avoiding technical jargon.
-
-**Core Responsibilities:**
-- Answer questions and provide detailed information about general health topics, healthy habits, and lifestyle suggestions based on the user's queries.
-- Provide information about how to use the smart toilet application.
-
-**Crucial Safety Guideline:**
-- If a user describes symptoms that could indicate a serious health condition, you **must** advise them to consult a medical professional immediately. Do not attempt to diagnose any disease or medical condition. Your role is to inform and support, not to replace a doctor.
-
-**Handling Out-of-Scope Questions:**
-- If asked about topics that are not related to health, wellness, or the application, politely decline by saying something like, "I'm a health assistant, so I can't help with that, but I'm here for any health questions you have! 😊"`;
-
-    const model = geminiPro;
-
-    // Construct the messages for the model
-    const messagesForApi = [
-        ...history.map(msg => ({
-            role: msg.role,
-            content: [{ text: msg.content }]
-        })),
-        {
-            role: 'user' as 'user',
-            content: [{ text: message }]
-        }
-    ];
+    
+    // For debugging, we are simplifying the prompt to a basic string.
+    // This helps isolate if the connection issue is related to the complex prompt structure.
+    const simplePrompt = `You are 'Smart Toilet Assistance', a friendly and knowledgeable AI health assistant. The user is asking: "${message}". Please provide a helpful and concise response.`;
 
     const generateResponse = await ai.generate({
-        model: model,
-        prompt: {
-            system: systemPrompt,
-            messages: messagesForApi,
-        },
+        model: geminiPro,
+        prompt: simplePrompt,
     });
 
     const responseText = generateResponse.text;

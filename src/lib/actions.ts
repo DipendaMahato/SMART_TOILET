@@ -57,9 +57,9 @@ export async function sendOtp(input: SendOtpInput) {
     }
 }
 
-export async function chatWithAi(history: ChatMessage[], message: string) {
+export async function chatWithAi(history: ChatMessage[], message: string, userProfile?: string, healthData?: string) {
     try {
-        const result = await chat({ history, message });
+        const result = await chat({ history, message, userProfile, healthData });
         
         if (result && result.response) {
             return { response: result.response };

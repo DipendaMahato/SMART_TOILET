@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ChemistryReport } from '@/components/insights/chemistry-report';
 import { Button } from '@/components/ui/button';
 import { UrineQualityResult } from '@/components/dashboard/urine-quality-result';
+import { getLatestCombinedSession } from '@/lib/data-helpers';
 
 const WarningMessage = ({ text = 'Warning: Value out of range.' }: { text?: string }) => (
     <div className="flex items-center gap-2 text-sm text-red-400 mt-2">
@@ -21,55 +22,6 @@ const WarningMessage = ({ text = 'Warning: Value out of range.' }: { text?: stri
         <span>{text}</span>
     </div>
 );
-
-// Helper to get the latest combined session data from RTDB data
-const getLatestCombinedSession = (data: any) => {
-    if (!data?.Reports) return { latestCombinedSession: null, combinedSessionId: null };
-
-    const dateKeys = Object.keys(data.Reports).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k));
-    if (dateKeys.length === 0) return { latestCombinedSession: null, combinedSessionId: null };
-    
-    const latestDate = dateKeys.sort().pop();
-    if (!latestDate) return { latestCombinedSession: null, combinedSessionId: null };
-
-    const dailyReport = data.Reports[latestDate];
-    if (!dailyReport) return { latestCombinedSession: null, combinedSessionId: null };
-
-    const hardwareSessions = dailyReport.Hardware_Sessions;
-    const medicalSessions = dailyReport.Medical_Sessions;
-
-    let latestHardwareSession = null;
-    let latestHardwareSessionId = null;
-    if (hardwareSessions && Object.keys(hardwareSessions).length > 0) {
-        latestHardwareSessionId = Object.keys(hardwareSessions).sort().pop();
-        if (latestHardwareSessionId) {
-            latestHardwareSession = hardwareSessions[latestHardwareSessionId];
-        }
-    }
-
-    let latestMedicalSession = null;
-    let latestMedicalSessionId = null;
-    if (medicalSessions && Object.keys(medicalSessions).length > 0) {
-        latestMedicalSessionId = Object.keys(medicalSessions).sort().pop();
-        if (latestMedicalSessionId) {
-            latestMedicalSession = medicalSessions[latestMedicalSessionId];
-        }
-    }
-
-    if (!latestHardwareSession && !latestMedicalSession) {
-        return { latestCombinedSession: null, combinedSessionId: null };
-    }
-
-    const latestCombinedSession = {
-        sensorData: latestHardwareSession?.sensorData || null,
-        Chemistry_Result: latestMedicalSession?.Chemistry_Result || null,
-        metadata: latestHardwareSession?.metadata || latestMedicalSession?.metadata || null,
-    };
-    
-    const combinedSessionId = `${latestDate}_${latestHardwareSessionId || 'nohw'}_${latestMedicalSessionId || 'nomed'}`;
-
-    return { latestCombinedSession, combinedSessionId };
-};
 
 
 export default function LiveSensorDataPage() {

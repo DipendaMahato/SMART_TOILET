@@ -10,6 +10,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { chatWithAi } from '@/lib/actions';
 import { Skeleton } from '../ui/skeleton';
+import { useUser, useFirestore, useDatabase } from '@/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { ref, get } from 'firebase/database';
+import { getLatestCombinedSession } from '@/lib/data-helpers';
 
 interface Message {
   role: 'user' | 'model';
@@ -21,6 +25,42 @@ export function AiAssistantChat() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const database = useDatabase();
+  const [userProfile, setUserProfile] = useState<string | undefined>();
+  const [healthData, setHealthData] = useState<string | undefined>();
+
+  useEffect(() => {
+    async function fetchData() {
+        if (!user || !firestore || !database) return;
+
+        try {
+            // Fetch user profile from Firestore
+            const userDocRef = doc(firestore, 'users', user.uid);
+            const userDocSnap = await getDoc(userDocRef);
+            if (userDocSnap.exists()) {
+                setUserProfile(JSON.stringify(userDocSnap.data()));
+            }
+
+            // Fetch latest health data from RTDB
+            const rtdbRef = ref(database, `Users/${user.uid}`);
+            const rtdbSnap = await get(rtdbRef);
+            if(rtdbSnap.exists()) {
+                const rtdbData = rtdbSnap.val();
+                const { latestCombinedSession } = getLatestCombinedSession(rtdbData);
+                if (latestCombinedSession) {
+                    setHealthData(JSON.stringify(latestCombinedSession));
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching context for AI chat:", error);
+        }
+    }
+    fetchData();
+  }, [user, firestore, database]);
+
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -42,7 +82,7 @@ export function AiAssistantChat() {
     setInput('');
     setLoading(true);
     
-    const result = await chatWithAi(messages, currentInput);
+    const result = await chatWithAi(messages, currentInput, userProfile, healthData);
     
     if (result.error) {
       console.error("AI Chat Error:", result.error);

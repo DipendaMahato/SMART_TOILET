@@ -11,52 +11,9 @@ import { doc, getDoc } from 'firebase/firestore';
 import { ref, get, onValue } from 'firebase/database';
 import { DownloadableReport } from '@/components/insights/downloadable-report';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { getLatestCombinedSession } from "@/lib/data-helpers";
 
 type Status = "Normal" | "Needs Attention" | "Abnormal";
-
-const getLatestCombinedSession = (data: any) => {
-    if (!data?.Reports) return { latestCombinedSession: null };
-
-    const dateKeys = Object.keys(data.Reports).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k));
-    if (dateKeys.length === 0) return { latestCombinedSession: null };
-
-    const latestDate = dateKeys.sort().pop();
-    if (!latestDate) return { latestCombinedSession: null };
-    
-    const dailyReport = data.Reports[latestDate];
-    if (!dailyReport) return { latestCombinedSession: null };
-
-    const hardwareSessions = dailyReport.Hardware_Sessions;
-    const medicalSessions = dailyReport.Medical_Sessions;
-
-    let latestHardwareSession = null;
-    if (hardwareSessions && Object.keys(hardwareSessions).length > 0) {
-        const latestHardwareSessionId = Object.keys(hardwareSessions).sort().pop();
-        if (latestHardwareSessionId) {
-            latestHardwareSession = hardwareSessions[latestHardwareSessionId];
-        }
-    }
-
-    let latestMedicalSession = null;
-    if (medicalSessions && Object.keys(medicalSessions).length > 0) {
-        const latestMedicalSessionId = Object.keys(medicalSessions).sort().pop();
-        if (latestMedicalSessionId) {
-            latestMedicalSession = medicalSessions[latestMedicalSessionId];
-        }
-    }
-
-    if (!latestHardwareSession && !latestMedicalSession) {
-        return { latestCombinedSession: null };
-    }
-
-    const latestCombinedSession = {
-        sensorData: latestHardwareSession?.sensorData || {},
-        Chemistry_Result: latestMedicalSession?.Chemistry_Result || {},
-    };
-    
-    return { latestCombinedSession };
-};
-
 
 const initialUrineDiagnostics = [
     { parameter: 'Bilirubin (BIL)', value: 'Negative', range: 'Negative', status: 'Normal' as Status },

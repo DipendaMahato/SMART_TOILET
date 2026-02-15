@@ -8,7 +8,7 @@
  * - ChatInput - The input type for the chat function.
  * - ChatOutput - The return type for the chat function.
  */
-import { ai } from '@/ai/genkit';
+import { ai, geminiPro } from '@/ai/genkit';
 import { z } from 'zod';
 
 const MessageSchema = z.object({
@@ -59,7 +59,7 @@ export async function chat(input: ChatInput): Promise<ChatOutput> {
 
   try {
     const llmResponse = await ai.generate({
-      model: 'google/gemini-1.5-flash-latest',
+      model: geminiPro,
       messages: messages,
     });
 

@@ -1,9 +1,8 @@
 
 import {genkit} from 'genkit';
 import {googleAI} from '@genkit-ai/google-genai';
-import { config } from 'dotenv';
 
-config();
+// Note: dotenv/config is not needed in Next.js as it handles .env files automatically.
 
 export const ai = genkit({
   plugins: [
@@ -13,4 +12,5 @@ export const ai = genkit({
   enableTracingAndMetrics: true,
 });
 
-export const geminiPro = googleAI.model('gemini-1.5-flash-latest');
+// Use a more stable and widely available model to prevent access issues.
+export const geminiPro = googleAI.model('gemini-pro');

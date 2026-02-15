@@ -116,12 +116,15 @@ export default function LiveSensorDataPage() {
 
             const { latestCombinedSession: currentLatestSession, combinedSessionId: currentCombinedSessionId } = getLatestCombinedSession(currentData);
             
-            const currentSensorData = currentLatestSession?.sensorData || {};
+            const reportSensorData = currentLatestSession?.sensorData || {};
+            const liveSensorData = currentData?.sensorData || {}; // Get live data if it exists
             const currentChemData = currentLatestSession?.Chemistry_Result || {};
-
             const isOccupiedValue = currentData.Live_Status?.isOccupied === 1 ? 1 : 0;
+
+            // Merge them, with live data taking precedence
             const unifiedSensorData = {
-                ...currentSensorData,
+                ...reportSensorData,
+                ...liveSensorData,
                 isOccupied: isOccupiedValue,
             };
 
@@ -129,7 +132,8 @@ export default function LiveSensorDataPage() {
                 sensorData: unifiedSensorData,
                 Chemistry_Result: currentChemData,
             });
-            setUserCount(unifiedSensorData?.usageCount ?? 0);
+            setUserCount(unifiedSensorData?.usageCount ?? (currentData.Account_Info?.totalUsageCount) ?? 0);
+
 
             // --- NOTIFICATION LOGIC ---
             if (prevData) {
@@ -147,7 +151,7 @@ export default function LiveSensorDataPage() {
                 }
                 
                 // Sensor value alert checks
-                if (prevSensorData && currentSensorData) {
+                if (prevSensorData && unifiedSensorData) {
                     const thresholds = {
                         ph_value_sensor: { min: 4.5, max: 8.0, name: 'Urine pH' },
                         specific_gravity_sensor: { min: 1.005, max: 1.030, name: 'Specific Gravity' },
@@ -155,10 +159,10 @@ export default function LiveSensorDataPage() {
                     };
     
                     (Object.keys(thresholds) as Array<keyof typeof thresholds>).forEach(key => {
-                        if (currentSensorData[key] === undefined || prevSensorData[key] === undefined) return;
+                        if (unifiedSensorData[key] === undefined || prevSensorData[key] === undefined) return;
     
                         const config = thresholds[key];
-                        const currentValue = parseFloat(currentSensorData[key]);
+                        const currentValue = parseFloat(unifiedSensorData[key]);
                         const prevValue = parseFloat(prevSensorData[key]);
     
                         if (isNaN(currentValue) || isNaN(prevValue)) return;
@@ -189,7 +193,7 @@ export default function LiveSensorDataPage() {
                         }
                     });
     
-                    if (currentSensorData.blood_detected_sensor === true && prevSensorData.blood_detected_sensor === false) {
+                    if (unifiedSensorData.blood_detected_sensor === true && prevSensorData.blood_detected_sensor === false) {
                         const alertMessage = `Traces of blood were detected in the latest analysis. Please consult a healthcare professional.`;
                         toast({
                             variant: 'destructive',
@@ -210,7 +214,7 @@ export default function LiveSensorDataPage() {
                     }
                     
                     const tempThreshold = 37;
-                    const currentTemp = parseFloat(currentSensorData.temperature);
+                    const currentTemp = parseFloat(unifiedSensorData.temperature);
                     const prevTemp = parseFloat(prevSensorData.temperature);
     
                     if (!isNaN(currentTemp) && !isNaN(prevTemp)) {
@@ -236,7 +240,7 @@ export default function LiveSensorDataPage() {
                     }
     
                     const tdsAbnormalThreshold = 500;
-                    const currentTds = parseFloat(currentSensorData.tds_value);
+                    const currentTds = parseFloat(unifiedSensorData.tds_value);
                     const prevTds = parseFloat(prevSensorData.tds_value);
                     if (!isNaN(currentTds) && !isNaN(prevTds)) {
                         if (currentTds > tdsAbnormalThreshold && prevTds <= tdsAbnormalThreshold) {
@@ -261,7 +265,7 @@ export default function LiveSensorDataPage() {
                     }
     
                     const turbidityAbnormalThreshold = 50;
-                    const currentTurbidity = parseFloat(currentSensorData.turbidity);
+                    const currentTurbidity = parseFloat(unifiedSensorData.turbidity);
                     const prevTurbidity = parseFloat(prevSensorData.turbidity);
                     if (!isNaN(currentTurbidity) && !isNaN(prevTurbidity)) {
                         if (currentTurbidity > turbidityAbnormalThreshold && prevTurbidity <= turbidityAbnormalThreshold) {
@@ -416,7 +420,7 @@ export default function LiveSensorDataPage() {
     const phValue = sensorData?.ph_value_sensor ? parseFloat(sensorData.ph_value_sensor) : null;
     const isPhOutOfRange = phValue !== null && (phValue < 4.5 || phValue > 8.0);
     const phStatus = isPhOutOfRange ? "WARNING" : "NORMAL";
-    const calculatedPH = phValue?.toFixed(2) ?? '...';
+    const calculatedPH = phValue?.toFixed(3) ?? '...';
 
     const sgValue = sensorData?.specific_gravity_sensor ? parseFloat(sensorData.specific_gravity_sensor) : null;
     const isSgOutOfRange = sgValue !== null && (sgValue < 1.005 || sgValue > 1.030);

@@ -150,26 +150,41 @@ export default function VitalsTrendsPage() {
     }
 
     const parts = recordId.split('-');
-    if (parts.length < 4) { // e.g., "2026-02-14-Sens_165030" -> ["2026", "02", "14", "Sens_165030"]
-        toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Invalid record ID format for deletion.",
-        });
-        return;
+    const type = parts[0];
+    let recordRef;
+
+    if (type === 'MED') {
+        const dateStr = parts.slice(1, 4).join('-');
+        const sessionKey = parts.slice(4).join('-');
+        if (!dateStr || !sessionKey) {
+             toast({ variant: "destructive", title: "Error", description: "Invalid Medical record ID format." });
+             return;
+        }
+        recordRef = ref(database, `Users/${user.uid}/Reports/${dateStr}/Medical_Sessions/${sessionKey}`);
+    } else if (type === 'HW') {
+        const dateStr = parts.slice(1, 4).join('-');
+        const sessionKey = parts.slice(4).join('-');
+        if (!dateStr || !sessionKey) {
+            toast({ variant: "destructive", title: "Error", description: "Invalid Hardware record ID format." });
+            return;
+        }
+        recordRef = ref(database, `Users/${user.uid}/Reports/${dateStr}/Hardware_Sessions/${sessionKey}`);
+    } else {
+        // Fallback for old ID format before HW/MED prefixes
+        const dateStr = parts.slice(0, 3).join('-');
+        const sessionKey = parts.slice(3).join('-');
+        if (!dateStr || !sessionKey) {
+            toast({ variant: "destructive", title: "Error", description: "Invalid record ID format for deletion." });
+            return;
+        }
+        recordRef = ref(database, `Users/${user.uid}/Reports/${dateStr}/Hardware_Sessions/${sessionKey}`);
     }
-    const dateStr = parts.slice(0, 3).join('-');
-    const sessionKey = parts.slice(3).join('-');
-    
-    // We only delete the hardware session as it's the primary key for the record.
-    // The associated medical session will become orphaned but won't appear in the UI.
-    const recordRef = ref(database, `Users/${user.uid}/Reports/${dateStr}/Hardware_Sessions/${sessionKey}`);
 
     try {
         await remove(recordRef);
         toast({
             title: "Record Deleted",
-            description: `The health record from ${format(parse(dateStr, 'yyyy-MM-dd', new Date()), 'PPP')} has been successfully deleted.`,
+            description: `The health record has been successfully deleted.`,
         });
     } catch (error: any) {
         console.error("Error deleting record:", error);
@@ -185,6 +200,7 @@ export default function VitalsTrendsPage() {
     if (!reports) return [];
 
     const allRecords: any[] = [];
+    const matchedMedSessionKeys = new Set<string>();
 
     Object.keys(reports).forEach(dateStr => {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return;
@@ -198,6 +214,7 @@ export default function VitalsTrendsPage() {
       const sortedHwKeys = Object.keys(hardwareSessions).sort();
       const sortedMedKeys = Object.keys(medicalSessions).sort();
 
+      // Pass 1: Anchor on hardware sessions
       sortedHwKeys.forEach(hwKey => {
           const hwSession = hardwareSessions[hwKey];
           if (typeof hwSession !== 'object' || hwSession === null || !hwSession.metadata) return;
@@ -208,6 +225,7 @@ export default function VitalsTrendsPage() {
           if (!isValid(hwTimestamp)) return;
 
           let matchedMedSession: any = null;
+          let matchedMedKey: string | null = null;
           let minTimeDiff = Infinity;
           
           sortedMedKeys.forEach(medKey => {
@@ -217,43 +235,70 @@ export default function VitalsTrendsPage() {
               
               if(isValid(medTimestamp)) {
                   const timeDiff = medTimestamp.getTime() - hwTimestamp.getTime();
-                  if (timeDiff >= 0 && timeDiff < minTimeDiff) {
+                  if (timeDiff >= 0 && timeDiff < 300000 && timeDiff < minTimeDiff) { // 5 minute window
                       minTimeDiff = timeDiff;
                       matchedMedSession = medSession;
+                      matchedMedKey = medKey;
                   }
               }
           });
           
+          if (matchedMedKey) {
+            matchedMedSessionKeys.add(`${dateStr}-${matchedMedKey}`);
+          }
+          
           const chemistry = matchedMedSession?.Chemistry_Result || {};
           const sensorData = hwSession.sensorData || {};
           
-          const record = {
-            id: `${dateStr}-${hwKey}`,
+          allRecords.push({
+            id: `HW-${dateStr}-${hwKey}`,
             timestamp: hwTimestamp,
-            
-            // Prioritize chemistry results, fallback to sensor data for overlapping fields
             ph: chemistry.chem_ph ?? sensorData.ph_value_sensor,
             specificGravity: chemistry.chem_specificGravity ?? sensorData.specific_gravity_sensor,
             blood: chemistry.chem_blood ?? sensorData.blood_detected_sensor,
             protein: chemistry.chem_protein,
             glucose: chemistry.chem_glucose,
-
-            // Sensor-only data
             tds: sensorData.tds_value,
             turbidity: sensorData.turbidity,
-            
-            // Other chemistry data
             bilirubin: chemistry.chem_bilirubin,
             urobilinogen: chemistry.chem_urobilinogen,
             ketone: chemistry.chem_ketones,
             ascorbicAcid: chemistry.chem_ascorbicAcid,
             nitrite: chemistry.chem_nitrite,
             leukocytes: chemistry.chem_leukocytes,
-
-            // Placeholder
             stoolConsistency: 'N/A',
-          };
-          allRecords.push(record);
+          });
+      });
+
+      // Pass 2: Add orphan medical sessions
+      sortedMedKeys.forEach(medKey => {
+        if (!matchedMedSessionKeys.has(`${dateStr}-${medKey}`)) {
+            const medSession = medicalSessions[medKey];
+            if (typeof medSession !== 'object' || medSession === null || !medSession.metadata) return;
+
+            const medTimeStr = medSession.metadata.time || '00:00:00';
+            const medTimestamp = parse(`${dateStr} ${medTimeStr}`, 'yyyy-MM-dd HH:mm:ss', new Date());
+            if (!isValid(medTimestamp)) return;
+
+            const chemistry = medSession.Chemistry_Result || {};
+
+            allRecords.push({
+                id: `MED-${dateStr}-${medKey}`,
+                timestamp: medTimestamp,
+                ph: chemistry.chem_ph,
+                specificGravity: chemistry.chem_specificGravity,
+                blood: chemistry.chem_blood,
+                protein: chemistry.chem_protein,
+                glucose: chemistry.chem_glucose,
+                bilirubin: chemistry.chem_bilirubin,
+                urobilinogen: chemistry.chem_urobilinogen,
+                ketone: chemistry.chem_ketones,
+                ascorbicAcid: chemistry.chem_ascorbicAcid,
+                nitrite: chemistry.chem_nitrite,
+                leukocytes: chemistry.chem_leukocytes,
+                stoolConsistency: 'N/A',
+            });
+        }
       });
     });
     
@@ -373,7 +418,3 @@ export default function VitalsTrendsPage() {
     </div>
   );
 }
-
-    
-
-    

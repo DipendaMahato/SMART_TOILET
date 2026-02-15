@@ -5,7 +5,7 @@
  */
 
 import { ai, geminiPro } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 
 // Define the schema for a single message in the chat history
 const ChatMessageSchema = z.object({
@@ -15,9 +15,11 @@ const ChatMessageSchema = z.object({
 export type ChatMessage = z.infer<typeof ChatMessageSchema>;
 
 // Define the input schema for the chat flow (what the frontend sends)
-// This is temporarily simplified to debug the connection issue.
 const ChatInputSchema = z.object({
+  history: z.array(ChatMessageSchema).describe("The history of the conversation."),
   message: z.string().describe("The user's latest message."),
+  userProfile: z.string().optional().describe("A JSON string of the user's profile."),
+  healthData: z.string().optional().describe("A JSON string of the user's latest health data."),
 });
 export type ChatInput = z.infer<typeof ChatInputSchema>;
 
@@ -37,14 +39,34 @@ const chatFlow = ai.defineFlow(
     outputSchema: ChatOutputSchema,
   },
   async (input) => {
-    // Using ai.generate directly for maximum simplicity to debug the connection.
-    // This will confirm if the basic model and API key are working.
-    const result = await ai.generate({
+    const { history, message, userProfile, healthData } = input;
+    
+    // Data Handling: Converting context into a formatted string for the AI
+    const currentContext = `
+      USER PROFILE: ${userProfile || 'No profile provided'}
+      LATEST SENSOR DATA: ${healthData || 'No sensor readings currently available'}
+    `;
+
+    // Combine context and user message into the final prompt
+    const finalUserMessage = `Context: ${currentContext}\n\nUser Message: ${message}`;
+    
+    const llmResponse = await ai.generate({
         model: geminiPro,
-        prompt: `You are a helpful assistant. Answer the following question: ${input.message}`,
+        prompt: finalUserMessage,
+        history: history,
+        // Role Definition: Specialized for the Smart Toilet Health Monitoring System
+        system: `You are the "Smart Toilet Medical Assistant," a specialized diagnostic AI. 
+      Your goal is to analyze user health trends based on urine and stool sensor data.
+      
+      CONTEXT RULES:
+      - Use the provided User Profile for age, weight, and medical history.
+      - Analyze the Health Data for specific sensor values: pH, Protein, Glucose, and hydration levels.
+      - If sensor values are abnormal (e.g., high glucose), suggest consulting a doctor but do not give a final medical diagnosis.
+      - Be professional, empathetic, and concise.`,
     });
     
-    const responseText = result.text;
+    const responseText = llmResponse.text;
+
     if (!responseText) {
       throw new Error("The AI returned an empty response.");
     }
@@ -54,9 +76,7 @@ const chatFlow = ai.defineFlow(
 );
 
 
-// Define the chat function that will be called from the server action.
-// The input signature is kept the same to avoid breaking the calling action,
-// but we will only use the 'message' property for this debugging step.
-export async function chat(input: { history: any[], message: string, userProfile?: string, healthData?: string }): Promise<ChatOutput> {
-  return chatFlow({ message: input.message });
+export async function chat(input: ChatInput): Promise<ChatOutput> {
+    // Errors will be caught by the calling server action.
+    return chatFlow(input);
 }

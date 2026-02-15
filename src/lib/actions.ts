@@ -8,7 +8,7 @@ import { mockMedicalProfile, mockToiletSensorData } from '@/lib/data';
 import { generateHealthInsights } from '@/ai/flows/generate-health-insights';
 import { refineInsightsWithReasoning } from '@/ai/flows/refine-insights-with-reasoning';
 import { sendOtp as sendOtpFlow, SendOtpInput } from '@/ai/flows/send-otp-flow';
-import { chat, ChatMessage } from '@/ai/flows/chat-flow';
+import { chat, ChatMessage, ChatInput } from '@/ai/flows/chat-flow';
 import { analyzeDipstick as analyzeDipstickFlow, AnalyzeDipstickInput } from '@/ai/flows/analyze-dipstick-flow';
 
 
@@ -64,11 +64,17 @@ export async function chatWithAi(history: ChatMessage[], message: string, userPr
         if (result && result.response) {
             return { response: result.response };
         }
-        throw new Error("Received an invalid response from the AI service.");
+        // This case handles if the flow itself returns a non-error but empty response
+        throw new Error("Received an invalid or empty response from the AI service.");
 
     } catch (error: any) {
-        console.error('Error in AI chat action:', error);
-        return { error: 'Sorry, I am currently unable to connect to the AI service. Please try again later.' };
+        // Detailed Error Handling for Firebase Studio Debugging
+        console.error("AI Service Connection Failure:", error);
+        
+        // Returns the exact reason (e.g., "Quota Exceeded" or "Invalid API Key") to the frontend
+        return { 
+          error: error.message || "An unexpected error occurred while connecting to the AI service." 
+        };
     }
 }
 

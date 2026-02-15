@@ -2,14 +2,13 @@
 'use server';
 
 /**
- * @fileOverview A conversational AI flow for the Smart Toilet Assistant.
+ * @fileOverview A conversational AI flow for the Smart Toilet Assistant using OpenRouter.
  *
  * - chat - A function that handles the chat conversation.
  * - ChatInput - The input type for the chat function.
  * - ChatOutput - The return type for the chat function.
  */
 
-import { ai, geminiPro } from '@/ai/genkit';
 import { z } from 'zod';
 
 // Define the shape of a single message for chat history
@@ -53,48 +52,53 @@ const systemPrompt = `You are 'Smart Toilet Assistance', a friendly and knowledg
 **Handling Out-of-Scope Questions:**
 - If asked about topics that are not related to health, wellness, or the application, politely decline by saying something like, "I'm a health assistant, so I can't help with that, but I'm here for any health questions you have! 😊"`;
 
-// Create a reusable prompt with the system instruction
-const chatPrompt = ai.definePrompt(
-  {
-    name: 'smartToiletAssistantPrompt',
-    model: geminiPro,
-    system: systemPrompt,
-    // The prompt only needs the latest message as input, history is passed separately
-    input: { schema: z.object({ message: z.string() }) },
-  },
-  // The handlebars template for the prompt itself
-  async ({ message }) => `{{{message}}}`
-);
-
-
 // The main exported function that will be called by the server action
 export async function chat(input: ChatInput): Promise<ChatOutput> {
-  return chatFlow(input);
-}
+  const { history, message } = input;
 
-// The Genkit flow that orchestrates the chat logic
-const chatFlow = ai.defineFlow(
-  {
-    name: 'chatFlow',
-    inputSchema: ChatInputSchema,
-    outputSchema: ChatOutputSchema,
-  },
-  async ({ history, message }) => {
-    try {
-      // Call the reusable prompt, passing the latest message as input
-      // and the existing conversation history in the options.
-      const response = await chatPrompt({ message }, { history });
-      const textResponse = response.text;
+  const messagesForApi = [
+    { role: 'system', content: systemPrompt },
+    ...history,
+    { role: 'user', content: message },
+  ];
 
-      if (!textResponse) {
-        return { response: 'Sorry, I could not generate a response.' };
-      }
+  try {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        "model": "google/gemini-flash-1.5",
+        "messages": messagesForApi
+      })
+    });
 
-      return { response: textResponse };
-    } catch (error: any) {
-      console.error("Error in Genkit chat flow:", error);
-      // Provide a user-friendly error message
-      return { response: "Sorry, I had trouble connecting. Please try again." };
+    if (!response.ok) {
+        const errorBody = await response.text();
+        console.error("OpenRouter API Error:", response.status, errorBody);
+        throw new Error(`API request failed with status ${response.status}: ${errorBody}`);
     }
+
+    const data = await response.json();
+    
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+        console.error("Invalid response structure from OpenRouter:", data);
+        throw new Error("Received an invalid response from the AI service.");
+    }
+    
+    const aiMessage = data.choices[0].message.content;
+
+    if (!aiMessage) {
+        return { response: 'Sorry, I could not generate a response.' };
+    }
+
+    return { response: aiMessage };
+
+  } catch (error: any) {
+    console.error("Error connecting to OpenRouter:", error);
+    // Provide a user-friendly error message
+    return { response: "Sorry, I had trouble connecting. Please try again." };
   }
-);
+}

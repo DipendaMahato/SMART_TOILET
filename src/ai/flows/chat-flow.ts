@@ -10,7 +10,6 @@
 
 import { ai, geminiPro } from '@/ai/genkit';
 import { z } from 'zod';
-import { generate } from 'genkit/generate';
 
 const ChatMessageSchema = z.object({
   role: z.enum(['user', 'model']),
@@ -67,7 +66,7 @@ const chatFlow = ai.defineFlow(
     }));
 
     try {
-        const response = await generate({
+        const response = await ai.generate({
             model: geminiPro,
             prompt: message,
             history: formattedHistory,

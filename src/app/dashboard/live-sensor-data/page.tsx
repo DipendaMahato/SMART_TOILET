@@ -39,7 +39,7 @@ export default function LiveSensorDataPage() {
     const sensorData = latestData?.sensorData;
     const chemistryData = latestData?.Chemistry_Result;
 
-    const isToiletOccupied = sensorData?.isOccupied === 1;
+    const isToiletOccupied = latestData?.isOccupied === 1;
     
     const chemistryParameters = [
         { key: 'chem_bilirubin', label: 'Bilirubin' },
@@ -77,14 +77,14 @@ export default function LiveSensorDataPage() {
             const unifiedSensorData = {
                 ...reportSensorData,
                 ...liveSensorData,
-                isOccupied: isOccupiedValue,
             };
 
             setLatestData({
                 sensorData: unifiedSensorData,
                 Chemistry_Result: currentChemData,
+                isOccupied: isOccupiedValue
             });
-            setUserCount(unifiedSensorData?.usageCount ?? (currentData.Account_Info?.totalUsageCount) ?? 0);
+            setUserCount(currentData.Account_Info?.totalUsageCount ?? 0);
 
 
             // --- NOTIFICATION LOGIC ---

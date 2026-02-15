@@ -23,8 +23,6 @@ const ChatInputSchema = z.object({
 });
 export type ChatInput = z.infer<typeof ChatInputSchema>;
 
-// Define a separate schema for the prompt's template variables
-const PromptInputSchema = ChatInputSchema.omit({ history: true });
 
 // Define the output schema for the chat flow
 const ChatOutputSchema = z.object({
@@ -37,29 +35,6 @@ export async function chat(input: ChatInput): Promise<ChatOutput> {
   return chatFlow(input);
 }
 
-// Define the prompt using the more robust definePrompt pattern
-const chatPrompt = ai.definePrompt({
-    name: 'chatPrompt',
-    model: geminiPro,
-    input: { schema: PromptInputSchema }, // Use schema without history for template variables
-    output: { schema: ChatOutputSchema },
-    prompt: `{{message}}`,
-    system: `You are 'Smart Toilet Assistance', a friendly and knowledgeable AI health assistant. Your primary goal is to provide helpful and accurate information about health, wellness, and the features of the Smart Toilet application based on the user's questions. You can answer questions about health metrics (like urine pH, hydration, etc.), suggest healthy habits, and explain what different sensor readings might mean in a general, educational context. IMPORTANT: You are an AI assistant, not a medical professional. You must not provide a medical diagnosis, prescribe treatment, or give definitive medical advice. Always include a disclaimer encouraging the user to consult with a real doctor for any health concerns. For example: "Remember, I'm an AI assistant. It's always best to consult with a healthcare professional for medical advice." Be friendly, empathetic, and encouraging in your tone. If asked about topics that are not related to health, wellness, or the application, politely decline by saying something like, "I'm a health assistant, so I can't help with that, but I'm here for any health questions you have! 😊"
-    
-    {{#if userProfile}}
-    Here is some context about the user you are helping. Use it to answer their questions, but do not mention that you have this data unless it's directly relevant to their question.
-    User Profile:
-    {{{userProfile}}}
-    {{/if}}
-
-    {{#if healthData}}
-    Latest Health Data:
-    {{{healthData}}}
-    {{/if}}
-    `,
-});
-
-
 // Define the Genkit flow for the chat functionality
 const chatFlow = ai.defineFlow(
   {
@@ -69,6 +44,17 @@ const chatFlow = ai.defineFlow(
   },
   async (input) => {
     const { history, message, userProfile, healthData } = input;
+    
+    // Construct the system instructions manually
+    const systemInstructions = `You are 'Smart Toilet Assistance', a friendly and knowledgeable AI health assistant. Your primary goal is to provide helpful and accurate information about health, wellness, and the features of the Smart Toilet application based on the user's questions. You can answer questions about health metrics (like urine pH, hydration, etc.), suggest healthy habits, and explain what different sensor readings might mean in a general, educational context. IMPORTANT: You are an AI assistant, not a medical professional. You must not provide a medical diagnosis, prescribe treatment, or give definitive medical advice. Always include a disclaimer encouraging the user to consult with a real doctor for any health concerns. For example: "Remember, I'm an AI assistant. It's always best to consult with a healthcare professional for medical advice." Be friendly, empathetic, and encouraging in your tone. If asked about topics that are not related to health, wellness, or the application, politely decline by saying something like, "I'm a health assistant, so I can't help with that, but I'm here for any health questions you have! 😊"
+    
+    ${userProfile ? `Here is some context about the user you are helping. Use it to answer their questions, but do not mention that you have this data unless it's directly relevant to their question.
+    User Profile:
+    ${userProfile}` : ''}
+
+    ${healthData ? `Latest Health Data:
+    ${healthData}` : ''}
+    `;
 
     // Reformat history for the generate call
     const generateHistory = history.map(msg => ({
@@ -76,16 +62,24 @@ const chatFlow = ai.defineFlow(
       content: [{ text: msg.content }],
     }));
 
-    // Call the prompt with separated variables and history options
-    const { output } = await chatPrompt(
-        { message, userProfile, healthData }, // These variables are for the handlebars template
-        { history: generateHistory } // This is the conversation history
-    );
-
-    if (!output || !output.response) {
+    // Prepend system instructions to the user's message to form a complete prompt
+    const fullPrompt = `${systemInstructions}\n\n---\n\nUSER QUESTION: ${message}`;
+    
+    // Call the AI model directly with the constructed prompt and history
+    const result = await ai.generate({
+        model: geminiPro,
+        prompt: fullPrompt,
+        history: generateHistory,
+        output: {
+            format: 'text' // Request simple text output
+        }
+    });
+    
+    const responseText = result.text;
+    if (!responseText) {
       throw new Error("The AI returned an empty response.");
     }
     
-    return { response: output.response };
+    return { response: responseText };
   }
 );

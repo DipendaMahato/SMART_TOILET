@@ -3,9 +3,11 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useUser, useFirestore } from "@/firebase";
-import { collection, getDocs, limit, orderBy, query, doc, getDoc, Timestamp } from "firebase/firestore";
+import { useUser, useFirestore, useDatabase } from "@/firebase";
+import { doc, getDoc, Timestamp } from "firebase/firestore";
+import { ref, get } from "firebase/database";
 import { chatWithAi } from "@/lib/actions";
+import { getLatestCombinedSession } from "@/lib/data-helpers";
 
 interface Message {
     role: 'user' | 'model';
@@ -29,17 +31,22 @@ const getAge = (dob: any) => {
 export function HealthAssistantWidget() {
     const { user } = useUser();
     const firestore = useFirestore();
+    const database = useDatabase();
     const [question, setQuestion] = useState('');
     const [response, setResponse] = useState("Hello, how can I help you today?");
     const [loading, setLoading] = useState(false);
     const [profile, setProfile] = useState<any>(null);
+    const [userProfileForAI, setUserProfileForAI] = useState<string | undefined>();
+    const [healthDataForAI, setHealthDataForAI] = useState<string | undefined>();
 
     useEffect(() => {
         if (user && firestore) {
             const profileRef = doc(firestore, 'users', user.uid);
             getDoc(profileRef).then(docSnap => {
                 if (docSnap.exists()) {
-                    setProfile(docSnap.data());
+                    const data = docSnap.data();
+                    setProfile(data);
+                    setUserProfileForAI(JSON.stringify(data));
                 }
             }).catch(error => {
                 console.error("Error fetching user profile for widget:", error);
@@ -47,7 +54,22 @@ export function HealthAssistantWidget() {
             // Update greeting
             setResponse(`Hello ${user.displayName?.split(' ')[0] || 'there'}, how can I help you today?`);
         }
-    }, [user, firestore]);
+        
+        if (user && database) {
+             const rtdbRef = ref(database, `Users/${user.uid}`);
+            get(rtdbRef).then(rtdbSnap => {
+                if(rtdbSnap.exists()) {
+                    const rtdbData = rtdbSnap.val();
+                    const { latestCombinedSession } = getLatestCombinedSession(rtdbData);
+                    if (latestCombinedSession) {
+                        setHealthDataForAI(JSON.stringify(latestCombinedSession));
+                    }
+                }
+            }).catch(error => {
+                console.error("Error fetching health data for widget:", error);
+            });
+        }
+    }, [user, firestore, database]);
 
     const askHealthAI = async () => {
         if (!question) return;
@@ -55,7 +77,7 @@ export function HealthAssistantWidget() {
         setResponse("Processing your request...");
 
         const history: Message[] = [];
-        const result = await chatWithAi(history, question);
+        const result = await chatWithAi(history, question, userProfileForAI, healthDataForAI);
         
         if (result.error) {
             console.error("AI Chat Error:", result.error);

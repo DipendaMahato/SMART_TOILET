@@ -2,17 +2,16 @@
 
 /**
  * @fileOverview A conversational AI flow for the Smart Toilet Assistant.
- * This version uses a direct fetch call to the Google Generative AI API.
+ * This version uses a direct fetch call to the OpenRouter API for stability.
  */
 
 import { z } from 'zod';
 
-// IMPORTANT: Using a hardcoded API key for stability.
-const API_KEY = 'AIzaSyBrJl1i6DGKJy99MHmmH2Aqc66aUV6sjms';
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${API_KEY}`;
+const API_KEY = 'sk-eeb9c5be46b94055897c4ef5f9eec563'; // User-provided OpenRouter key
+const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 const ChatMessageSchema = z.object({
-  role: z.enum(['user', 'model']),
+  role: z.enum(['user', 'model']), // Internally we use 'model', but will map to 'assistant' for API
   content: z.string(),
 });
 export type ChatMessage = z.infer<typeof ChatMessageSchema>;
@@ -28,83 +27,62 @@ const ChatOutputSchema = z.object({
 });
 export type ChatOutput = z.infer<typeof ChatOutputSchema>;
 
-// The main exported function that will be called by the server action
 export async function chat(input: ChatInput): Promise<ChatOutput> {
   const { history, message } = input;
   
-  const systemInstruction = `You are 'Smart Toilet Assistance', a friendly and knowledgeable AI health assistant. Your primary goal is to provide helpful and accurate information about health, wellness, and the features of the Smart Toilet application based on the user's questions. You can answer questions about health metrics (like urine pH, hydration, etc.), suggest healthy habits, and explain what different sensor readings might mean in a general, educational context. IMPORTANT: You are an AI assistant, not a medical professional. You must never provide a medical diagnosis, prescribe treatment, or give definitive medical advice. Always include a disclaimer encouraging the user to consult with a real doctor for any health concerns. For example: "Remember, I'm an AI assistant. It's always best to consult with a healthcare professional for medical advice." Be friendly, empathetic, and encouraging in your tone. If asked about topics that are not related to health, wellness, or the application, politely decline by saying something like, "I'm a health assistant, so I can't help with that, but I'm here for any health questions you have! 😊"`;
-
-  // Gemini requires a structured conversational history.
-  const contents = history.map(h => ({
-    role: h.role,
-    parts: [{ text: h.content }],
+  const systemInstruction = `You are 'Smart Toilet Assistance', a friendly and knowledgeable AI health assistant. Your primary goal is to provide helpful and accurate information about health, wellness, and the features of the Smart Toilet application based on the user's questions. You can answer questions about health metrics (like urine pH, hydration, etc.), suggest healthy habits, and explain what different sensor readings might mean in a general, educational context. IMPORTANT: You are an AI assistant, not a medical professional. You must not provide a medical diagnosis, prescribe treatment, or give definitive medical advice. Always include a disclaimer encouraging the user to consult with a real doctor for any health concerns. For example: "Remember, I'm an AI assistant. It's always best to consult with a healthcare professional for medical advice." Be friendly, empathetic, and encouraging in your tone. If asked about topics that are not related to health, wellness, or the application, politely decline by saying something like, "I'm a health assistant, so I can't help with that, but I'm here for any health questions you have! 😊"`;
+  
+  // Map roles: 'model' -> 'assistant' for the OpenRouter/OpenAI compatible API
+  const messages = history.map(h => ({
+      role: h.role === 'model' ? 'assistant' : 'user',
+      content: h.content,
   }));
 
-  // Add the new user message to the history
-  contents.push({
-    role: 'user',
-    parts: [{ text: message }],
-  });
-  
+  // Add the system instruction and the new user message
+  const apiMessages = [
+      { role: 'system', content: systemInstruction },
+      ...messages,
+      { role: 'user', content: message }
+  ];
+
   const payload = {
-    contents: contents,
-    systemInstruction: {
-      parts: [{
-        text: systemInstruction
-      }]
-    },
-    safetySettings: [
-        {
-            category: 'HARM_CATEGORY_HATE_SPEECH',
-            threshold: 'BLOCK_ONLY_HIGH',
-        },
-        {
-            category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-            threshold: 'BLOCK_NONE',
-        },
-        {
-            category: 'HARM_CATEGORY_HARASSMENT',
-            threshold: 'BLOCK_MEDIUM_AND_ABOVE',
-        },
-        {
-            category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-            threshold: 'BLOCK_LOW_AND_ABOVE',
-        },
-    ],
+    model: 'google/gemini-flash-1.5', // A fast and capable model available on OpenRouter
+    messages: apiMessages,
   };
 
-  const res = await fetch(API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
-  });
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${API_KEY}`,
+        'Content-Type': 'application/json',
+        // Required header for OpenRouter
+        'HTTP-Referer': 'https://smart-toilet-app.com', 
+        'X-Title': 'Smart Toilet App',
+      },
+      body: JSON.stringify(payload),
+    });
 
-  if (!res.ok) {
-    const errorBody = await res.json();
-    console.error("Google AI API Error:", errorBody);
-    // The error from the API is often the most useful for debugging.
-    throw new Error(`API request failed: ${errorBody?.error?.message || res.statusText}`);
-  }
-
-  const data = await res.json();
-  
-  // Handle cases where the model response might be blocked by safety settings
-  if (!data.candidates || data.candidates.length === 0) {
-    const blockReason = data.promptFeedback?.blockReason;
-    if (blockReason) {
-        return { response: `I am unable to respond to that request as it was blocked for the following reason: ${blockReason}.` };
+    if (!res.ok) {
+      const errorBody = await res.text();
+      console.error("OpenRouter API Error:", res.status, errorBody);
+      throw new Error(`API request failed with status ${res.status}: ${errorBody}`);
     }
-    throw new Error('No candidates returned from AI model and no block reason provided.');
+
+    const data = await res.json();
+    
+    const responseText = data.choices?.[0]?.message?.content;
+    
+    if (!responseText) {
+      console.error("Invalid response structure from OpenRouter API:", data);
+      throw new Error('No valid response text from AI model.');
+    }
+    
+    return { response: responseText };
+
+  } catch (e: any) {
+    console.error("Fetch to OpenRouter failed:", e);
+    // Re-throw the error so it's caught by the server action
+    throw new Error(e.message || 'Failed to fetch from OpenRouter');
   }
-  
-  const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  
-  if (!responseText) {
-    console.error("Invalid response structure from Google AI API:", data);
-    throw new Error('No valid response text from AI model.');
-  }
-  
-  return { response: responseText };
 }

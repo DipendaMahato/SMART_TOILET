@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -8,7 +9,7 @@
  * - GenerateHealthInsightsOutput - The return type for the generateHealthInsights function.
  */
 
-import {ai} from '@/ai/genkit';
+import {ai, openRouterModel} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const GenerateHealthInsightsInputSchema = z.object({
@@ -37,7 +38,7 @@ export async function generateHealthInsights(
 
 const prompt = ai.definePrompt({
   name: 'generateHealthInsightsPrompt',
-  model: 'google/gemini-1.5-flash-latest',
+  model: openRouterModel,
   input: {schema: GenerateHealthInsightsInputSchema},
   output: {schema: GenerateHealthInsightsOutputSchema},
   prompt: `You are an AI health assistant specializing in generating personalized health insights.

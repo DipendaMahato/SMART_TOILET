@@ -9,7 +9,7 @@
  * - ChatOutput - The return type for the chat function.
  */
 
-import { ai } from '@/ai/genkit';
+import { ai, geminiPro } from '@/ai/genkit';
 import { z } from 'genkit';
 import { Message } from 'genkit/ai';
 
@@ -65,7 +65,7 @@ const chatFlow = ai.defineFlow(
     }));
 
     const llmResponse = await ai.generate({
-      model: 'google/gemini-1.5-flash-latest',
+      model: geminiPro,
       prompt: message,
       history: genkitHistory,
       config: {

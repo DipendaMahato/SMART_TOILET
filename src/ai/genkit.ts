@@ -12,3 +12,5 @@ export const ai = genkit({
   logLevel: 'debug',
   enableTracingAndMetrics: true,
 });
+
+export const geminiPro = googleAI.model('gemini-1.5-flash-latest');

@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -8,7 +9,7 @@
  * - RefineInsightsOutput - The return type for the refineInsightsWithReasoning function.
  */
 
-import {ai} from '@/ai/genkit';
+import {ai, openRouterModel} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const RefineInsightsInputSchema = z.object({
@@ -46,7 +47,7 @@ const reasoningTool = ai.defineTool({
 
 const refineInsightsPrompt = ai.definePrompt({
   name: 'refineInsightsPrompt',
-  model: 'google/gemini-1.5-flash-latest',
+  model: openRouterModel,
   tools: [reasoningTool],
   input: {schema: RefineInsightsInputSchema},
   output: {schema: RefineInsightsOutputSchema},

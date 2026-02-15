@@ -60,14 +60,13 @@ export async function sendOtp(input: SendOtpInput) {
 export async function chatWithAi(history: { role: 'user' | 'model'; content: string }[], message: string) {
     try {
         const result = await chat({ history, message });
-
-        if (!result.response) {
-            throw new Error('No response from AI model.');
+        if (result && result.response) {
+            return { response: result.response };
         }
-
-        return { response: result.response };
-    } catch (error) {
-        console.error('Error in AI chat:', error);
-        return { error: 'Sorry, I encountered an error. Please try again.' };
+        // The chat function now throws, so this case might not be hit, but it's safe to keep.
+        throw new Error("Received an invalid response from the AI service.");
+    } catch (error: any) {
+        console.error('Error in AI chat action:', error);
+        return { error: 'Sorry, I am currently unable to connect to the AI service. Please try again later.' };
     }
 }

@@ -10,7 +10,9 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import { geminiPro } from '@/ai/genkit';
+import { googleAI } from '@genkit-ai/google-genai';
+
+const geminiProVision = googleAI.model('gemini-pro-vision');
 
 const AnalyzeDipstickInputSchema = z.object({
   imageDataUri: z
@@ -39,7 +41,7 @@ export async function analyzeDipstick(input: AnalyzeDipstickInput): Promise<Anal
 
 const prompt = ai.definePrompt({
   name: 'analyzeDipstickPrompt',
-  model: geminiPro,
+  model: geminiProVision,
   input: {schema: AnalyzeDipstickInputSchema},
   output: {schema: AnalyzeDipstickOutputSchema},
   prompt: `You are an expert at analyzing urine dipstick test results from an image.

@@ -2,7 +2,7 @@
 import { AiAssistantChat } from '@/components/dashboard/ai-assistant-chat';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { BrainCircuit, CheckCircle, Database, Filter, FlaskConical, Camera, RefreshCw, Loader2, X } from 'lucide-react';
+import { BrainCircuit, CheckCircle, Database, Filter, FlaskConical, Camera, RefreshCw, Loader2, X, Upload } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -53,6 +53,7 @@ export default function AiProcessTrackerPage() {
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -100,6 +101,30 @@ export default function AiProcessTrackerPage() {
       }
     };
   }, [isCameraOpen, stream]);
+
+  const performAnalysis = async (imageDataUri: string) => {
+    setIsAnalyzing(true);
+    setAnalysisResult(null);
+
+    const result = await analyzeDipstick({ imageDataUri });
+
+    if (result.error) {
+        toast({
+            variant: 'destructive',
+            title: 'Analysis Failed',
+            description: result.error,
+        });
+        setAnalysisResult(null);
+    } else {
+        setAnalysisResult(result.results);
+        toast({
+            title: 'Analysis Complete',
+            description: 'Dipstick analysis results are now available.',
+        });
+    }
+
+    setIsAnalyzing(false);
+  };
   
   const handleCaptureAndAnalyze = async () => {
     if (!videoRef.current || !canvasRef.current || !isCameraOpen) {
@@ -125,33 +150,31 @@ export default function AiProcessTrackerPage() {
     setCapturedImage(imageDataUri);
     closeCamera();
     
-    setIsAnalyzing(true);
-    setAnalysisResult(null);
+    await performAnalysis(imageDataUri);
+  };
 
-    const result = await analyzeDipstick({ imageDataUri });
-
-    if (result.error) {
-        toast({
-            variant: 'destructive',
-            title: 'Analysis Failed',
-            description: result.error,
-        });
-        setAnalysisResult(null);
-    } else {
-        setAnalysisResult(result.results);
-        toast({
-            title: 'Analysis Complete',
-            description: 'Dipstick analysis results are now available.',
-        });
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const imageDataUri = e.target?.result as string;
+        if (imageDataUri) {
+          setCapturedImage(imageDataUri);
+          if (isCameraOpen) closeCamera();
+          await performAnalysis(imageDataUri);
+        }
+      };
+      reader.readAsDataURL(file);
     }
-
-    setIsAnalyzing(false);
   };
 
   const handleRetake = () => {
     setCapturedImage(null);
     setAnalysisResult(null);
-    openCamera();
+    if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+    }
   };
 
   return (
@@ -204,12 +227,19 @@ export default function AiProcessTrackerPage() {
               Manual Dipstick Analysis
             </CardTitle>
             <CardDescription>
-              {capturedImage ? "Review the captured image and analysis results." : "Use your camera to scan a urine dipstick for an instant health parameter analysis."}
+              {capturedImage ? "Review the captured image and analysis results." : "Use your camera to scan or upload a photo of a urine dipstick for an instant health parameter analysis."}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
                 <canvas ref={canvasRef} className="hidden" />
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                />
 
                 <div className="relative w-full aspect-video bg-black rounded-md flex items-center justify-center">
                     {capturedImage ? (
@@ -224,12 +254,18 @@ export default function AiProcessTrackerPage() {
                     )}
                 </div>
                 
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                     {!isCameraOpen && !capturedImage ? (
-                        <Button className="w-full" onClick={openCamera} disabled={isAnalyzing}>
-                            <Camera className="mr-2 h-4 w-4" />
-                            Open Camera
-                        </Button>
+                        <>
+                            <Button className="flex-1 min-w-[150px]" onClick={openCamera} disabled={isAnalyzing}>
+                                <Camera className="mr-2 h-4 w-4" />
+                                Open Camera
+                            </Button>
+                            <Button variant="outline" className="flex-1 min-w-[150px]" onClick={() => fileInputRef.current?.click()} disabled={isAnalyzing}>
+                                <Upload className="mr-2 h-4 w-4" />
+                                Upload Photo
+                            </Button>
+                        </>
                     ) : null}
 
                     {isCameraOpen && !capturedImage ? (
@@ -248,7 +284,7 @@ export default function AiProcessTrackerPage() {
                     {capturedImage ? (
                         <Button className="w-full" variant="outline" onClick={handleRetake} disabled={isAnalyzing}>
                             <RefreshCw className="mr-2 h-4 w-4" />
-                            Retake Photo
+                            Retake or Upload New
                         </Button>
                     ) : null}
                 </div>

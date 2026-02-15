@@ -2,12 +2,13 @@
 'use server';
 
 /**
- * @fileOverview A conversational AI flow for the Smart Toilet Assistant using OpenRouter.
+ * @fileOverview A conversational AI flow for the Smart Toilet Assistant.
  *
  * - chat - A function that handles the chat conversation.
  * - ChatInput - The input type for the chat function.
  * - ChatOutput - The return type for the chat function.
  */
+import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 
 const MessageSchema = z.object({
@@ -50,49 +51,28 @@ const systemPrompt = `You are 'Smart Toilet Assistance', a friendly and knowledg
 export async function chat(input: ChatInput): Promise<ChatOutput> {
   const { history, message } = input;
 
-  // Map 'model' role to 'assistant' for OpenRouter API
-  const mappedHistory = history.map(h => ({
-    role: h.role === 'model' ? 'assistant' : 'user',
-    content: h.content,
-  }));
-
   const messages = [
     { role: 'system', content: systemPrompt },
-    ...mappedHistory,
+    ...history,
     { role: 'user', content: message }
-  ];
+  ] as { role: 'system' | 'user' | 'model'; content: string }[];
 
   try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-flash-1.5", // A fast and capable model
-        messages: messages,
-      }),
+    const llmResponse = await ai.generate({
+      model: 'google/gemini-1.5-flash-latest',
+      messages: messages,
     });
 
-    if (!response.ok) {
-      const errorBody = await response.text();
-      console.error("OpenRouter API error:", response.status, errorBody);
-      throw new Error(`API request failed with status ${response.status}`);
-    }
+    const responseText = llmResponse.text;
 
-    const jsonResponse = await response.json();
-    const modelResponse = jsonResponse.choices[0]?.message?.content;
-
-    if (!modelResponse) {
+    if (!responseText) {
       throw new Error("No response content from AI model.");
     }
 
-    return { response: modelResponse };
+    return { response: responseText };
 
   } catch (error) {
     console.error("Error in chat flow:", error);
-    // Return a user-friendly error in the expected output format
     return { response: "Sorry, I had trouble connecting. Please try again." };
   }
 }

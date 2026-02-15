@@ -1,9 +1,12 @@
-
 'use client';
 import { AiAssistantChat } from '@/components/dashboard/ai-assistant-chat';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { BrainCircuit, CheckCircle, Database, Filter, FlaskConical } from 'lucide-react';
+import { BrainCircuit, CheckCircle, Database, Filter, FlaskConical, Camera } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 const processStages = [
     {
@@ -32,13 +35,40 @@ const processStages = [
     },
      {
         name: 'Insight Generation',
-        description: 'Actionable health insights are created for the user.',
+        description: 'Actionable health insights are created for the user. You can also manually scan a dipstick below.',
         icon: CheckCircle,
         status: 'pending',
     },
 ];
 
 export default function AiProcessTrackerPage() {
+  const [hasCameraPermission, setHasCameraPermission] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const getCameraPermission = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({video: true});
+        setHasCameraPermission(true);
+
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      } catch (error) {
+        console.error('Error accessing camera:', error);
+        setHasCameraPermission(false);
+        toast({
+          variant: 'destructive',
+          title: 'Camera Access Denied',
+          description: 'Please enable camera permissions in your browser settings to use this app.',
+        });
+      }
+    };
+
+    getCameraPermission();
+  }, [toast]);
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fade-in">
       <div className="lg:col-span-2 space-y-8">
@@ -81,6 +111,37 @@ export default function AiProcessTrackerPage() {
             ))}
             </div>
         </div>
+
+        <Card className="animate-slide-up" style={{ animationDelay: '400ms' }}>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Camera className="h-6 w-6 text-primary" />
+              Manual Dipstick Analysis
+            </CardTitle>
+            <CardDescription>
+              Use your camera to scan a urine dipstick for an instant health parameter analysis.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+                <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted playsInline />
+                
+                {!hasCameraPermission && (
+                    <Alert variant="destructive">
+                        <AlertTitle>Camera Access Required</AlertTitle>
+                        <AlertDescription>
+                            Please allow camera access to use this feature.
+                        </AlertDescription>
+                    </Alert>
+                )}
+
+                <Button className="w-full" disabled={!hasCameraPermission} onClick={() => alert("Analysis feature coming soon!")}>
+                    <Camera className="mr-2 h-4 w-4" />
+                    Analyze Dipstick Photo
+                </Button>
+            </div>
+          </CardContent>
+        </Card>
 
       </div>
       <div className="lg:col-span-1 animate-slide-up" style={{animationDelay: '400ms'}}>

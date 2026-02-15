@@ -8,9 +8,10 @@
  * - ChatOutput - The return type for the chat function.
  */
 
-import { ai, geminiPro } from '@/ai/genkit';
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
 import { z } from 'zod';
 
+// Schema definitions remain the same
 const ChatMessageSchema = z.object({
   role: z.enum(['user', 'model']),
   content: z.string(),
@@ -48,41 +49,62 @@ const systemPrompt = `You are 'Smart Toilet Assistance', a friendly and knowledg
 **Handling Out-of-Scope Questions:**
 - If asked about topics that are not related to health, wellness, or the application, politely decline by saying something like, "I'm a health assistant, so I can't help with that, but I'm here for any health questions you have! 😊"`;
 
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+
+const safetySettings = [
+  {
+    category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  },
+  {
+    category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  },
+  {
+    category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  },
+  {
+    category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  },
+];
+
+
 // This wrapper function will be called by the action.
 export async function chat(input: ChatInput): Promise<ChatOutput> {
-  return chatFlow(input);
-}
-
-const chatFlow = ai.defineFlow(
-  {
-    name: 'chatFlow',
-    inputSchema: ChatInputSchema,
-    outputSchema: ChatOutputSchema,
-  },
-  async ({ history, message }) => {
-    const formattedHistory = history.map(h => ({
-      role: h.role,
-      content: [{ text: h.content }],
-    }));
+    const { history, message } = input;
 
     try {
-        const response = await ai.generate({
-            model: geminiPro,
-            prompt: message,
-            history: formattedHistory,
-            system: systemPrompt,
+        const model = genAI.getGenerativeModel({ 
+            model: "gemini-pro",
+            systemInstruction: systemPrompt,
+            safetySettings,
         });
-        
-        const textResponse = response.text;
+
+        // The history for @google/genai needs a specific format
+        const formattedHistory = history.map(h => ({
+            role: h.role,
+            parts: [{ text: h.content }]
+        }));
+
+        const chatSession = model.startChat({
+            history: formattedHistory,
+            generationConfig: {
+                maxOutputTokens: 1000,
+            },
+        });
+
+        const result = await chatSession.sendMessage(message);
+        const textResponse = result.response.text();
 
         if (!textResponse) {
             return { response: 'Sorry, I could not generate a response.' };
         }
 
         return { response: textResponse };
-    } catch (error) {
-        console.error("Error in Genkit chat flow:", error);
-        return { response: "Sorry, I had trouble connecting. Please try again." };
-    }
+  } catch (error) {
+    console.error("Error in Google AI chat flow:", error);
+    return { response: "Sorry, I had trouble connecting. Please try again." };
   }
-);
+}

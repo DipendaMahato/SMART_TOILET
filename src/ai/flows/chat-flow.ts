@@ -21,20 +21,18 @@ export type ChatOutput = z.infer<typeof ChatOutputSchema>;
 export async function chat(message: string): Promise<ChatOutput> {
 
   const systemInstruction = `You are 'Smart Toilet Assistance', a friendly and knowledgeable AI health assistant. Your primary goal is to provide helpful and accurate information about health, wellness, and the features of the Smart Toilet application based on the user's questions. You can answer questions about health metrics (like urine pH, hydration, etc.), suggest healthy habits, and explain what different sensor readings might mean in a general, educational context. IMPORTANT: You are an AI assistant, not a medical professional. You must not provide a medical diagnosis, prescribe treatment, or give definitive medical advice. Always include a disclaimer encouraging the user to consult with a real doctor for any health concerns. For example: "Remember, I'm an AI assistant. It's always best to consult with a healthcare professional for medical advice." Be friendly, empathetic, and encouraging in your tone. If asked about topics that are not related to health, wellness, or the application, politely decline by saying something like, "I'm a health assistant, so I can't help with that, but I'm here for any health questions you have! 😊"`;
+  
+  const fullUserMessage = `${systemInstruction}\n\nUSER QUESTION: ${message}`;
 
   const messages = [
       {
-          role: 'system',
-          content: systemInstruction,
-      },
-      {
           role: 'user',
-          content: message,
+          content: fullUserMessage,
       },
   ];
 
   const payload = {
-    model: "mistralai/mistral-7b-instruct:free", // Switched to a more reliable free model
+    model: "deepseek/deepseek-r1-0528:free", // Using the model from user's example
     messages: messages,
   };
 

@@ -11,8 +11,8 @@ import {ai} from '@/ai/genkit';
 import {z} from 'zod';
 import { googleAI } from '@genkit-ai/google-genai';
 
-// Explicitly define the model object, which is the key to the fix.
-const geminiPro = googleAI.model('gemini-pro');
+// Use the gemini-pro-vision model, which is known to work in this environment.
+const geminiProVision = googleAI.model('gemini-pro-vision');
 
 const ChatMessageSchema = z.object({
     role: z.enum(['user', 'model']),
@@ -38,7 +38,7 @@ export async function chat(input: ChatInput): Promise<ChatOutput> {
 
 const prompt = ai.definePrompt({
   name: 'chatPrompt',
-  model: geminiPro, // Use the defined model object here.
+  model: geminiProVision, // Use the vision model which can also process text-only prompts.
   input: { schema: ChatInputSchema },
   output: { schema: ChatOutputSchema },
   system: `You are the "Smart Toilet Medical Assistant," a specialized diagnostic AI. Your goal is to analyze user health trends based on urine and stool sensor data.

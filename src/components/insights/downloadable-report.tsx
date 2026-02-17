@@ -169,7 +169,7 @@ export const DownloadableReport = forwardRef<HTMLDivElement, ReportProps>(({ dat
         <div ref={ref} style={{ width: '210mm', minHeight: '297mm', background: 'white', color: 'black', fontFamily: "'Arial', sans-serif" }}>
             <div style={{ padding: '25px', display: 'flex', flexDirection: 'column', height: '100%' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '2px solid #004a99', paddingBottom: '10px', marginBottom: '15px' }}>
-                    <img src="/hospital_logo.png" alt="Logo" style={{ width: '60px', height: '60px', marginRight: '20px' }} />
+                    <img src="/logo.png" alt="Logo" style={{ width: '60px', height: '60px', marginRight: '20px' }} />
                     <div style={{ textAlign: 'center' }}>
                         <h1 style={{ margin: 0, color: '#004a99', fontSize: '24px', textTransform: 'uppercase' }}>URINE ROUTINE EXAMINATION</h1>
                         <div style={{ marginTop: '8px', fontSize: '14px', color: '#333' }}>

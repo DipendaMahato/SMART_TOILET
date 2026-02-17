@@ -9,7 +9,12 @@ import { generateHealthInsights } from '@/ai/flows/generate-health-insights';
 import { refineInsightsWithReasoning } from '@/ai/flows/refine-insights-with-reasoning';
 import { sendOtp as sendOtpFlow, SendOtpInput } from '@/ai/flows/send-otp-flow';
 import { analyzeDipstick as analyzeDipstickFlow, AnalyzeDipstickInput } from '@/ai/flows/analyze-dipstick-flow';
-import { chat, ChatInput, ChatMessage } from '@/ai/flows/chat-flow';
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+interface ChatMessage {
+  role: 'user' | 'model';
+  content: string;
+}
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -57,27 +62,50 @@ export async function sendOtp(input: SendOtpInput) {
 }
 
 export async function chatWithAi(
-  history: ChatMessage[],
+  history: ChatMessage[], 
   message: string, 
   userProfile?: string, 
   healthData?: string
 ) {
   try {
-    const input: ChatInput = {
-        history,
-        message,
-        userProfile,
-        healthData
-    };
-    const result = await chat(input);
-    return result;
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error("CRITICAL: GEMINI_API_KEY is missing from environment variables.");
+    }
+    const genAI = new GoogleGenerativeAI(apiKey);
+
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-1.5-flash",
+      systemInstruction: `You are the "Smart Toilet Medical Assistant," a specialized diagnostic AI. Your goal is to analyze user health trends based on urine and stool sensor data.
+      
+      CONTEXT RULES:
+      - Use the provided User Profile for age, weight, and medical history.
+      - Analyze the Health Data for specific sensor values: pH, Protein, Glucose, and hydration levels.
+      - If sensor values are abnormal (e.g., high glucose), suggest consulting a doctor but do not give a final medical diagnosis.
+      - Be professional, empathetic, and concise.
+
+      USER PROFILE: ${userProfile || 'No profile provided'}
+      LATEST SENSOR DATA: ${healthData || 'No sensor readings currently available'}`
+    });
+
+    const chat = model.startChat({
+      history: history.map(m => ({
+        role: m.role,
+        parts: [{ text: m.content }],
+      })),
+    });
+
+    const result = await chat.sendMessage(message);
+    const response = await result.response;
+    
+    return { response: response.text() };
+
   } catch (error: any) {
-    console.error("AI Service Connection Failure:", error);
-    return { 
-      error: error.message || "An unexpected error occurred while connecting to the AI service." 
-    };
+    console.error("Gemini API Error:", error);
+    return { error: error.message || "Failed to connect to AI service." };
   }
 }
+
 
 export async function analyzeDipstick(input: AnalyzeDipstickInput) {
     try {

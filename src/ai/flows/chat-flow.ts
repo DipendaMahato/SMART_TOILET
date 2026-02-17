@@ -11,8 +11,8 @@ import {ai} from '@/ai/genkit';
 import {z} from 'zod';
 import { googleAI } from '@genkit-ai/google-genai';
 
-// Use a model that is more likely to be compatible with older v1beta endpoints.
-const gemini10Pro = googleAI.model('gemini-1.0-pro');
+// Use the standard gemini-pro model. It is configured to use the stable API endpoint.
+const geminiPro = googleAI.model('gemini-pro');
 
 const ChatMessageSchema = z.object({
     role: z.enum(['user', 'model']),
@@ -38,7 +38,7 @@ export async function chat(input: ChatInput): Promise<ChatOutput> {
 
 const prompt = ai.definePrompt({
   name: 'chatPrompt',
-  model: gemini10Pro, // Use the specific model
+  model: geminiPro, // Use the standard gemini-pro model
   input: { schema: ChatInputSchema },
   output: { schema: ChatOutputSchema },
   system: `You are the "Smart Toilet Medical Assistant," a specialized diagnostic AI. Your goal is to analyze user health trends based on urine and stool sensor data.

@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview A conversational AI flow for the Smart Toilet Assistant.
@@ -32,8 +31,8 @@ const ChatOutputSchema = z.object({
 });
 export type ChatOutput = z.infer<typeof ChatOutputSchema>;
 
-// Use the model that is known to be working from the analyzeDipstick flow
-const visionModel = googleAI.model('gemini-pro-vision');
+// Use a reliable text-only model from the googleAI plugin
+const textModel = googleAI.model('gemini-pro');
 
 // Define the Genkit flow for the chat functionality
 const chatFlow = ai.defineFlow(
@@ -45,7 +44,8 @@ const chatFlow = ai.defineFlow(
   async (input) => {
     const { history, message, userProfile, healthData } = input;
     
-    // Combine all instructions and context into a single prompt.
+    // Combine all instructions and context into a single prompt for the current turn.
+    // This is a robust way to provide context to the model for conversational chat.
     const fullPrompt = `You are the "Smart Toilet Medical Assistant," a specialized diagnostic AI. 
       Your goal is to analyze user health trends based on urine and stool sensor data.
       
@@ -58,12 +58,13 @@ const chatFlow = ai.defineFlow(
       USER PROFILE: ${userProfile || 'No profile provided'}
       LATEST SENSOR DATA: ${healthData || 'No sensor readings currently available'}
 
-      User Message: ${message}`;
+      Now, please respond to the following user message:
+      User Message: "${message}"`;
     
     const llmResponse = await ai.generate({
-        model: visionModel,
-        prompt: fullPrompt,
-        history: history,
+        model: textModel,
+        prompt: fullPrompt, // The prompt contains the system instruction, context, and user message for this turn
+        history: history, // The history contains previous turns of the conversation
     });
     
     const responseText = llmResponse.text;
@@ -77,6 +78,7 @@ const chatFlow = ai.defineFlow(
 );
 
 
+// This is the exported function that the server action will call.
 export async function chat(input: ChatInput): Promise<ChatOutput> {
     // Errors will be caught by the calling server action.
     return chatFlow(input);

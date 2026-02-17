@@ -6,4 +6,3 @@ import '@/ai/flows/generate-health-insights.ts';
 import '@/ai/flows/refine-insights-with-reasoning.ts';
 import '@/ai/flows/send-otp-flow.ts';
 import '@/ai/flows/analyze-dipstick-flow.ts';
-import '@/ai/flows/chat-flow.ts';

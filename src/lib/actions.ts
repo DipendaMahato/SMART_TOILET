@@ -60,7 +60,12 @@ export async function sendOtp(input: SendOtpInput) {
 
 // Bypassing Genkit for chat to resolve persistent connection issues.
 // Using the @google/generative-ai SDK directly.
-const genAI = new GoogleGenerativeAI("AIzaSyBrJl1i6DGKJy99MHmmH2Aqc66aUV6sjms");
+const apiKey = process.env.GEMINI_API_KEY;
+if (!apiKey) {
+  console.error("CRITICAL: GEMINI_API_KEY is missing from environment variables.");
+}
+const genAI = new GoogleGenerativeAI(apiKey || "");
+
 
 export async function chatWithAi(
   history: any[], 

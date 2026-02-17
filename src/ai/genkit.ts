@@ -7,11 +7,10 @@ import {googleAI} from '@genkit-ai/google-genai';
 export const ai = genkit({
   plugins: [
     googleAI({
-        apiKey: "AIzaSyBrJl1i6DGKJy99MHmmH2Aqc66aUV6sjms",
+        apiKey: process.env.GEMINI_API_KEY,
     }),
   ],
 });
 
 // Use a performant text model for general purpose use.
 export const geminiPro = googleAI.model('gemini-pro');
-

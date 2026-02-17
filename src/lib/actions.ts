@@ -4,13 +4,12 @@
 import { config } from 'dotenv';
 config();
 
-import { headers } from 'next/headers';
 import { mockMedicalProfile, mockToiletSensorData } from '@/lib/data';
 import { generateHealthInsights } from '@/ai/flows/generate-health-insights';
 import { refineInsightsWithReasoning } from '@/ai/flows/refine-insights-with-reasoning';
 import { sendOtp as sendOtpFlow, SendOtpInput } from '@/ai/flows/send-otp-flow';
 import { analyzeDipstick as analyzeDipstickFlow, AnalyzeDipstickInput } from '@/ai/flows/analyze-dipstick-flow';
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { chat as chatFlow, ChatInput } from '@/ai/flows/chat-flow';
 
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -58,15 +57,6 @@ export async function sendOtp(input: SendOtpInput) {
     }
 }
 
-// Bypassing Genkit for chat to resolve persistent connection issues.
-// Using the @google/generative-ai SDK directly.
-const apiKey = process.env.GEMINI_API_KEY;
-if (!apiKey) {
-  console.error("CRITICAL: GEMINI_API_KEY is missing from environment variables.");
-}
-const genAI = new GoogleGenerativeAI(apiKey || "");
-
-
 export async function chatWithAi(
   history: any[], 
   message: string, 
@@ -74,35 +64,9 @@ export async function chatWithAi(
   healthData?: string
 ) {
   try {
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
-      systemInstruction: `You are the "Smart Toilet Medical Assistant," a specialized diagnostic AI. 
-      Your goal is to analyze user health trends based on urine and stool sensor data.
-      
-      CONTEXT RULES:
-      - Use the provided User Profile for age, weight, and medical history.
-      - Analyze the Health Data for specific sensor values: pH, Protein, Glucose, and hydration levels.
-      - If sensor values are abnormal (e.g., high glucose), suggest consulting a doctor but do not give a final medical diagnosis.
-      - Be professional, empathetic, and concise.`
-    });
-
-    const currentContext = `
-      USER PROFILE: ${userProfile || 'No profile provided'}
-      LATEST SENSOR DATA: ${healthData || 'No sensor readings currently available'}
-    `;
-
-    const chat = model.startChat({
-      history: history.map(m => ({
-        role: m.role === 'user' ? 'user' : 'model',
-        parts: [{ text: m.content }],
-      })),
-    });
-
-    const result = await chat.sendMessage(`Context: ${currentContext}\n\nUser Message: ${message}`);
-    const response = await result.response;
-    
-    return { response: response.text() };
-
+    const input: ChatInput = { history, message, userProfile, healthData };
+    const result = await chatFlow(input);
+    return { response: result.response };
   } catch (error: any) {
     console.error("AI Service Connection Failure:", error);
     return { 

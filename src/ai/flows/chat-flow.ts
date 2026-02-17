@@ -5,7 +5,8 @@
  * This flow uses Genkit to interact with a conversational AI model.
  */
 
-import { ai, geminiPro } from '@/ai/genkit';
+import { ai } from '@/ai/genkit';
+import { googleAI } from '@genkit-ai/google-genai';
 import { z } from 'zod';
 
 // Define the schema for a single message in the chat history
@@ -31,6 +32,8 @@ const ChatOutputSchema = z.object({
 });
 export type ChatOutput = z.infer<typeof ChatOutputSchema>;
 
+// Use the model that is known to be working from the analyzeDipstick flow
+const visionModel = googleAI.model('gemini-pro-vision');
 
 // Define the Genkit flow for the chat functionality
 const chatFlow = ai.defineFlow(
@@ -58,7 +61,7 @@ const chatFlow = ai.defineFlow(
       User Message: ${message}`;
     
     const llmResponse = await ai.generate({
-        model: geminiPro,
+        model: visionModel,
         prompt: fullPrompt,
         history: history,
     });

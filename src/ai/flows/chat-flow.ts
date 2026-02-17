@@ -11,7 +11,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import {googleAI} from '@genkit-ai/google-genai';
 
-const geminiProModel = googleAI.model('gemini-3-pro-preview');
+const geminiProModel = googleAI.model('gemini-3-flash-preview');
 
 const ChatMessageSchema = z.object({
   role: z.enum(['user', 'model']),

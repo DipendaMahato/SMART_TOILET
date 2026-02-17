@@ -1,5 +1,1 @@
-# Firebase Studio
-
-This is a NextJS starter in Firebase Studio.
-
-To get started, take a look at src/app/page.tsx.
+Smart Toilet is an AI and IoT-based health monitoring system that automatically analyzes urine and stool using sensors and image processing to detect health changes, provide real-time insights, and enable early disease detection through continuous non-invasive monitoring.

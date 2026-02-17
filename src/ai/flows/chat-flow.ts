@@ -52,15 +52,10 @@ const prompt = ai.definePrompt({
       USER PROFILE: {{{userProfile}}}
       LATEST SENSOR DATA: {{{healthData}}}`,
   prompt: `{{#each history}}
-{{#if (eq role 'user')}}
-User: {{content}}
-{{else}}
-AI: {{content}}
-{{/if}}
+{{role}}: {{content}}
 {{/each}}
-
-User: {{message}}
-AI: `,
+user: {{message}}
+model: `,
 });
 
 const chatFlow = ai.defineFlow(
